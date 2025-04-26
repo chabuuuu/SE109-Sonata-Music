@@ -1,4 +1,3 @@
-import { Link } from "lucide-react";
 import React from "react";
 import Button from "./button";
 
@@ -38,11 +37,10 @@ const NavMenu = () => {
       {/* Auth Buttons */}
       <div className="flex space-x-2">
         <a href="/login">
-          <Button data="Log in"/>
-
+          <Button data="Log in" />
         </a>
         <a href="/register">
-          <Button data="Sign in"/>
+          <Button data="Sign in" />
         </a>
       </div>
     </div>
