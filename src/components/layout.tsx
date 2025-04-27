@@ -7,7 +7,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="fixed w-full">
-        {/* all the navigation bar */}
+      {/* all the navigation bar */}
       <div className="flex h-screen overflow-hidden">
         {/* Left Sidebar */}
         <div>
@@ -24,7 +24,7 @@ export default function RootLayout({
         </div>
       </div>
       {/* Bottom Banner */}
-      <BottomBanner/>
+      <BottomBanner />
     </div>
   );
 }
