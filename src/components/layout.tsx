@@ -5,7 +5,7 @@ import NavMenu from "@/components/navmenu";
 export default function Layout({children}: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="fixed w-full">
-        {/* all the navigation bar */}
+      {/* all the navigation bar */}
       <div className="flex h-screen overflow-hidden">
         {/* Left Sidebar */}
         <div>
@@ -22,7 +22,7 @@ export default function Layout({children}: Readonly<{ children: React.ReactNode 
         </div>
       </div>
       {/* Bottom Banner */}
-      <BottomBanner/>
+      <BottomBanner />
     </div>
   );
 }
