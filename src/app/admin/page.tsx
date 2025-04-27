@@ -4,7 +4,7 @@ const MainPage = () => {
   return (
     <div className="x-overflow-scroll">
       {/* put your content here */}
-      <h1>I need to check on something.</h1>
+      <h1>admin pages</h1>
     </div>
   );
 };
