@@ -1,4 +1,4 @@
-import BottomBanner from "@/components/bottem_banner";
+import BottomBanner from "@/components/bottom_banner";
 import Navbar from "@/components/navbar";
 import NavMenu from "@/components/navmenu";
 
