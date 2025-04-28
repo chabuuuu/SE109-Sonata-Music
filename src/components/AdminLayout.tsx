@@ -4,6 +4,7 @@ import NavMenu from '@/components/navmenu';
 import Link from 'next/link';
 import Image from 'next/image';
 
+// if somebody uses this it needs to pass something in it
 interface AdminLayoutProps {
   children: ReactNode;
 }
