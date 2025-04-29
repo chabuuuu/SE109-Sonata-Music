@@ -6,6 +6,7 @@ import Image from "next/image";
 import styles from "./adminNavbar.module.css";
 import { useRouter } from "next/navigation";
 
+// if somebody uses this it needs to pass something in it
 interface AdminLayoutProps {
   children: ReactNode;
 }
