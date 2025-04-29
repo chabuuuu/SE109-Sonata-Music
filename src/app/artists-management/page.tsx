@@ -11,14 +11,16 @@ import {
   CloudUpload,
 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
+import SearchModal from "@/components/SearchModal";
 
 export default function ArtistsManagement() {
-  // function handlePopUp(){
+  // this is the function for handle the popup
+  const [showModal, setShowModal] = useState(false);
 
-  //   return(
-  //     Null
-  //   );
-  // }
+  function handleShowModal (){
+    setShowModal(!showModal);
+  };
+
   return (
     <AdminLayout>
       <div className="w-full mx-auto p-2 md:p-4 bg-white">
@@ -105,7 +107,10 @@ export default function ArtistsManagement() {
                       </div>
 
                       {/* Plus button positioned in the bottom-left corner */}
-                      <button className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
+                      <button
+                        onClick={handleShowModal}
+                        className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                      >
                         <span className="text-lg leading-none">+</span>
                       </button>
                     </div>
@@ -125,7 +130,7 @@ export default function ArtistsManagement() {
                       </div>
 
                       {/* Plus button positioned in the bottom-left corner */}
-                      <button className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
+                      <button onClick={handleShowModal} className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
                         <span className="text-lg leading-none">+</span>
                       </button>
                     </div>
@@ -145,7 +150,7 @@ export default function ArtistsManagement() {
                       </div>
 
                       {/* Plus button positioned in the bottom-left corner */}
-                      <button className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
+                      <button onClick={handleShowModal} className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
                         <span className="text-lg leading-none">+</span>
                       </button>
                     </div>
@@ -165,7 +170,7 @@ export default function ArtistsManagement() {
                       </div>
 
                       {/* Plus button positioned in the bottom-left corner */}
-                      <button className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
+                      <button onClick={handleShowModal} className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
                         <span className="text-lg leading-none">+</span>
                       </button>
                     </div>
@@ -197,7 +202,7 @@ export default function ArtistsManagement() {
                       </div>
 
                       {/* Plus button positioned in the bottom-left corner */}
-                      <button className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
+                      <button onClick={handleShowModal} className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
                         <span className="text-lg leading-none">+</span>
                       </button>
                     </div>
@@ -217,7 +222,7 @@ export default function ArtistsManagement() {
                       </div>
 
                       {/* Plus button positioned in the bottom-left corner */}
-                      <button className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
+                      <button onClick={handleShowModal} className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300">
                         <span className="text-lg leading-none">+</span>
                       </button>
                     </div>
@@ -285,6 +290,7 @@ export default function ArtistsManagement() {
           </div>
         </div>
       </div>
+      {showModal ? <SearchModal onClose={() => setShowModal(false)} /> : null}
     </AdminLayout>
   );
 }
