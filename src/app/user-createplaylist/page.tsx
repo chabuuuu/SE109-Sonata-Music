@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import Navbar from '@/components/navbar';
 
 
@@ -66,7 +66,7 @@ const categories = ["Playlists", "Artists", "Albums"];
 
 const PlaylistPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("Playlists");
-  const [currentProgress, setCurrentProgress] = useState(50); // For the progress bar, 0-100
+  //const [currentProgress, setCurrentProgress] = useState(50); // For the progress bar, 0-100
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const toggleProfileMenu = () => {
@@ -214,7 +214,7 @@ const PlaylistPage = () => {
           <img src="/podcast-thumbnail.jpg" alt="Current playing" className="h-14 w-14 mr-3" />
           <div>
             <p className="text-sm font-medium text-white">Competing with giants: An inside look at how Tinder...</p>
-            <p className="text-xs text-gray-400">Lenny's Podcast: Product | Growth | Career</p>
+            <p className="text-xs text-gray-400">Lenny Podcast: Product | Growth | Career</p>
           </div>
         </div>
         
