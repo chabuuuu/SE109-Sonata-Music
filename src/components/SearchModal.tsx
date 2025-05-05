@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { Search, X } from "lucide-react";
 
 const SearchModal = ({onClose}:{onClose: () => void}) => {

@@ -2,20 +2,14 @@
 
 import React from "react";
 import { useState } from "react";
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Settings,
-} from "lucide-react";
+import { ChevronDown, Edit, Settings } from "lucide-react";
 import songs from "./songs.json";
 import Pagination from "@mui/material/Pagination";
+import Image from "next/image";
 
 export default function SongManagementAdmin() {
   const [currentPage, setCurrentPage] = useState(1);
   //setting the hooks for time but havent got function to change it
-  const [timeFilter, setTimeFilter] = useState("Last 7 days");
 
   // Sample data from the image
   const songsPerPage = 10;
@@ -38,12 +32,17 @@ export default function SongManagementAdmin() {
           </button>
           <div>
             <button className="flex items-center gap-2 border border-sky-900/70 bg-white rounded-md px-3 py-1.5 text-sm text-sky-900/70">
-              {timeFilter}
+              <p>Last 7 days</p>
               <ChevronDown size={16} />
             </button>
           </div>
           <button className="flex items-center gap-2 border border-sky-900/70 bg-white rounded-md px-3 py-1.5 text-sm text-sky-900/70">
-            <img src="../../Download_icon.svg" alt="download icon down arrow" />
+            <Image
+              src="../../Download_icon.svg"
+              alt="download icon"
+              width={20}
+              height={20}
+            />
             Download as CSV
           </button>
         </div>
@@ -82,7 +81,7 @@ export default function SongManagementAdmin() {
                   (currentPage - 1) * songsPerPage,
                   currentPage * songsPerPage
                 )
-                .map((song, index) => (
+                .map((song) => (
                   <tr key={song.id} className="border-t border-gray-200">
                     <td className="py-3 px-4 text-sm text-gray-600">
                       {song.date}
@@ -128,7 +127,9 @@ export default function SongManagementAdmin() {
             />
           </div>
           <div>
-            <button className="text-blue-500 text-sm hover:text-yellow-500 mb-1">Show all</button>
+            <button className="text-blue-500 text-sm hover:text-yellow-500 mb-1">
+              Show all
+            </button>
           </div>
         </div>
       </div>

@@ -46,10 +46,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   }`}
                   onClick={() => handleNavigation("dashboard", "/dashboard")}
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/Home_logo.png"
                     alt="home logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Dashboard</span>
                 </li>
@@ -61,10 +63,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     handleNavigation("artists", "/artists-management")
                   }
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/search_logo.png"
                     alt="search logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Artists Management</span>
                 </li>
@@ -76,10 +80,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     handleNavigation("albums", "/albums-management")
                   }
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/library_logo.png"
                     alt="Library logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Albums Management</span>
                 </li>
@@ -91,10 +97,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     handleNavigation("contributors", "/contributors-management")
                   }
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/createPlaylist_logo.png"
                     alt="create playlist logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Contributors Management</span>
                 </li>

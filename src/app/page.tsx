@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/navbar';
-import BottomBanner from '@/components/bottom_banner';
+import React, { useState, useEffect } from "react";
+import Navbar from "@/components/navbar";
+import BottomBanner from "@/components/bottom_banner";
+import Image from "next/image";
 
 // Featured artist data for rotation
 const featuredArtists = [
@@ -125,10 +126,10 @@ const podcastData = [
  */
 
 // Section wrapper with parchment style background
-const ContentSection: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title,
-  children,
-}) => (
+const ContentSection: React.FC<{
+  title: string;
+  children: React.ReactNode;
+}> = ({ title, children }) => (
   <section className="p-6 font-['Playfair_Display',serif] text-[#3A2A24]">
     <header className="flex justify-between items-center mb-4">
       <h2 className="text-xl font-bold tracking-wide">{title}</h2>
@@ -153,9 +154,11 @@ const PlaylistCard: React.FC<{
 }> = ({ title, description, image }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <img
+      <Image
         src={image}
         alt={title}
+        width={24}
+        height={24}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%]"
       />
       {/* Play button */}
@@ -186,9 +189,11 @@ const PodcastCard: React.FC<{
 }> = ({ title, image, date, duration }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <img
+      <Image
         src={image}
         alt={title}
+        width={24}
+        height={24}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%]"
       />
       {/* Play button */}
@@ -346,9 +351,11 @@ const HomePage: React.FC = () => {
               <div className="flex items-center gap-8">
                 {/* Portrait */}
                 <div className="overflow-hidden rounded-full w-36 h-36 border-4 border-[#C8A97E] shadow-md">
-                  <img
+                  <Image
                     src={currentArtist.image}
                     alt={`${currentArtist.name} portrait`}
+                    width={24}
+                    height={24}
                     className="w-full h-full object-cover grayscale-[30%] sepia-[10%]"
                   />
                 </div>
