@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import AdminLayout from '@/components/AdminLayout';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import AdminLayout from "@/components/AdminLayout";
 import {
   FolderPlus,
   Inbox,
@@ -13,18 +13,20 @@ import {
   CloudUpload,
   MinusCircle,
   PlusCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
-const mockItems = ['E_Interview', 'E_Bench_Engineering'];
+const mockItems = ["E_Interview", "E_Bench_Engineering"];
 
 export default function AdminCategoriesPage() {
-  const [rows, setRows] = useState<string[]>(['']);
+  const [rows, setRows] = useState<string[]>([""]);
 
-  const addRow = () => setRows((prev) => [...prev, '']);
+  const addRow = () => setRows((prev) => [...prev, ""]);
   const updateRow = (i: number, val: string) =>
     setRows((prev) => prev.map((v, idx) => (idx === i ? val : v)));
   const removeRow = (i: number) =>
     setRows((prev) => prev.filter((_, idx) => idx !== i));
+
+
 
   return (
     <AdminLayout>
@@ -71,7 +73,9 @@ export default function AdminCategoriesPage() {
           <div className="grid grid-cols-2 gap-6">
             {/* Categories Title */}
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Categories Title</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Categories Title
+              </label>
               <input
                 type="text"
                 placeholder="Search..."
@@ -80,7 +84,9 @@ export default function AdminCategoriesPage() {
             </div>
             {/* Release Date */}
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Release Date</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Release Date
+              </label>
               <div className="relative">
                 <input
                   type="date"
@@ -93,10 +99,14 @@ export default function AdminCategoriesPage() {
             </div>
             {/* Upload Cover Art */}
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Upload Cover Art</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Upload Cover Art
+              </label>
               <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-white">
                 <CloudUpload size={32} className="mb-2 text-gray-400" />
-                <p className="text-sm text-gray-500">Select a file or drag and drop here</p>
+                <p className="text-sm text-gray-500">
+                  Select a file or drag and drop here
+                </p>
                 <p className="text-xs text-gray-400 mb-2">
                   JPG, PNG or PDF; file size no more than 10MB
                 </p>
@@ -107,7 +117,9 @@ export default function AdminCategoriesPage() {
             </div>
             {/* Description */}
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Description</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Description
+              </label>
               <textarea
                 rows={4}
                 placeholder="Enter description..."
@@ -118,11 +130,19 @@ export default function AdminCategoriesPage() {
 
           {/* Upload Songs/Albums */}
           <div className="mt-8 flex-1 flex flex-col">
-            <label className="block text-sm text-gray-700 mb-3">Upload Songs/Albums</label>
+            <label className="block text-sm text-gray-700 mb-3">
+              Upload Songs/Albums
+            </label>
             <div className="flex-1 overflow-auto space-y-4">
               {rows.map((val, idx) => (
-                <div key={idx} className="flex items-center bg-gray-50 rounded-lg px-4 h-12">
-                  <button onClick={() => removeRow(idx)} className="text-blue-600 hover:text-blue-800 mr-3">
+                <div
+                  key={idx}
+                  className="flex items-center bg-gray-50 rounded-lg px-4 h-12"
+                >
+                  <button
+                    onClick={() => removeRow(idx)}
+                    className="text-blue-600 hover:text-blue-800 mr-3"
+                  >
                     <MinusCircle size={20} />
                   </button>
                   <select
@@ -142,7 +162,10 @@ export default function AdminCategoriesPage() {
                 </div>
               ))}
             </div>
-            <button onClick={addRow} className="mt-4 inline-flex items-center text-blue-600 font-medium">
+            <button
+              onClick={addRow}
+              className="mt-4 inline-flex items-center text-blue-600 font-medium"
+            >
               <PlusCircle size={20} className="mr-1" />
               Add row
             </button>
