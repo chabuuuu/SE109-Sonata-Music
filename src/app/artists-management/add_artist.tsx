@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 import {
-  Plus,
-  Users,
-  Filter,
   ChevronDown,
-  Download,
-  Settings,
   CloudUpload,
 } from "lucide-react";
 import SearchModal from "@/components/SearchModal";
