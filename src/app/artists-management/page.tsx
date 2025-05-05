@@ -1,11 +1,7 @@
 "use client";
 
-import React, { useActionState, useState } from "react";
+import React, { useState } from "react";
 import {
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
   Plus,
   Users,
   ChevronDown,

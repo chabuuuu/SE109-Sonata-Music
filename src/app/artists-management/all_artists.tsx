@@ -2,13 +2,6 @@ import { useState } from "react";
 import {
   Search,
   X,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Users,
-  ChevronDown,
-  Download,
-  Settings,
 } from "lucide-react";
 import Pagination from "@mui/material/Pagination";
 import artists from "./artists.json";
