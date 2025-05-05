@@ -1,20 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  Settings,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import feedbacks from "./feedbacks.json";
 import Pagination from "@mui/material/Pagination";
+import Image from "next/image";
 
 export default function QuizzesFeedbackAdmin() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [timeFilter, setTimeFilter] = useState("Last 7 days");
   const [isCollapsed, setIsCollapsed] = useState([
     false,
     false,
@@ -62,12 +56,18 @@ export default function QuizzesFeedbackAdmin() {
             </button>
             <div className="relative">
               <button className="flex items-center gap-2 border border-sky-900/70 bg-white rounded-md px-3 py-1.5 text-sm text-sky-900/70">
-                {timeFilter}
+                {/* will be changed in the future */}
+                <p>Last 7 days</p>
                 <ChevronDown size={16} />
               </button>
             </div>
             <button className="flex items-center gap-2 border border-sky-900/70 bg-white rounded-md px-3 py-1.5 text-sm text-sky-900/70">
-              <img src="../../Download_icon.svg" alt="download icon" />
+              <Image
+                src="../../Download_icon.svg"
+                alt="download icon"
+                width={24}
+                height={24}
+              />
               Download as CSV
             </button>
           </div>
@@ -196,7 +196,7 @@ export default function QuizzesFeedbackAdmin() {
               onChange={handlePageChange}
               siblingCount={1}
             />
-           <button className="text-blue-500 text-sm ml-5">Show all</button>
+            <button className="text-blue-500 text-sm ml-5">Show all</button>
           </div>
         </div>
       </div>

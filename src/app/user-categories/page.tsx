@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 /*****************************************************************
  *  CLASSICAL CATEGORIES PAGE – Top‑bar unified with Albums page
@@ -14,25 +14,85 @@ import { useRouter } from "next/navigation";
  ******************************/
 const categories = [
   // Row 1 – Dark → Light
-  { title: "Choral Works",      color: "bg-[#A67C52]/80", image: "/images/categories/choral.png" },
-  { title: "Solo Violin",       color: "bg-[#A67C52]/60", image: "/images/categories/violin.png" },
-  { title: "Chamber Music",     color: "bg-[#B08C66]/80", image: "/images/categories/chamber.png" },
-  { title: "Minimalism",        color: "bg-[#B08C66]/60", image: "/images/categories/minimalism.png" },
-  { title: "Symphonies",        color: "bg-[#C8A97E]/80", image: "/images/categories/symphony.png" },
+  {
+    title: "Choral Works",
+    color: "bg-[#A67C52]/80",
+    image: "/images/categories/choral.png",
+  },
+  {
+    title: "Solo Violin",
+    color: "bg-[#A67C52]/60",
+    image: "/images/categories/violin.png",
+  },
+  {
+    title: "Chamber Music",
+    color: "bg-[#B08C66]/80",
+    image: "/images/categories/chamber.png",
+  },
+  {
+    title: "Minimalism",
+    color: "bg-[#B08C66]/60",
+    image: "/images/categories/minimalism.png",
+  },
+  {
+    title: "Symphonies",
+    color: "bg-[#C8A97E]/80",
+    image: "/images/categories/symphony.png",
+  },
 
   // Row 2 – Dark → Light
-  { title: "Film Scores",       color: "bg-[#C8A97E]/60", image: "/images/categories/filmscore.png" },
-  { title: "Piano Works",       color: "bg-[#C9AE8E]/80", image: "/images/categories/piano.png" },
-  { title: "Renaissance",       color: "bg-[#C9AE8E]/60", image: "/images/categories/renaissance.png" },
-  { title: "Concertos",         color: "bg-[#D3B995]/80", image: "/images/categories/concerto.png" },
-  { title: "Modern Classical",  color: "bg-[#DBC0A2]/80", image: "/images/categories/modern.png" },
+  {
+    title: "Film Scores",
+    color: "bg-[#C8A97E]/60",
+    image: "/images/categories/filmscore.png",
+  },
+  {
+    title: "Piano Works",
+    color: "bg-[#C9AE8E]/80",
+    image: "/images/categories/piano.png",
+  },
+  {
+    title: "Renaissance",
+    color: "bg-[#C9AE8E]/60",
+    image: "/images/categories/renaissance.png",
+  },
+  {
+    title: "Concertos",
+    color: "bg-[#D3B995]/80",
+    image: "/images/categories/concerto.png",
+  },
+  {
+    title: "Modern Classical",
+    color: "bg-[#DBC0A2]/80",
+    image: "/images/categories/modern.png",
+  },
 
   // Row 3 – Dark → Light
-  { title: "Baroque Gems",      color: "bg-[#D9C3A5]/80", image: "/images/categories/baroque.png" },
-  { title: "Operas",            color: "bg-[#E6D7C3]/80", image: "/images/categories/opera.png" },
-  { title: "Oratorios",         color: "bg-[#EDD7B7]/80", image: "/images/categories/oratorio.png" },
-  { title: "Romantic Era",      color: "bg-[#E8D8C1]/80", image: "/images/categories/romantic.png" },
-  { title: "Ballet Suites",     color: "bg-[#F0E6D6]/80", image: "/images/categories/ballet.png" },
+  {
+    title: "Baroque Gems",
+    color: "bg-[#D9C3A5]/80",
+    image: "/images/categories/baroque.png",
+  },
+  {
+    title: "Operas",
+    color: "bg-[#E6D7C3]/80",
+    image: "/images/categories/opera.png",
+  },
+  {
+    title: "Oratorios",
+    color: "bg-[#EDD7B7]/80",
+    image: "/images/categories/oratorio.png",
+  },
+  {
+    title: "Romantic Era",
+    color: "bg-[#E8D8C1]/80",
+    image: "/images/categories/romantic.png",
+  },
+  {
+    title: "Ballet Suites",
+    color: "bg-[#F0E6D6]/80",
+    image: "/images/categories/ballet.png",
+  },
 ];
 
 const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
@@ -44,7 +104,10 @@ const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
 /******************************
  *  SEARCH BAR – Albums style *
  ******************************/
-const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void }> = ({ term, setTerm }) => {
+const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void }> = ({
+  term,
+  setTerm,
+}) => {
   const [focus, setFocus] = useState(false);
   return (
     <div
@@ -101,8 +164,9 @@ const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void }> = ({ t
  *    MAIN PAGE COMPONENT     *
  ******************************/
 export default function CategoriesPage() {
-  const router = useRouter();
-  const [tab, setTab] = useState<"Categories" | "Artists" | "Albums">("Categories");
+  const [tab, setTab] = useState<"Categories" | "Artists" | "Albums">(
+    "Categories"
+  );
   const [view, setView] = useState<"grid" | "list">("grid");
   const [term, setTerm] = useState("");
 
@@ -136,7 +200,9 @@ export default function CategoriesPage() {
                   >
                     <button
                       className={`px-4 py-2 rounded-md text-sm transition-colors ${
-                        tab === t ? "bg-[#C8A97E] text-white" : "hover:bg-[#C8A97E]/30"
+                        tab === t
+                          ? "bg-[#C8A97E] text-white"
+                          : "hover:bg-[#C8A97E]/30"
                       }`}
                       onClick={() => setTab(t)}
                     >
@@ -151,7 +217,9 @@ export default function CategoriesPage() {
                 <button
                   aria-label="Grid view"
                   className={`p-2 rounded ${
-                    view === "grid" ? "bg-[#C8A97E]/80" : "hover:bg-[#C8A97E]/40"
+                    view === "grid"
+                      ? "bg-[#C8A97E]/80"
+                      : "hover:bg-[#C8A97E]/40"
                   }`}
                   onClick={() => setView("grid")}
                 >
@@ -167,7 +235,9 @@ export default function CategoriesPage() {
                 <button
                   aria-label="List view"
                   className={`p-2 rounded ${
-                    view === "list" ? "bg-[#C8A97E]/80" : "hover:bg-[#C8A97E]/40"
+                    view === "list"
+                      ? "bg-[#C8A97E]/80"
+                      : "hover:bg-[#C8A97E]/40"
                   }`}
                   onClick={() => setView("list")}
                 >
@@ -198,7 +268,9 @@ export default function CategoriesPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
               {categories.map((c) => (
                 <Link
-                  href={`/user-category/${c.title.toLowerCase().replace(/\s+/g, "-")}`}
+                  href={`/user-category/${c.title
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`}
                   key={c.title}
                   className="group"
                 >
@@ -208,11 +280,14 @@ export default function CategoriesPage() {
                     <span className="absolute top-4 left-4 text-lg font-semibold drop-shadow text-[#F8F0E3]">
                       {c.title}
                     </span>
-                    <img
-                      src={c.image}
-                      alt={c.title}
-                      className="w-24 h-24 absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 rotate-12"
-                    />
+                    <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 rotate-12 w-24 h-24">
+                      <Image
+                        src={c.image}
+                        alt={c.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -224,23 +299,32 @@ export default function CategoriesPage() {
             <div className="space-y-3 mb-12">
               {categories.map((c) => (
                 <Link
-                  href={`/user-category/${c.title.toLowerCase().replace(/\s+/g, "-")}`}
+                  href={`/user-category/${c.title
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`}
                   key={c.title}
                   className="block"
                 >
                   <div className="flex items-center bg-[#F0E6D6] border border-[#D3B995] rounded-xl p-4 hover:bg-[#E6D7C3]/70 transition-colors">
-                    <div className={`${c.color} w-16 h-16 rounded-lg mr-4 relative overflow-hidden flex-shrink-0`}>
-                      <img
-                        src={c.image}
-                        alt={c.title}
-                        className="w-10 h-10 absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 rotate-12"
-                      />
+                    <div
+                      className={`${c.color} w-16 h-16 rounded-lg mr-4 relative overflow-hidden flex-shrink-0`}
+                    >
+                      <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 rotate-12 w-10 h-10">
+                        <Image
+                          src={c.image}
+                          alt={c.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                     </div>
                     <div className="flex-grow">
                       <h3 className="text-lg font-semibold text-[#3A2A24] group-hover:text-[#C8A97E] transition-colors duration-300">
                         {c.title}
                       </h3>
-                      <p className="text-sm text-[#6D4C41]">Khám phá {c.title.toLowerCase()} cổ điển</p>
+                      <p className="text-sm text-[#6D4C41]">
+                        Khám phá {c.title.toLowerCase()} cổ điển
+                      </p>
                     </div>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

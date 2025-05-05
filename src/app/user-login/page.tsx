@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [isClient, setIsClient] = useState(false);
@@ -21,26 +22,33 @@ export default function LoginPage() {
 
       {/* Left: Image */}
       <div className="hidden md:block">
-        <img
-          src="/violin-sheet.jpeg"
-          alt="Violin with sheet music"
-          className="h-full w-full object-cover"
-        />
+        <div className="relative h-full w-full">
+          <Image
+            src="/violin-sheet.jpeg"
+            alt="Violin with sheet music"
+            fill
+            className="object-cover"
+          />
+        </div>
       </div>
 
       {/* Right: Login form */}
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md p-8">
           <div className="flex justify-center mb-6">
-            <img
+            <Image
               src="/sonata-logo.png"
               alt="Sonata Logo"
-              className="h-20"
+              height={80} // equivalent to h-20
+              width={150} // you can set the width as needed
+              className="object-contain" // optional to ensure proper scaling
             />
           </div>
           <form className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
               <input
                 type="text"
                 placeholder="Username"
@@ -48,7 +56,9 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -65,11 +75,17 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <a href="#" className="text-blue-700 font-semibold hover:underline">
+              <a
+                href="#"
+                className="text-blue-700 font-semibold hover:underline"
+              >
                 Forgot your password?
               </a>
               <label className="inline-flex items-center space-x-2">
-                <input type="checkbox" className="form-checkbox accent-blue-700" />
+                <input
+                  type="checkbox"
+                  className="form-checkbox accent-blue-700"
+                />
                 <span className="text-gray-700">Remember me</span>
               </label>
             </div>
