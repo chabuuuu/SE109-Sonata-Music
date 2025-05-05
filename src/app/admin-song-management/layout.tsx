@@ -1,15 +1,14 @@
-import BottomBanner from "@/components/bottom_banner";
-import Navbar from "@/components/navbar";
+import NavbarAdmin from "@/components/navbar-admin";
 import NavMenu from "@/components/navmenu";
 
 export default function Layout({children}: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="fixed w-full">
-      {/* all the navigation bar */}
+        {/* all the navigation bar */}
       <div className="flex h-screen overflow-hidden">
         {/* Left Sidebar */}
         <div>
-          <Navbar />
+          <NavbarAdmin />
         </div>
 
         {/* Main Content Area */}
@@ -21,8 +20,6 @@ export default function Layout({children}: Readonly<{ children: React.ReactNode 
           <div className="flex-1 overflow-auto">{children}</div>
         </div>
       </div>
-      {/* Bottom Banner */}
-      <BottomBanner />
     </div>
   );
 }

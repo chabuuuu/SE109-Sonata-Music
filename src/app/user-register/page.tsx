@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const [isClient, setIsClient] = useState(false);
@@ -16,32 +17,38 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-white relative">
+      {/* Left: Image */}
+      <div className="hidden md:block">
+        <div className="relative h-full w-full ">
+          <Image
+            src="/violin-sheet.jpeg"
+            alt="Violin with sheet music"
+            fill
+            className="object-cover"
+          />
+        </div>
+      </div>
       {/* Top and Bottom blue lines (thicker) */}
       <div className="absolute top-0 left-0 w-full h-4 bg-blue-900" />
       <div className="absolute bottom-0 left-0 w-full h-4 bg-blue-900" />
-
-      {/* Left: Image */}
-      <div className="hidden md:block">
-        <img
-          src="/violin-sheet.jpeg"
-          alt="Violin with sheet music"
-          className="h-full w-full object-cover"
-        />
-      </div>
 
       {/* Right: Register form */}
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md p-8">
           <div className="flex justify-center mb-6">
-            <img
+            <Image
               src="/sonata-logo.png"
               alt="Sonata Logo"
-              className="h-20"
+              height={80} // equivalent to h-20 (80px)
+              width={150} // you can set the width as needed
+              className="object-contain" // optional to ensure proper scaling
             />
           </div>
           <form className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Full name</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Full name
+              </label>
               <input
                 type="text"
                 placeholder="Full name"
@@ -49,7 +56,9 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
               <input
                 type="text"
                 placeholder="Username"
@@ -57,7 +66,9 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -74,7 +85,9 @@ export default function RegisterPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Retype password</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Retype password
+              </label>
               <div className="relative">
                 <input
                   type={showRetypePassword ? "text" : "password"}
@@ -86,7 +99,11 @@ export default function RegisterPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                   onClick={() => setShowRetypePassword((prev) => !prev)}
                 >
-                  {showRetypePassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showRetypePassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
                 </button>
               </div>
             </div>
