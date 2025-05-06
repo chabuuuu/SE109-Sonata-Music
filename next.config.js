@@ -4,8 +4,7 @@ module.exports = {
       remotePatterns: [
         {
           protocol: 'https',
-          hostname: 'www.operacolorado.org',
-          pathname: '/wp-content/uploads/**',
+          hostname: '**',
         },
       ],
     },

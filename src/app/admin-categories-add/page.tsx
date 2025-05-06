@@ -20,6 +20,7 @@ export default function AdminCategoriesPage() {
   const [rows, setRows] = useState(['']);
   const [name, setName] = useState('');
   const [picture, setPicture] = useState('');
+  const [description, setDescription] = useState('');
 
   const addRow = () => setRows((prev) => [...prev, '']);
   const updateRow = (i: number, val: string) =>
@@ -57,6 +58,7 @@ export default function AdminCategoriesPage() {
   const handleClear = () => {
     setName('');
     setPicture('');
+    setDescription('');
     setRows(['']);
   };
 
@@ -73,7 +75,7 @@ export default function AdminCategoriesPage() {
             <span className="text-sm font-medium">Add Categories</span>
           </Link>
           <Link
-            href="/adminall"
+            href="./admin-categories-all"
             className="w-36 h-20 bg-white text-gray-600 rounded-xl shadow border border-gray-200 flex flex-col items-center justify-center"
           >
             <Inbox size={24} className="mb-1" />
@@ -128,6 +130,8 @@ export default function AdminCategoriesPage() {
               <textarea
                 rows={4}
                 placeholder="Enter description..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full bg-gray-100 rounded-lg p-3 placeholder-gray-400 text-black resize-none focus:ring-blue-500 focus:border-blue-500 border border-transparent"
               />
             </div>

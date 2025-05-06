@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import DetailModal from "@/components/DetailModal";
+import { ADMIN_TOKEN } from "@/constant/adminToken";
 
 interface Category {
   id: string;
@@ -93,9 +94,24 @@ export default function AdminCategoriesAllPage() {
   }, [filtered, currentPage, pageSize]);
 
   // Handlers
-  const handleDelete = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await axios.delete(`https://api.sonata.io.vn/api/v1/category/${id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem(ADMIN_TOKEN),
+        },
+      });
+
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+      alert('Category deleted successfully!');
+      console.log(JSON.stringify(response.data));
+    } catch(err) {
+      console.error("Error deleting category:", err);
+      alert("Failed to delete category. Please try again.");
+    }
   };
+
   const handleShowAll = () => {
     setPageSize(filtered.length || 1);
     setCurrentPage(1);
@@ -153,7 +169,7 @@ export default function AdminCategoriesAllPage() {
         {/* Left action buttons */}
         <div className="absolute top-6 left-6 flex space-x-4">
           <Link
-            href="/admincategories"
+            href="/admin-categories-add"
             className="w-36 h-20 bg-white text-gray-600 rounded-xl border border-gray-200 flex flex-col items-center justify-center"
           >
             <FolderPlus size={24} className="mb-1 text-black" />
