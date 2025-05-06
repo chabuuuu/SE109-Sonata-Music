@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef } from "react";
-import { X, Clock, Eye, User, Music } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { X, Clock, Eye, User, Music, Edit } from "lucide-react";
 import Image from "next/image";
+import { ADMIN_TOKEN } from "@/constant/adminToken";
+import axios from "axios";
 
 type DetailModalProps = {
   onClose: () => void;
@@ -14,16 +16,57 @@ type DetailModalProps = {
     views: string;
     createdBy: string;
     picture: string;
-    songsCount: string
+    songsCount: string;
   };
 };
 
 const DetailModal = ({ onClose, data }: DetailModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    name: data.title,
+    picture: data.picture,
+  });
+
+  useEffect(() => {
+    setEditData({
+      name: data.title,
+      picture: data.picture,
+    });
+  }, [data]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
       onClose();
+    }
+  };
+
+  const handleSave = async () => {
+    // Input validation
+    if (!editData.name || !editData.picture) {
+      alert("Name and Picture URL are required.");
+      return;
+    }
+    const token = localStorage.getItem(ADMIN_TOKEN);
+
+    try {
+      const response = await axios.put(
+        `https://api.sonata.io.vn/api/v1/category/${data.id}`,
+        editData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      setIsEditing(false);
+      alert("Category updated successfully!");
+    } catch (err) {
+      console.error("Error updating category:", err);
+      alert(`Failed to update category: ${err || "Unknown error"}. Please try again.`);
     }
   };
 
@@ -34,7 +77,7 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
     >
       <div
         ref={modalRef}
-        className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl w-3/4 max-w-2xl overflow-hidden border border-gray-200"
+        className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl w-3/4 max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200"
       >
         {/* Image Header Section */}
         <div className="relative h-56 w-full overflow-hidden">
@@ -46,13 +89,21 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           
-          {/* Close Button */}
-          <button
-            className="absolute top-4 right-4 p-2 bg-black/30 hover:bg-black/50 rounded-full transition-all duration-300 text-white"
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
+          {/* Buttons */}
+          <div className="absolute top-4 right-4 flex space-x-2">
+            <button
+              className="p-2 bg-black/30 hover:bg-black/50 rounded-full transition-all duration-300 text-white"
+              onClick={() => setIsEditing(true)}
+            >
+              <Edit size={18} />
+            </button>
+            <button
+              className="p-2 bg-black/30 hover:bg-black/50 rounded-full transition-all duration-300 text-white"
+              onClick={onClose}
+            >
+              <X size={18} />
+            </button>
+          </div>
           
           {/* Title on image */}
           <div className="absolute bottom-4 left-6 right-6">
@@ -95,21 +146,47 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
             </p>
           </div>
           
-          {/* Additional Fields - hidden the ones we already show */}
-          <div className="space-y-1">
-            {Object.entries(data).map(([key, value]) => {
-              if (
-                ["id", "title", "description", "createAt", "views", "createdBy", "picture", "songsCount"].includes(key)
-              )
-                return null;
-              return (
-                <div key={key} className="text-sm text-gray-600 flex justify-between border-b border-gray-100 py-2">
-                  <strong className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</strong> 
-                  <span className="text-gray-800">{String(value)}</span>
+          {/* Edit Section */}
+          {isEditing && (
+            <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4 text-black">Edit Category Information</h3>
+              <form onSubmit={handleSave}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    value={editData.name}
+                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                    className="mt-1 text-black block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
                 </div>
-              );
-            })}
-          </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Picture URL</label>
+                  <input
+                    type="text"
+                    value={editData.picture}
+                    onChange={(e) => setEditData({ ...editData, picture: e.target.value })}
+                    className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
 
         {/* Footer Buttons */}
