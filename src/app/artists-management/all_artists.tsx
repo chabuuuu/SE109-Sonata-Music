@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, XCircle, Info } from "lucide-react";
 import Pagination from "@mui/material/Pagination";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-import { ArtistDetails, ApiArtistDetails } from './artist.types';
+import { ArtistDetails, ApiArtistDetails } from "./artist.types";
 
 export default function All_artists() {
   const [artists, setArtists] = useState<ArtistDetails[]>([]);
@@ -64,9 +64,7 @@ export default function All_artists() {
                 : "None",
             nationality: artist.nationality || "Unknown",
             role:
-              artist.roles?.length > 0 
-              ? artist.roles.join(", ")
-              : "Unknown",
+              artist.roles?.length > 0 ? artist.roles.join(", ") : "Unknown",
             awardsAndHonors: artist.awardsAndHonors || "None",
           })
         );
@@ -79,6 +77,26 @@ export default function All_artists() {
     };
     fetchArtists();
   }, [searchTerm, currentPage, artistPerPage]);
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await axios.delete(
+        `https://api.sonata.io.vn/api/v1/artist/${id}`,
+
+      {
+        headers: 
+          {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+          },
+        });
+
+        setCurrentPage(1);
+    } catch (err) {
+      console.log("Can not delete the artist, please try again.", err);
+      alert("Failed to delete artist. Please try again.");
+    };
+  };
 
   return (
     <div className="bg-white p-6 w-full mx-auto">
@@ -237,7 +255,7 @@ export default function All_artists() {
 
           {/* Table */}
           <div className="mb-4">
-            <div className="grid grid-cols-7 bg-gray-400/40 py-2 border-t border-b border-gray-300 text-black">
+            <div className="grid grid-cols-8 bg-gray-400/40 py-2 border-t border-b border-gray-300 text-black">
               <div className="px-2 font-medium">Full name</div>
               <div className="px-2 font-medium">Nationality</div>
               <div className="px-2 font-medium">Role</div>
@@ -245,6 +263,7 @@ export default function All_artists() {
               <div className="px-2 font-medium">Instrument Played</div>
               <div className="px-2 font-medium">Awards</div>
               <div className="px-2 font-medium">ID</div>
+              <div className="px-2 font-medium">Action</div>
             </div>
 
             {artists
@@ -255,7 +274,7 @@ export default function All_artists() {
               .map((artist, index) => (
                 <div
                   key={artist.id}
-                  className={`grid grid-cols-7 py-2 border-b border-gray-200 ${
+                  className={`grid grid-cols-8 py-2 border-b border-gray-200 ${
                     index % 2 === 0 ? "bg-white" : "bg-gray-100"
                   }`}
                 >
@@ -268,6 +287,14 @@ export default function All_artists() {
                     {artist.awardsAndHonors}
                   </div>
                   <div className="px-2 text-black">{artist.id}</div>
+                  <div className="flex gap-1 ml-2">
+                    <button onClick={() => handleDelete(artist.id)}>
+                      <XCircle size={20} className="text-red-500" />
+                    </button>
+                    <button>
+                      <Info size={20} className="text-blue-600" />
+                    </button>
+                  </div>
                 </div>
               ))}
           </div>
