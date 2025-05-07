@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
-import AdminLayout from '@/components/AdminLayout';
-import * as XLSX from 'xlsx';
+import React, { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
+import AdminLayout from "@/components/AdminLayout";
+import * as XLSX from "xlsx";
 import {
   FolderPlus,
   Inbox,
@@ -13,7 +13,10 @@ import {
   Search,
   XCircle,
   Info,
-} from 'lucide-react';
+} from "lucide-react";
+import axios from "axios";
+import DetailModal from "@/components/DetailModal";
+import { ADMIN_TOKEN } from "@/constant/adminToken";
 
 interface Category {
   id: string;
@@ -21,26 +24,50 @@ interface Category {
   songsCount: string;
   views: string;
   releaseDate: string;
+  createAt: string;
   createdBy: string;
   description: string;
+  picture: string; // optional if API returns it but not in mock data
 }
 
-// Sample data
-const initialData: Category[] = Array.from({ length: 50 }).map((_, i) => ({
-  id: `ENG${i + 1}`,
-  name: `ABC app ${i + 1}`,
-  songsCount: 'ABCAPP',
-  views: 'In progress',
-  releaseDate: '11.01.2008',
-  createdBy: '11.01.2009',
-  description: 'ABCAPP TOP 1 SONG IN THE WORLD YOU CAN SEE HERE',
-}));
-
 export default function AdminCategoriesAllPage() {
-  const [categories, setCategories] = useState<Category[]>(initialData);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [popup, setPopup] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "https://api.sonata.io.vn/api/v1/category"
+        );
+        const apiData = response.data.data;
+
+        // Transform API data to match your local structure
+        const mappedData: Category[] = apiData.map((item: Category) => ({
+          id: item.id,
+          name: item.name,
+          picture: item.picture,
+          songsCount: "0",
+          views: "0",
+          releaseDate: new Date(item.createAt).toLocaleDateString(),
+          createdBy: "System",
+          description: "Imported from API",
+        }));
+
+        setCategories(mappedData);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Filter logic
   const filtered = useMemo(
@@ -67,27 +94,56 @@ export default function AdminCategoriesAllPage() {
   }, [filtered, currentPage, pageSize]);
 
   // Handlers
-  const handleDelete = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await axios.delete(`https://api.sonata.io.vn/api/v1/category/${id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem(ADMIN_TOKEN),
+        },
+      });
+
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+      alert('Category deleted successfully!');
+      console.log(JSON.stringify(response.data));
+    } catch(err) {
+      console.error("Error deleting category:", err);
+      alert("Failed to delete category. Please try again.");
+    }
   };
+
   const handleShowAll = () => {
     setPageSize(filtered.length || 1);
     setCurrentPage(1);
   };
   const handleDownloadCSV = () => {
     const headers = [
-      'ID','Name','Songs count','Views','Release date','Created by','Description'
+      "ID",
+      "Name",
+      "Songs count",
+      "Views",
+      "Release date",
+      "Created by",
+      "Description",
     ];
     const rows = filtered.map((c) => [
-      c.id, c.name, c.songsCount, c.views, c.releaseDate, c.createdBy, c.description
+      c.id,
+      c.name,
+      c.songsCount,
+      c.views,
+      c.releaseDate,
+      c.createdBy,
+      c.description,
     ]);
     const csv = [headers, ...rows]
-      .map((r) => r.map((v) => `"${v}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+      .map((r) => r.map((v) => `"${v}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'categories.csv'; a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "categories.csv";
+    a.click();
     URL.revokeObjectURL(url);
   };
   const handleExportExcel = () => {
@@ -95,16 +151,16 @@ export default function AdminCategoriesAllPage() {
       filtered.map((c) => ({
         ID: c.id,
         Name: c.name,
-        'Songs count': c.songsCount,
+        "Songs count": c.songsCount,
         Views: c.views,
-        'Release date': c.releaseDate,
-        'Created by': c.createdBy,
+        "Release date": c.releaseDate,
+        "Created by": c.createdBy,
         Description: c.description,
       }))
     );
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Categories');
-    XLSX.writeFile(wb, 'categories.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, "Categories");
+    XLSX.writeFile(wb, "categories.xlsx");
   };
 
   return (
@@ -113,11 +169,13 @@ export default function AdminCategoriesAllPage() {
         {/* Left action buttons */}
         <div className="absolute top-6 left-6 flex space-x-4">
           <Link
-            href="/admincategories"
+            href="/admin-categories-add"
             className="w-36 h-20 bg-white text-gray-600 rounded-xl border border-gray-200 flex flex-col items-center justify-center"
           >
             <FolderPlus size={24} className="mb-1 text-black" />
-            <span className="text-sm font-medium text-black">Add Categories</span>
+            <span className="text-sm font-medium text-black">
+              Add Categories
+            </span>
           </Link>
           <Link
             href="/adminall"
@@ -172,7 +230,7 @@ export default function AdminCategoriesAllPage() {
                 {searchTerm && (
                   <button
                     onClick={() => {
-                      setSearchTerm('');
+                      setSearchTerm("");
                       setCurrentPage(1);
                     }}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm font-medium text-black"
@@ -201,10 +259,19 @@ export default function AdminCategoriesAllPage() {
               <thead>
                 <tr className="bg-gray-200">
                   {[
-                    'ID','Name','Songs count','Views',
-                    'Release date','Created by','Description','Actions',
+                    "ID",
+                    "Name",
+                    "Songs count",
+                    "Views",
+                    "Release date",
+                    "Created by",
+                    "Description",
+                    "Actions",
                   ].map((h) => (
-                    <th key={h} className="px-3 py-2 font-semibold text-black text-left">
+                    <th
+                      key={h}
+                      className="px-3 py-2 font-semibold text-black text-left"
+                    >
                       {h}
                     </th>
                   ))}
@@ -227,7 +294,12 @@ export default function AdminCategoriesAllPage() {
                       <button onClick={() => handleDelete(c.id)}>
                         <XCircle size={20} className="text-red-500" />
                       </button>
-                      <button>
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(c);
+                          setPopup(true);
+                        }}
+                      >
                         <Info size={20} className="text-blue-600" />
                       </button>
                     </td>
@@ -243,7 +315,9 @@ export default function AdminCategoriesAllPage() {
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className={`px-2 py-1 ${
-                currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-black'
+                currentPage === 1
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-black"
               }`}
             >
               ← Previous
@@ -255,7 +329,9 @@ export default function AdminCategoriesAllPage() {
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`px-2 py-1 ${
-                    page === currentPage ? 'bg-blue-600 text-white rounded' : 'text-black'
+                    page === currentPage
+                      ? "bg-blue-600 text-white rounded"
+                      : "text-black"
                   }`}
                 >
                   {page}
@@ -267,18 +343,41 @@ export default function AdminCategoriesAllPage() {
               disabled={currentPage === totalPages}
               className={`px-2 py-1 ${
                 currentPage === totalPages
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-black'
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-black"
               }`}
             >
               Next →
             </button>
-            <button onClick={handleShowAll} className="ml-4 text-black underline">
+            <button
+              onClick={handleShowAll}
+              className="ml-4 text-black underline"
+            >
               Show all
             </button>
           </div>
         </div>
       </div>
+      {popup && selectedCategory && (
+        <DetailModal
+          data={{
+            id: selectedCategory.id,
+            title: selectedCategory.name,
+            createAt: selectedCategory.releaseDate,
+            description: selectedCategory.description,
+            songsCount: selectedCategory.songsCount,
+            views: selectedCategory.views,
+            createdBy: selectedCategory.createdBy,
+            picture: selectedCategory.picture
+            
+            // you can pass any extra fields here too
+          }}
+          onClose={() => {
+            setPopup(false);
+            setSelectedCategory(null);
+          }}
+        />
+      )}
     </AdminLayout>
   );
 }
