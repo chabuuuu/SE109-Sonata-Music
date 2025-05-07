@@ -14,7 +14,7 @@ import Add_artist from "./add_artist";
 import All_artists from "./all_artists";
 
 export default function ArtistsManagement() {
-  const [selectedTab, setSelectedTab] = useState("add");
+  const [selectedTab, setSelectedTab] = useState("all");
 
   return (
     <AdminLayout>
