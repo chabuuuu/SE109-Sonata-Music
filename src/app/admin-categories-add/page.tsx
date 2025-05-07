@@ -36,7 +36,7 @@ export default function AdminCategoriesPage() {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + localStorage.getItem(ADMIN_TOKEN),
         },
-        body: JSON.stringify({ name, picture }),
+        body: JSON.stringify({ name, picture, description }),
       });
 
       if (!response.ok) {
@@ -48,6 +48,7 @@ export default function AdminCategoriesPage() {
       // Optionally, reset form or redirect
       setName('');
       setPicture('');
+      setDescription('');
       alert('Category created successfully!');
     } catch (error) {
       console.error('Error creating category:', error);
