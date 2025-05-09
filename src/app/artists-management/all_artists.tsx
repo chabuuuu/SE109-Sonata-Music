@@ -80,7 +80,7 @@ export default function All_artists() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await axios.delete(
+      await axios.delete(
         `https://api.sonata.io.vn/api/v1/artist/${id}`,
 
       {
