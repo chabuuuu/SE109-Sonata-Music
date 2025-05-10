@@ -40,7 +40,7 @@ export default function LoginPage() {
       if (token) {
         localStorage.setItem(ADMIN_TOKEN, token);
         // redirect to admin dashboard
-        router.push("/admin");
+        router.push("/admin-categories-all");
       } else {
         setError("Không nhận được token từ server.");
       }
