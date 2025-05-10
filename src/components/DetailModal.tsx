@@ -26,12 +26,14 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
   const [editData, setEditData] = useState({
     name: data.title,
     picture: data.picture,
+    description: data.description,
   });
 
   useEffect(() => {
     setEditData({
       name: data.title,
       picture: data.picture,
+      description: data.description,
     });
   }, [data]);
 
@@ -166,6 +168,16 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
                     type="text"
                     value={editData.picture}
                     onChange={(e) => setEditData({ ...editData, picture: e.target.value })}
+                    className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <input
+                    type="text"
+                    value={editData.description}
+                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                     className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
