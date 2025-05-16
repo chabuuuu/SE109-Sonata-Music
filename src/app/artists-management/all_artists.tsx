@@ -10,6 +10,7 @@ export default function All_artists() {
   const [totalFound, setToTalFound] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPopup, setIsPopup] = useState(false);
   const artistPerPage = 10;
   const totalPages = Math.ceil(totalFound / artistPerPage);
 
@@ -97,6 +98,10 @@ export default function All_artists() {
       alert("Failed to delete artist. Please try again.");
     };
   };
+
+  const handlePopup = () => {
+
+  }
 
   return (
     <div className="bg-white p-6 w-full mx-auto">
@@ -290,8 +295,8 @@ export default function All_artists() {
                   <div className="flex gap-1 ml-2">
                     <button onClick={() => handleDelete(artist.id)}>
                       <XCircle size={20} className="text-red-500" />
-                    </button>
-                    <button>
+                    </button >
+                    <button onClick={handlePopup} >
                       <Info size={20} className="text-blue-600" />
                     </button>
                   </div>
@@ -323,6 +328,7 @@ export default function All_artists() {
           </div>
         </div>
       </div>
+      {isPopup && }
     </div>
   );
 }
