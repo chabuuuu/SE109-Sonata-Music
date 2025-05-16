@@ -4,6 +4,7 @@ import Pagination from "@mui/material/Pagination";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import { ArtistDetails, ApiArtistDetails } from "./artist.types";
+import ArtistDetailModal from "./artist_detail_modal";
 
 export default function All_artists() {
   const [artists, setArtists] = useState<ArtistDetails[]>([]);
@@ -11,6 +12,7 @@ export default function All_artists() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isPopup, setIsPopup] = useState(false);
+  const [artistDetailKey, setArtistDetailKey] = useState("");
   const artistPerPage = 10;
   const totalPages = Math.ceil(totalFound / artistPerPage);
 
@@ -53,7 +55,7 @@ export default function All_artists() {
         // Map API response to our display format
         const LstArtists: ArtistDetails[] = artists.map(
           (artist: ApiArtistDetails) => ({
-            id: artist.id?.toString() || "N/A",
+            id: artist.id || "N/A",
             name: artist.name || "Unknown",
             genres:
               artist.genres?.length > 0
@@ -84,24 +86,25 @@ export default function All_artists() {
       await axios.delete(
         `https://api.sonata.io.vn/api/v1/artist/${id}`,
 
-      {
-        headers: 
-          {
+        {
+          headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
           },
-        });
+        }
+      );
 
-        setCurrentPage(1);
+      setCurrentPage(1);
     } catch (err) {
       console.log("Can not delete the artist, please try again.", err);
       alert("Failed to delete artist. Please try again.");
-    };
+    }
   };
 
-  const handlePopup = () => {
-
-  }
+  const handlePopup = (c: string) => {
+    setIsPopup(true);
+    setArtistDetailKey(c);
+  };
 
   return (
     <div className="bg-white p-6 w-full mx-auto">
@@ -295,8 +298,8 @@ export default function All_artists() {
                   <div className="flex gap-1 ml-2">
                     <button onClick={() => handleDelete(artist.id)}>
                       <XCircle size={20} className="text-red-500" />
-                    </button >
-                    <button onClick={handlePopup} >
+                    </button>
+                    <button onClick={() => handlePopup(artist.id)}>
                       <Info size={20} className="text-blue-600" />
                     </button>
                   </div>
@@ -328,7 +331,15 @@ export default function All_artists() {
           </div>
         </div>
       </div>
-      {isPopup && }
+      {isPopup && (
+        <ArtistDetailModal
+          id={artistDetailKey}
+          onClose={() => {
+            setIsPopup(false);
+            setArtistDetailKey("");
+          }}
+        />
+      )}
     </div>
   );
 }
