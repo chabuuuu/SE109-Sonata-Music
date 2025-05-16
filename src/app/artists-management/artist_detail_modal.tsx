@@ -274,6 +274,39 @@ const ArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
                   </div>
                 )}
 
+                {/* Orchestras */}
+                {artist.orchestras && (
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2 text-blue-700 flex items-center">
+                      <Music size={20} className="mr-2" />
+                      Orchestras
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        {artist.orchestras.map((orchestra) => (
+                          <div
+                            key={orchestra.id}
+                            className="bg-gray-100 p-3 rounded-lg flex items-center"
+                          >
+                            <div className="w-10 h-10 rounded overflow-hidden mr-2">
+                              <div className=" w-full h-full relative">
+                                <Image
+                                  src={orchestra.picture}
+                                  alt={orchestra.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            </div>
+                            <span className="font-medium text-black">
+                              {orchestra.name}
+                            </span>
+                          </div>
+                        ))}
+
+                    </div>
+                  </div>
+                )}
+
                 {/* Genres */}
                 {artist.genres && artist.genres.length > 0 && (
                   <div>

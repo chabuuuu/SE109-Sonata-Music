@@ -318,16 +318,7 @@ export default function All_artists() {
               />
             </div>
 
-            <button className="text-blue-500">Show all</button>
 
-            <div className="flex items-center">
-              <button className="border border-gray-300 rounded py-1 px-6 mr-2 text-black rounded-2xl hover:bg-gray-300">
-                Edit
-              </button>
-              <button className="bg-gray-200 border border-gray-300 rounded py-1 px-4 text-black rounded-2xl hover:bg-white">
-                Delete
-              </button>
-            </div>
           </div>
         </div>
       </div>
