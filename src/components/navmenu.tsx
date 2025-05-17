@@ -22,7 +22,7 @@ const NavMenu = () => {
       <div className="relative flex-grow max-w-xl mx-4">
         <input
           type="text"
-          placeholder="What do you want to listen to?"
+          placeholder="Bạn muốn nghe gì?"
           className="w-full bg-white text-gray-900 rounded-full py-2 px-10"
         />
         <svg
@@ -37,10 +37,10 @@ const NavMenu = () => {
       {/* Auth Buttons */}
       <div className="flex space-x-2">
         <a href="/login">
-          <Button data="Log in" />
+          <Button data="Đăng nhập" />
         </a>
         <a href="/register">
-          <Button data="Sign in" />
+          <Button data="Đăng ký" />
         </a>
       </div>
     </div>

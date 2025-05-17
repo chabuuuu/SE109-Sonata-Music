@@ -15,58 +15,59 @@ export default function RegisterPage() {
   if (!isClient) return null;
 
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-white relative">
-      {/* Top and Bottom blue lines (thicker) */}
-      <div className="absolute top-0 left-0 w-full h-4 bg-blue-900" />
-      <div className="absolute bottom-0 left-0 w-full h-4 bg-blue-900" />
+    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-[#F8F0E3] relative font-['Playfair_Display',serif] text-[#3A2A24]">
+      {/* Top and Bottom decorative lines */}
+      <div className="absolute top-0 left-0 w-full h-4 bg-[#C8A97E]" />
+      <div className="absolute bottom-0 left-0 w-full h-4 bg-[#C8A97E]" />
 
-      {/* Left: Image */}
-      <div className="hidden md:block">
+      {/* Left: Image with vintage overlay */}
+      <div className="hidden md:block relative">
         <img
           src="/violin-sheet.jpeg"
           alt="Violin with sheet music"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover grayscale-[20%] sepia-[10%]"
         />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#3A2A24]/30 to-transparent"></div>
       </div>
 
       {/* Right: Register form */}
-      <div className="flex items-center justify-center">
-        <div className="w-full max-w-md p-8">
-          <div className="flex justify-center mb-6">
-            <img
-              src="/sonata-logo.png"
-              alt="Sonata Logo"
-              className="h-20"
-            />
+      <div className="flex items-center justify-center p-6">
+        <div className="w-full max-w-md p-8 bg-[#F0E6D6] border border-[#D3B995] rounded-lg shadow-lg">
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <h1 className="text-[#C8A97E] font-['Playfair_Display',serif] text-4xl tracking-wide">Sonata</h1>
+              <div className="absolute left-0 right-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-[#C8A97E] to-transparent"></div>
+            </div>
           </div>
-          <form className="space-y-4">
+          <h2 className="text-2xl font-bold mb-6 text-center tracking-wide">Register</h2>
+          <form className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Full name</label>
+              <label className="block text-sm font-medium text-[#6D4C41] mb-1.5">Full name</label>
               <input
                 type="text"
-                placeholder="Full name"
-                className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder-gray-600"
+                placeholder="Enter your full name"
+                className="w-full border border-[#D3B995] bg-[#F8F0E3] rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#C8A97E] text-[#3A2A24] placeholder-[#8D6C61]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <label className="block text-sm font-medium text-[#6D4C41] mb-1.5">Username</label>
               <input
                 type="text"
-                placeholder="Username"
-                className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder-gray-600"
+                placeholder="Choose a username"
+                className="w-full border border-[#D3B995] bg-[#F8F0E3] rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#C8A97E] text-[#3A2A24] placeholder-[#8D6C61]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-[#6D4C41] mb-1.5">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder-gray-600"
+                  placeholder="Create a password"
+                  className="w-full border border-[#D3B995] bg-[#F8F0E3] rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#C8A97E] text-[#3A2A24] placeholder-[#8D6C61]"
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -74,16 +75,16 @@ export default function RegisterPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Retype password</label>
+              <label className="block text-sm font-medium text-[#6D4C41] mb-1.5">Retype password</label>
               <div className="relative">
                 <input
                   type={showRetypePassword ? "text" : "password"}
-                  placeholder="Password"
-                  className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder-gray-600"
+                  placeholder="Confirm your password"
+                  className="w-full border border-[#D3B995] bg-[#F8F0E3] rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#C8A97E] text-[#3A2A24] placeholder-[#8D6C61]"
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
                   onClick={() => setShowRetypePassword((prev) => !prev)}
                 >
                   {showRetypePassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -92,14 +93,14 @@ export default function RegisterPage() {
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-900 text-white py-2 rounded font-semibold hover:bg-blue-800"
+              className="w-full bg-[#C8A97E] hover:bg-[#A67C52] text-white py-3 rounded-md font-semibold transition-colors shadow-md mt-2"
             >
               REGISTER
             </button>
           </form>
-          <p className="mt-4 text-sm text-center text-gray-700">
+          <p className="mt-6 text-sm text-center text-[#6D4C41]">
             Already have an account?
-            <a href="/login" className="text-blue-600 font-medium ml-1">
+            <a href="/user-login" className="text-[#A67C52] hover:text-[#C8A97E] font-medium ml-1 transition-colors">
               Login
             </a>
           </p>

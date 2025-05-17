@@ -1,7 +1,19 @@
+'use client';
+
 import React from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const ClassicalNavbar = () => {
+  const { isLoggedIn, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/user-login');
+  };
+
   return (
     <aside className="w-48 h-screen pb-24 bg-gradient-to-b from-[#3A2A24] to-[#1A0F0D] flex flex-col justify-between border-r border-[#D3B995] shadow-lg">
       {/* TOP: Logo and Navigation */}
@@ -66,6 +78,52 @@ const ClassicalNavbar = () => {
                 <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Liked Songs</span>
               </Link>
             </li>
+            
+            {/* User authentication links */}
+            {!isLoggedIn ? (
+              <li className="overflow-hidden rounded-md mt-8">
+                <Link 
+                  href="/user-login" 
+                  className="flex items-center gap-4 text-[#C8A97E] w-full p-3 transition-all duration-300 hover:bg-[#48352F] rounded-md group"
+                >
+                  <div className="w-6 h-6 flex items-center justify-center text-[#C8A97E] group-hover:text-[#F8F0E3]">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                  </div>
+                  <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Login</span>
+                </Link>
+              </li>
+            ) : (
+              <>
+                <li className="overflow-hidden rounded-md mt-8">
+                  <Link 
+                    href="/user-profile" 
+                    className="flex items-center gap-4 text-[#C8A97E] w-full p-3 transition-all duration-300 hover:bg-[#48352F] rounded-md group"
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center text-[#C8A97E] group-hover:text-[#F8F0E3]">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Profile</span>
+                  </Link>
+                </li>
+                <li className="overflow-hidden rounded-md">
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-4 text-[#C8A97E] w-full p-3 transition-all duration-300 hover:bg-[#48352F] rounded-md group"
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center text-[#C8A97E] group-hover:text-[#F8F0E3]">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </div>
+                    <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Logout</span>
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
       </div>
