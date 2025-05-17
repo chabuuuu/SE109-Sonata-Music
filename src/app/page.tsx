@@ -7,8 +7,11 @@ import { getPopularAlbums, Album } from '@/services/albumService';
 import { getTimelessPieces } from '@/services/timelessService';
 import { getTopArtists, Artist } from '@/services/artistService';
 import { getInstrumentSpotlight, InstrumentSpotlight, Instrument } from '@/services/instrumentService';
-import { getErasAndStyles, EraStyle, Period } from '@/services/eraService';
+import { getErasAndStyles, EraStyle } from '@/services/eraService';
 import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
+import { LISTENER_TOKEN } from '@/constant/listenerToken';
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -70,8 +73,8 @@ const playlistData = [
   },
 ];
 
-// Podcast data
-const podcastData = [
+// Podcast data (không sử dụng nhưng để lại nếu cần sau này)
+const _podcastData = [
   {
     title: "Every Parent's Nightmare",
     image: "/podcast_imgs/the_letter.jpg",
@@ -104,49 +107,6 @@ const podcastData = [
   },
 ];
 
-// Fallback artists data nếu API fails
-const fallbackArtists = [
-  {
-    id: 1,
-    name: "Mozart",
-    years: "(1756 - 1791)",
-    description:
-      "Mozart was a child prodigy who amazed royal European courts. He composed over 600 works across many musical genres. His operas combined drama, humor, and brilliant musical composition.",
-    image: "/artists/mozart-portrait.png",
-    famousPieces: [
-      "Requiem in D Minor, K. 626",
-      "The Magic Flute",
-      "Symphony No. 40 in G Minor",
-    ],
-  },
-  {
-    id: 2,
-    name: "Beethoven",
-    years: "(1770 - 1827)",
-    description:
-      "Beethoven was a German composer and pianist whose music bridged the Classical and Romantic eras. He is considered one of the most influential composers of all time.",
-    image: "/artists/beethoven-portrait.png",
-    famousPieces: [
-      "Symphony No. 9 in D Minor",
-      "Moonlight Sonata",
-      "Für Elise",
-    ],
-  },
-  {
-    id: 3,
-    name: "Bach",
-    years: "(1685 - 1750)",
-    description:
-      "Bach was a German composer and musician of the Baroque period known for his instrumental compositions, keyboard works, and vocal music.",
-    image: "/artists/bach-portrait.png",
-    famousPieces: [
-      "Brandenburg Concertos",
-      "The Well-Tempered Clavier",
-      "Mass in B Minor",
-    ],
-  },
-];
-
 /**
  * -----------------------------
  *  REUSABLE COMPONENTS
@@ -154,10 +114,10 @@ const fallbackArtists = [
  */
 
 // Section wrapper with parchment style background
-const ContentSection: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title,
-  children,
-}) => (
+const ContentSection: React.FC<{
+  title: string;
+  children: React.ReactNode;
+}> = ({ title, children }) => (
   <section className="p-6 font-['Playfair_Display',serif] text-[#3A2A24]">
     <header className="flex justify-between items-center mb-6">
       <h2 className="text-2xl font-bold tracking-wide">{title}</h2>
@@ -182,9 +142,11 @@ const PlaylistCard: React.FC<{
 }> = ({ title, description, image }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <img
+      <Image
         src={image}
         alt={title}
+        width={250}
+        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -227,18 +189,14 @@ const PlaylistCard: React.FC<{
   </article>
 );
 
-// Podcast card
-const PodcastCard: React.FC<{
-  title: string;
-  image: string;
-  date: string;
-  duration: string;
-}> = ({ title, image, date, duration }) => (
+// Podcast card (không sử dụng nhưng để lại nếu cần sau này)const _PodcastCard: React.FC<{  title: string;  image: string;  date: string;  duration: string;}> = ({ title, image, date, duration }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <img
+      <Image
         src={image}
         alt={title}
+        width={250}
+        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -296,9 +254,11 @@ const AlbumCard: React.FC<{
 }> = ({ album }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <img
+      <Image
         src={album.coverPhoto}
         alt={album.name}
+        width={250}
+        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -371,9 +331,11 @@ const ArtistCard: React.FC<{
 }> = ({ artist }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <img
+      <Image
         src={artist.picture}
         alt={artist.name}
+        width={250}
+        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -432,9 +394,11 @@ const InstrumentCard: React.FC<{
       
       {songs.length > 0 && (
         <figure className="relative rounded-md overflow-hidden">
-          <img
+          <Image
             src={songs[0].coverPhoto}
             alt={songs[0].name}
+            width={250}
+            height={250}
             className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%]"
           />
           {/* Play button */}
@@ -463,6 +427,19 @@ const InstrumentCard: React.FC<{
 const SearchBar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const { isLoggedIn, userProfile } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Tạo avatar từ fullname
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <div
@@ -495,7 +472,7 @@ const SearchBar: React.FC = () => {
             </svg>
             <input
               type="text"
-              placeholder="Tìm kiếm bài hát, nghệ sĩ, album..."
+              placeholder="Search for songs, artists, albums..."
               className={`bg-transparent border-none focus:outline-none flex-grow text-[#3A2A24] font-['Playfair_Display',serif] transition-all ${
                 isExpanded ? "text-base" : "text-sm"
               }`}
@@ -527,27 +504,71 @@ const SearchBar: React.FC = () => {
             )}
           </div>
           
-          {/* Login/Register buttons */}
-          <div className="flex items-center space-x-3">
-            <a 
-              href="/user-login"
-              className="text-[#3A2A24] hover:text-[#C8A97E] transition-colors px-3 py-1.5 text-sm font-medium flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Login
-            </a>
-            <a
-              href="/user-register"
-              className="bg-[#C8A97E] hover:bg-[#A67C52] text-white transition-colors rounded-full px-5 py-1.5 text-sm font-medium shadow-md hover:shadow-lg flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              Register
-            </a>
-          </div>
+          {/* Hiển thị nút Login/Register hoặc Avatar của người dùng */}
+          {!isLoggedIn ? (
+            // Chưa đăng nhập: Hiển thị nút Login/Register
+            <div className="flex items-center space-x-3">
+              <a 
+                href="/user-login"
+                className="text-[#3A2A24] hover:text-[#C8A97E] transition-colors px-3 py-1.5 text-sm font-medium flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Login
+              </a>
+              <a
+                href="/user-register"
+                className="bg-[#C8A97E] hover:bg-[#A67C52] text-white transition-colors rounded-full px-5 py-1.5 text-sm font-medium shadow-md hover:shadow-lg flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Register
+              </a>
+            </div>
+          ) : (
+            // Đã đăng nhập: Hiển thị avatar người dùng
+            <div className="relative">
+              <button 
+                onClick={() => setShowUserMenu(!showUserMenu)} 
+                className="flex items-center space-x-2 focus:outline-none"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#C8A97E] to-[#A67C52] flex items-center justify-center text-white font-semibold">
+                  {userProfile?.fullname ? getInitials(userProfile.fullname) : 'U'}
+                </div>
+                <span className="text-[#3A2A24] text-sm font-medium hidden md:block">
+                  {userProfile?.fullname || userProfile?.username || 'User'}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#6D4C41]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* User dropdown menu */}
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-[#F0E6D6] border border-[#D3B995] rounded-lg shadow-lg py-2 z-50">
+                  <a 
+                    href="/user-profile" 
+                    className="block px-4 py-2 text-[#3A2A24] hover:bg-[#E6D7C3] hover:text-[#6D4C41] transition-colors"
+                  >
+                    My Profile
+                  </a>
+                  <hr className="my-1 border-[#D3B995]" />
+                  <button 
+                    onClick={() => {
+                      localStorage.removeItem(LISTENER_TOKEN);
+                      localStorage.removeItem('userId');
+                      window.location.href = '/user-login';
+                    }}
+                    className="block w-full text-left px-4 py-2 text-[#3A2A24] hover:bg-[#E6D7C3] hover:text-[#6D4C41] transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -689,7 +710,7 @@ const InstrumentSpotlightSection: React.FC<{
             <div className={`absolute inset-0 bg-gradient-to-r ${gradient} opacity-80`} />
             <div className="absolute inset-0 p-8 flex flex-col md:flex-row items-start md:items-center">
               <div className="w-48 h-48 md:w-56 md:h-56 rounded-md shadow-xl overflow-hidden mb-4 md:mb-0 md:mr-8 bg-[#F0E6D6] border-4 border-[#F0E6D6]">
-                <img 
+                <Image 
                   src={featuredImage} 
                   alt={featuredInstrument.name} 
                   className="w-full h-full object-cover" 
@@ -735,7 +756,7 @@ const InstrumentSpotlightSection: React.FC<{
                   }`}
                 >
                   <div className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-all duration-300 ${isSelected ? 'border-white shadow-lg' : 'border-[#C8A97E]'} flex-shrink-0`}>
-                    <img 
+                    <Image 
                       src={getInstrumentImage(instrument)} 
                       alt={instrument.name}
                       className={`w-full h-full object-cover transition-transform duration-500 ${
@@ -770,9 +791,11 @@ const InstrumentSpotlightSection: React.FC<{
                   className="bg-[#F0E6D6] border border-[#D3B995] rounded-lg hover:shadow-lg transition-all duration-300 overflow-hidden group h-full flex flex-col"
                 >
                   <figure className="relative overflow-hidden">
-                    <img
+                    <Image
                       src={song.coverPhoto}
                       alt={song.name}
+                      width={250}
+                      height={250}
                       className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -854,9 +877,11 @@ const EraStyleSection: React.FC<{
           className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col"
         >
           <figure className="relative mb-4 rounded-md overflow-hidden">
-            <img
+            <Image
               src={eraStyle.period.picture || '/default-era.jpg'}
               alt={eraStyle.period.name}
+              width={250}
+              height={250}
               className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1180,7 +1205,7 @@ const HomePage: React.FC = () => {
               <div className="flex items-center gap-8">
                 {/* Portrait */}
                 <div className="overflow-hidden rounded-full w-36 h-36 border-4 border-[#C8A97E] shadow-md">
-                  <img
+                  <Image
                     src={currentArtist.image}
                     alt={`${currentArtist.name} portrait`}
                     className="w-full h-full object-cover grayscale-[30%] sepia-[10%]"
@@ -1273,7 +1298,7 @@ const HomePage: React.FC = () => {
                 </p>
                 <button 
                   onClick={() => fetchPopularAlbums()} 
-                  className="mt-4 px-6 py-2 bg-[#C8A97E] text-white rounded-full hover:bg-[#A67C52] transition-colors"
+                  className="mt-4 px-6 py-3 bg-[#C8A97E] text-white rounded-full hover:bg-[#A67C52] transition-colors"
                 >
                   Thử lại
                 </button>

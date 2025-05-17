@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 /* ─────────── SearchBar ─────────── */
 const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
@@ -173,7 +173,11 @@ const composers = [
     years: "1833-1897",
     country: "Germany",
     instrument: "Piano",
-    notableWorks: ["Symphony No. 4", "Hungarian Dances", "Ein Deutsches Requiem"],
+    notableWorks: [
+      "Symphony No. 4",
+      "Hungarian Dances",
+      "Ein Deutsches Requiem",
+    ],
     description:
       "Traditionalist who innovated within classical forms and structures",
     backgroundColor: "bg-[#584e42]",
@@ -266,16 +270,14 @@ export default function ClassicalMusicArtistsPage() {
   >("Artists");
   const [activeView, setActiveView] = useState<"grid" | "list">("grid");
   const [selectedEra, setSelectedEra] = useState("All Periods");
-  const [selectedInstrument, setSelectedInstrument] = useState(
-    "All Instruments"
-  );
-  const [sortBy, setSortBy] = useState<typeof sortOptions[0]["value"]>(
-    "alphaAsc"
-  );
+  const [selectedInstrument, setSelectedInstrument] =
+    useState("All Instruments");
+  const [sortBy, setSortBy] =
+    useState<(typeof sortOptions)[0]["value"]>("alphaAsc");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentComposer, setCurrentComposer] = useState<
-    typeof composers[0] | null
+    (typeof composers)[0] | null
   >(null);
   const [nowPlaying, setNowPlaying] = useState({
     title: 'Piano Sonata No.14 "Moonlight"',
@@ -283,13 +285,15 @@ export default function ClassicalMusicArtistsPage() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const router = useRouter();
 
   /* ────── Dropdown outside‑click helper ────── */
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setShowSortMenu(false);
       }
     }
@@ -303,11 +307,14 @@ export default function ClassicalMusicArtistsPage() {
   const filteredComposers = composers.filter((c) => {
     const eraOK = selectedEra === "All Periods" || c.era.includes(selectedEra);
     const instOK =
-      selectedInstrument === "All Instruments" || c.instrument === selectedInstrument;
+      selectedInstrument === "All Instruments" ||
+      c.instrument === selectedInstrument;
     const searchOK =
       !searchTerm ||
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.notableWorks.some((w) => w.toLowerCase().includes(searchTerm.toLowerCase()));
+      c.notableWorks.some((w) =>
+        w.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     return eraOK && instOK && searchOK;
   });
 
@@ -328,7 +335,7 @@ export default function ClassicalMusicArtistsPage() {
     }
   });
 
-  const playSample = (c: typeof composers[0]) => {
+  const playSample = (c: (typeof composers)[0]) => {
     setCurrentComposer(c);
     setIsPlaying(true);
     setNowPlaying({ title: c.notableWorks[0], composer: c.name });
@@ -442,8 +449,19 @@ export default function ClassicalMusicArtistsPage() {
                 }}
               >
                 {/* icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
                 </svg>
                 Sort
               </button>
@@ -453,7 +471,9 @@ export default function ClassicalMusicArtistsPage() {
                     <li key={opt.value}>
                       <button
                         className={`flex w-full px-4 py-2 text-left hover:bg-[#E6D7C3] ${
-                          sortBy === opt.value ? "text-[#3A2A24] font-medium" : "text-[#6D4C41]"
+                          sortBy === opt.value
+                            ? "text-[#3A2A24] font-medium"
+                            : "text-[#6D4C41]"
                         }`}
                         onClick={() => {
                           setSortBy(opt.value as typeof sortBy);
@@ -469,7 +489,7 @@ export default function ClassicalMusicArtistsPage() {
             </div>
           </div>
         </div>
-        
+
         {/* ERA TIMELINE */}
         <div className="px-8 pt-6 pb-2">
           <h3 className="text-xs font-medium text-[#6D4C41] uppercase tracking-wider mb-3">
@@ -509,11 +529,15 @@ export default function ClassicalMusicArtistsPage() {
                   className="group flex flex-col items-center p-4 rounded-lg border border-transparent hover:border-[#B79E7A]/60 hover:bg-[#F0E6D6] transition"
                 >
                   <div className="relative w-full max-w-[160px] aspect-square rounded-full overflow-hidden border-4 border-[#B79E7A]/70">
-                    <img
-                      src={c.image}
-                      alt={c.name}
-                      className="w-full h-full object-cover grayscale-[30%] sepia-[10%]"
-                    />
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={c.image}
+                        alt={c.name}
+                        fill
+                        className="object-cover grayscale-[30%] sepia-[10%]"
+                      />
+                    </div>
+
                     <button
                       onClick={() => playSample(c)}
                       className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-[#3A2A24]/60 transition"
@@ -535,7 +559,9 @@ export default function ClassicalMusicArtistsPage() {
                   <h3 className="mt-3 text-sm font-medium group-hover:text-[#B79E7A] whitespace-nowrap">
                     {c.name}
                   </h3>
-                  <p className="text-xs text-[#6D4C41] whitespace-nowrap">{c.years}</p>
+                  <p className="text-xs text-[#6D4C41] whitespace-nowrap">
+                    {c.years}
+                  </p>
                 </div>
               ))}
             </div>
@@ -546,11 +572,15 @@ export default function ClassicalMusicArtistsPage() {
                   key={c.name}
                   className="flex items-center p-4 rounded-lg border border-[#D3B995] hover:border-[#B79E7A] hover:bg-[#F0E6D6] transition"
                 >
-                  <img
-                    src={c.image}
-                    alt={c.name}
-                    className="h-16 w-16 rounded-full object-cover mr-4"
-                  />
+                  <div className="relative h-16 w-16 mr-4">
+                    <Image
+                      src={c.image}
+                      alt={c.name}
+                      fill
+                      className="rounded-full object-cover"
+                    />
+                  </div>
+
                   <div className="flex-1">
                     <h4 className="font-medium">{c.name}</h4>
                     <p className="text-xs text-[#6D4C41]">{c.years}</p>
@@ -584,11 +614,14 @@ export default function ClassicalMusicArtistsPage() {
             {currentComposer ? (
               <>
                 <div className="relative h-14 w-14 mr-4 rounded-full overflow-hidden border-4 border-[#C8A97E]">
-                  <img
-                    src={currentComposer.image}
-                    alt={currentComposer.name}
-                    className="h-full w-full object-cover grayscale-[30%] sepia-[10%]"
-                  />
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={currentComposer.image}
+                      alt={currentComposer.name}
+                      fill
+                      className="object-cover grayscale-[30%] sepia-[10%]"
+                    />
+                  </div>
                   <div className="absolute inset-0 bg-[#3A2A24] mix-blend-multiply opacity-30" />
                 </div>
                 <div>

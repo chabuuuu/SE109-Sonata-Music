@@ -1,10 +1,11 @@
 "use client";
-import React, { ReactNode } from "react";
 import NavMenu from "@/components/navmenu";
-import Link from "next/link";
+import { ADMIN_TOKEN } from "@/constant/adminToken";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import React, { ReactNode, useEffect } from "react";
 import styles from "./adminNavbar.module.css";
-import { useRouter } from "next/navigation";
 
 // if somebody uses this it needs to pass something in it
 interface AdminLayoutProps {
@@ -21,6 +22,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     router.push(path);
     return true;
   }
+
+  useEffect(() => {
+    const token = localStorage.getItem(ADMIN_TOKEN); // hoặc key mà mày lưu
+    if (!token) {
+      // nếu không có token → redirect về login
+      router.replace("/admin/login");
+    }
+  }, [router]);
 
   return (
     <div className="fixed w-full">
@@ -46,10 +55,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   }`}
                   onClick={() => handleNavigation("dashboard", "/dashboard")}
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/Home_logo.png"
                     alt="home logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Dashboard</span>
                 </li>
@@ -61,10 +72,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     handleNavigation("artists", "/artists-management")
                   }
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/search_logo.png"
                     alt="search logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Artists Management</span>
                 </li>
@@ -76,10 +89,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     handleNavigation("albums", "/albums-management")
                   }
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/library_logo.png"
                     alt="Library logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Albums Management</span>
                 </li>
@@ -91,10 +106,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     handleNavigation("contributors", "/contributors-management")
                   }
                 >
-                  <img
+                  <Image
                     src="/layout_imgs/createPlaylist_logo.png"
                     alt="create playlist logo"
-                    className="w-5 h-5"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
                   />
                   <span className="text-base">Contributors Management</span>
                 </li>

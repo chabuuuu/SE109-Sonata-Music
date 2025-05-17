@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -39,14 +39,14 @@ export default function LoginPage() {
     
     // Kiểm tra form trước khi gửi
     if (!formValues.usernameOrEmail || !formValues.password) {
-      setError('Vui lòng điền đầy đủ tên đăng nhập và mật khẩu');
+      setError('Please enter your username/email and password');
       return;
     }
 
     try {
       setIsLoading(true);
       const response = await login(formValues);
-      console.log('Đăng nhập thành công:', response);
+      console.log('Login successful:', response);
       
       // Cập nhật trạng thái đăng nhập trong context
       setLoggedIn(true);
@@ -54,8 +54,8 @@ export default function LoginPage() {
       // Chuyển hướng đến trang chính sau khi đăng nhập
       router.push('/');
     } catch (err: any) {
-      console.error('Lỗi đăng nhập:', err);
-      setError(err.message || 'Đăng nhập thất bại, vui lòng thử lại');
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed, please try again');
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +150,7 @@ export default function LoginPage() {
               className={`w-full bg-[#C8A97E] hover:bg-[#A67C52] text-white py-3 rounded-md font-semibold transition-colors shadow-md ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
-              {isLoading ? 'ĐANG ĐĂNG NHẬP...' : 'ĐĂNG NHẬP'}
+              {isLoading ? 'LOGGING IN...' : 'LOGIN'}
             </button>
           </form>
           <div className="mt-8 text-center">

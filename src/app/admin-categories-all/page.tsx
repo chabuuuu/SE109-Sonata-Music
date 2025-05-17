@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
-import AdminLayout from '@/components/AdminLayout';
-import * as XLSX from 'xlsx';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import AdminLayout from "@/components/AdminLayout";
+import * as XLSX from "xlsx";
 import {
   FolderPlus,
   Inbox,
@@ -13,98 +13,157 @@ import {
   Search,
   XCircle,
   Info,
-} from 'lucide-react';
+} from "lucide-react";
+import axios from "axios";
+import DetailModal from "@/components/DetailModal";
+import { ADMIN_TOKEN } from "@/constant/adminToken";
 
 interface Category {
   id: string;
   name: string;
   songsCount: string;
+  totalMusics: string;
+  viewCount: string;
   views: string;
   releaseDate: string;
+  createAt: string;
   createdBy: string;
   description: string;
+  picture: string;
 }
 
-// Sample data
-const initialData: Category[] = Array.from({ length: 50 }).map((_, i) => ({
-  id: `ENG${i + 1}`,
-  name: `ABC app ${i + 1}`,
-  songsCount: 'ABCAPP',
-  views: 'In progress',
-  releaseDate: '11.01.2008',
-  createdBy: '11.01.2009',
-  description: 'ABCAPP TOP 1 SONG IN THE WORLD YOU CAN SEE HERE',
-}));
-
 export default function AdminCategoriesAllPage() {
-  const [categories, setCategories] = useState<Category[]>(initialData);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
-  // Filter logic
-  const filtered = useMemo(
-    () =>
-      categories.filter(
-        (c) =>
-          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.id.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [categories, searchTerm]
+  const [totalCount, setTotalCount] = useState(0);
+  const [popup, setPopup] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
+  // Fetch (or search) whenever searchTerm, currentPage or pageSize change
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [filtered.length, totalPages, currentPage]);
+    const fetchCategories = async () => {
+      try {
+        const filters = searchTerm
+          ? [
+              {
+                operator: "equal",
+                key: "name",
+                value: searchTerm,
+              },
+            ]
+          : [];
+        const response = await axios.post(
+          `https://api.sonata.io.vn/api/v1/category/search?rpp=${pageSize}&page=${currentPage}`,
+          { filters, sorts: [{ key: "id", type: "DESC" }] },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+            },
+          }
+        );
 
-  // Paginate
-  const paginatedData = useMemo(() => {
-    if (pageSize >= filtered.length) return filtered;
-    const start = (currentPage - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, currentPage, pageSize]);
+        const { items, total } = response.data.data;
 
-  // Handlers
-  const handleDelete = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+        // Map API items into our Category shape
+        const mapped: Category[] = items.map((item: Category) => ({
+          id: item.id,
+          name: item.name || "Untitled",
+          picture: item.picture || "default.jpg",
+          songsCount: String(item.totalMusics ?? 0),
+          views: String(item.viewCount ?? 0),
+          releaseDate: item.createAt
+            ? new Date(item.createAt).toLocaleDateString()
+            : "Unknown",
+          createAt: item.createAt || "",
+          createdBy: "System",
+          description: item.description || "Imported from API",
+        }));
+
+        setCategories(mapped);
+        setTotalCount(total);
+      } catch (err) {
+        console.error("Failed to fetch/search categories:", err);
+      }
+    };
+
+    fetchCategories();
+  }, [searchTerm, currentPage, pageSize]);
+
+  // handle delete
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(`https://api.sonata.io.vn/api/v1/category/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+        },
+      });
+      // Refetch current page so count & pages stay in sync
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("Error deleting category:", err);
+      alert("Failed to delete category. Please try again.");
+    }
   };
+
   const handleShowAll = () => {
-    setPageSize(filtered.length || 1);
+    setPageSize(totalCount || 1);
     setCurrentPage(1);
   };
+
   const handleDownloadCSV = () => {
     const headers = [
-      'ID','Name','Songs count','Views','Release date','Created by','Description'
+      "ID",
+      "Name",
+      "Songs count",
+      "Views",
+      "Release date",
+      "Created by",
+      "Description",
     ];
-    const rows = filtered.map((c) => [
-      c.id, c.name, c.songsCount, c.views, c.releaseDate, c.createdBy, c.description
+    const rows = categories.map((c) => [
+      c.id,
+      c.name,
+      c.songsCount,
+      c.views,
+      c.releaseDate,
+      c.createdBy,
+      c.description,
     ]);
     const csv = [headers, ...rows]
-      .map((r) => r.map((v) => `"${v}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+      .map((r) => r.map((v) => `"${v}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'categories.csv'; a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "categories.csv";
+    a.click();
     URL.revokeObjectURL(url);
   };
+
   const handleExportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(
-      filtered.map((c) => ({
+      categories.map((c) => ({
         ID: c.id,
         Name: c.name,
-        'Songs count': c.songsCount,
+        "Songs count": c.songsCount,
         Views: c.views,
-        'Release date': c.releaseDate,
-        'Created by': c.createdBy,
+        "Release date": c.releaseDate,
+        "Created by": c.createdBy,
         Description: c.description,
       }))
     );
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Categories');
-    XLSX.writeFile(wb, 'categories.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, "Categories");
+    XLSX.writeFile(wb, "categories.xlsx");
   };
 
   return (
@@ -113,11 +172,13 @@ export default function AdminCategoriesAllPage() {
         {/* Left action buttons */}
         <div className="absolute top-6 left-6 flex space-x-4">
           <Link
-            href="/admincategories"
+            href="/admin-categories-add"
             className="w-36 h-20 bg-white text-gray-600 rounded-xl border border-gray-200 flex flex-col items-center justify-center"
           >
             <FolderPlus size={24} className="mb-1 text-black" />
-            <span className="text-sm font-medium text-black">Add Categories</span>
+            <span className="text-sm font-medium text-black">
+              Add Categories
+            </span>
           </Link>
           <Link
             href="/adminall"
@@ -141,7 +202,7 @@ export default function AdminCategoriesAllPage() {
             onClick={handleDownloadCSV}
             className="inline-flex items-center bg-white rounded-lg shadow border border-gray-200 px-3 h-10"
           >
-            <span className="text-sm text-black">Download as CSV</span>
+            <span className="text-sm text-black">Download CSV</span>
             <Download size={16} className="ml-1 text-black" />
           </button>
         </div>
@@ -150,29 +211,30 @@ export default function AdminCategoriesAllPage() {
         <div className="h-full bg-white p-6 pt-32 flex flex-col overflow-hidden">
           {/* Header: Found + Search + Export */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-black">
-                Found: {filtered.length}
+            <div className="flex items-center space-x-4 ">
+              <span className="text-sm font-medium text-black w-1/5">
+                Found: {totalCount}
               </span>
-              <div className="relative">
+              <div className="relative w-full">
+                {/* Remove flex, gap-5, w-100, space-around */}
                 <Search
                   size={16}
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                 />
                 <input
                   type="text"
-                  placeholder="Search"
+                  placeholder="Search by name..."
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="pl-8 pr-12 h-10 bg-gray-100 rounded-lg text-black placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 border border-transparent"
+                  className="w-full pl-8 pr-20 h-10 bg-gray-100 rounded-lg text-black placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 border border-transparent"
                 />
                 {searchTerm && (
                   <button
                     onClick={() => {
-                      setSearchTerm('');
+                      setSearchTerm("");
                       setCurrentPage(1);
                     }}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm font-medium text-black"
@@ -183,7 +245,6 @@ export default function AdminCategoriesAllPage() {
               </div>
             </div>
 
-            {/* ← Export to Excel */}
             <button
               onClick={handleExportExcel}
               className="inline-flex items-center bg-white rounded-lg shadow-sm border border-blue-600 px-4 h-10"
@@ -201,17 +262,26 @@ export default function AdminCategoriesAllPage() {
               <thead>
                 <tr className="bg-gray-200">
                   {[
-                    'ID','Name','Songs count','Views',
-                    'Release date','Created by','Description','Actions',
+                    "ID",
+                    "Name",
+                    "Songs count",
+                    "Views",
+                    "Release date",
+                    "Created by",
+                    "Description",
+                    "Actions",
                   ].map((h) => (
-                    <th key={h} className="px-3 py-2 font-semibold text-black text-left">
+                    <th
+                      key={h}
+                      className="px-3 py-2 font-semibold text-black text-left"
+                    >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {paginatedData.map((c) => (
+                {categories.map((c) => (
                   <tr
                     key={c.id}
                     className="odd:bg-gray-50 even:bg-white hover:bg-gray-100"
@@ -227,7 +297,12 @@ export default function AdminCategoriesAllPage() {
                       <button onClick={() => handleDelete(c.id)}>
                         <XCircle size={20} className="text-red-500" />
                       </button>
-                      <button>
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(c);
+                          setPopup(true);
+                        }}
+                      >
                         <Info size={20} className="text-blue-600" />
                       </button>
                     </td>
@@ -243,11 +318,14 @@ export default function AdminCategoriesAllPage() {
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className={`px-2 py-1 ${
-                currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-black'
+                currentPage === 1
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-black"
               }`}
             >
               ← Previous
             </button>
+
             {[...Array(totalPages)].map((_, i) => {
               const page = i + 1;
               return (
@@ -255,30 +333,56 @@ export default function AdminCategoriesAllPage() {
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`px-2 py-1 ${
-                    page === currentPage ? 'bg-blue-600 text-white rounded' : 'text-black'
+                    page === currentPage
+                      ? "bg-blue-600 text-white rounded"
+                      : "text-black"
                   }`}
                 >
                   {page}
                 </button>
               );
             })}
+
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className={`px-2 py-1 ${
                 currentPage === totalPages
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-black'
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-black"
               }`}
             >
               Next →
             </button>
-            <button onClick={handleShowAll} className="ml-4 text-black underline">
+
+            <button
+              onClick={handleShowAll}
+              className="ml-4 text-black underline"
+            >
               Show all
             </button>
           </div>
         </div>
       </div>
+
+      {popup && selectedCategory && (
+        <DetailModal
+          data={{
+            id: selectedCategory.id,
+            title: selectedCategory.name,
+            createAt: selectedCategory.releaseDate,
+            description: selectedCategory.description,
+            songsCount: selectedCategory.songsCount,
+            views: selectedCategory.views,
+            createdBy: selectedCategory.createdBy,
+            picture: selectedCategory.picture,
+          }}
+          onClose={() => {
+            setPopup(false);
+            setSelectedCategory(null);
+          }}
+        />
+      )}
     </AdminLayout>
   );
 }
