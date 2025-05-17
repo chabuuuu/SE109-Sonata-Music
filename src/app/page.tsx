@@ -7,11 +7,10 @@ import { getPopularAlbums, Album } from '@/services/albumService';
 import { getTimelessPieces } from '@/services/timelessService';
 import { getTopArtists, Artist } from '@/services/artistService';
 import { getInstrumentSpotlight, InstrumentSpotlight, Instrument } from '@/services/instrumentService';
-import { getErasAndStyles, EraStyle } from '@/services/eraService';
+import { getErasAndStyles, EraStyle, Period } from '@/services/eraService';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
-import Image from 'next/image';
-import { LISTENER_TOKEN } from '@/constant/listenerToken';
+import { getToken } from '@/services/authService';
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -33,6 +32,18 @@ interface ArtistApiResponse {
   dateOfDeath: string | null;
   significantPerformences: string;
   awardsAndHonors: string;
+}
+
+// Interface cho thông tin người dùng
+interface UserProfile {
+  id: string;
+  username: string;
+  fullname: string;
+  gender: string;
+  email: string;
+  createAt: string;
+  updateAt: string;
+  favoriteLists: any[];
 }
 
 // Background images for random rotation
@@ -73,8 +84,8 @@ const playlistData = [
   },
 ];
 
-// Podcast data (không sử dụng nhưng để lại nếu cần sau này)
-const _podcastData = [
+// Podcast data
+const podcastData = [
   {
     title: "Every Parent's Nightmare",
     image: "/podcast_imgs/the_letter.jpg",
@@ -104,6 +115,49 @@ const _podcastData = [
     image: "/podcast_imgs/gift_of_failure.jpg",
     date: "Aug 2022",
     duration: "56 Min",
+  },
+];
+
+// Fallback artists data nếu API fails
+const fallbackArtists = [
+  {
+    id: 1,
+    name: "Mozart",
+    years: "(1756 - 1791)",
+    description:
+      "Mozart was a child prodigy who amazed royal European courts. He composed over 600 works across many musical genres. His operas combined drama, humor, and brilliant musical composition.",
+    image: "/artists/mozart-portrait.png",
+    famousPieces: [
+      "Requiem in D Minor, K. 626",
+      "The Magic Flute",
+      "Symphony No. 40 in G Minor",
+    ],
+  },
+  {
+    id: 2,
+    name: "Beethoven",
+    years: "(1770 - 1827)",
+    description:
+      "Beethoven was a German composer and pianist whose music bridged the Classical and Romantic eras. He is considered one of the most influential composers of all time.",
+    image: "/artists/beethoven-portrait.png",
+    famousPieces: [
+      "Symphony No. 9 in D Minor",
+      "Moonlight Sonata",
+      "Für Elise",
+    ],
+  },
+  {
+    id: 3,
+    name: "Bach",
+    years: "(1685 - 1750)",
+    description:
+      "Bach was a German composer and musician of the Baroque period known for his instrumental compositions, keyboard works, and vocal music.",
+    image: "/artists/bach-portrait.png",
+    famousPieces: [
+      "Brandenburg Concertos",
+      "The Well-Tempered Clavier",
+      "Mass in B Minor",
+    ],
   },
 ];
 
@@ -142,11 +196,9 @@ const PlaylistCard: React.FC<{
 }> = ({ title, description, image }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <Image
+      <img
         src={image}
         alt={title}
-        width={250}
-        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -189,14 +241,18 @@ const PlaylistCard: React.FC<{
   </article>
 );
 
-// Podcast card (không sử dụng nhưng để lại nếu cần sau này)const _PodcastCard: React.FC<{  title: string;  image: string;  date: string;  duration: string;}> = ({ title, image, date, duration }) => (
+// Podcast card
+const PodcastCard: React.FC<{
+  title: string;
+  image: string;
+  date: string;
+  duration: string;
+}> = ({ title, image, date, duration }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <Image
+      <img
         src={image}
         alt={title}
-        width={250}
-        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -254,11 +310,9 @@ const AlbumCard: React.FC<{
 }> = ({ album }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <Image
+      <img
         src={album.coverPhoto}
         alt={album.name}
-        width={250}
-        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -331,11 +385,9 @@ const ArtistCard: React.FC<{
 }> = ({ artist }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <Image
+      <img
         src={artist.picture}
         alt={artist.name}
-        width={250}
-        height={250}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -394,11 +446,9 @@ const InstrumentCard: React.FC<{
       
       {songs.length > 0 && (
         <figure className="relative rounded-md overflow-hidden">
-          <Image
+          <img
             src={songs[0].coverPhoto}
             alt={songs[0].name}
-            width={250}
-            height={250}
             className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%]"
           />
           {/* Play button */}
@@ -557,7 +607,7 @@ const SearchBar: React.FC = () => {
                   <hr className="my-1 border-[#D3B995]" />
                   <button 
                     onClick={() => {
-                      localStorage.removeItem(LISTENER_TOKEN);
+                      localStorage.removeItem('accessToken');
                       localStorage.removeItem('userId');
                       window.location.href = '/user-login';
                     }}
@@ -710,7 +760,7 @@ const InstrumentSpotlightSection: React.FC<{
             <div className={`absolute inset-0 bg-gradient-to-r ${gradient} opacity-80`} />
             <div className="absolute inset-0 p-8 flex flex-col md:flex-row items-start md:items-center">
               <div className="w-48 h-48 md:w-56 md:h-56 rounded-md shadow-xl overflow-hidden mb-4 md:mb-0 md:mr-8 bg-[#F0E6D6] border-4 border-[#F0E6D6]">
-                <Image 
+                <img 
                   src={featuredImage} 
                   alt={featuredInstrument.name} 
                   className="w-full h-full object-cover" 
@@ -756,7 +806,7 @@ const InstrumentSpotlightSection: React.FC<{
                   }`}
                 >
                   <div className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-all duration-300 ${isSelected ? 'border-white shadow-lg' : 'border-[#C8A97E]'} flex-shrink-0`}>
-                    <Image 
+                    <img 
                       src={getInstrumentImage(instrument)} 
                       alt={instrument.name}
                       className={`w-full h-full object-cover transition-transform duration-500 ${
@@ -791,11 +841,9 @@ const InstrumentSpotlightSection: React.FC<{
                   className="bg-[#F0E6D6] border border-[#D3B995] rounded-lg hover:shadow-lg transition-all duration-300 overflow-hidden group h-full flex flex-col"
                 >
                   <figure className="relative overflow-hidden">
-                    <Image
+                    <img
                       src={song.coverPhoto}
                       alt={song.name}
-                      width={250}
-                      height={250}
                       className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -877,11 +925,9 @@ const EraStyleSection: React.FC<{
           className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col"
         >
           <figure className="relative mb-4 rounded-md overflow-hidden">
-            <Image
+            <img
               src={eraStyle.period.picture || '/default-era.jpg'}
               alt={eraStyle.period.name}
-              width={250}
-              height={250}
               className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1205,7 +1251,7 @@ const HomePage: React.FC = () => {
               <div className="flex items-center gap-8">
                 {/* Portrait */}
                 <div className="overflow-hidden rounded-full w-36 h-36 border-4 border-[#C8A97E] shadow-md">
-                  <Image
+                  <img
                     src={currentArtist.image}
                     alt={`${currentArtist.name} portrait`}
                     className="w-full h-full object-cover grayscale-[30%] sepia-[10%]"
