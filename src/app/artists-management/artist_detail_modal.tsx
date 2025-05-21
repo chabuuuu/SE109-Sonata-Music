@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   Music,
@@ -115,31 +115,34 @@ const ArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
   const [artist, setArtist] = useState<Artist | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // Add a key to force re-render when needed
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // get artist
-  useEffect(() => {
-    const fetchArtist = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get<ApiResponse<Artist>>(
-          `${BASE_URL}/artist/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
-            },
-          }
-        );
-        setArtist(response.data.data); // Access the artist data from the data property
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load artist data");
-        setLoading(false);
-      }
-    };
+  const fetchArtist = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get<ApiResponse<Artist>>(
+        `${BASE_URL}/artist/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+          },
+        }
+      );
+      setArtist(response.data.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load artist data");
+      setLoading(false);
+    }
+  }, [id, BASE_URL]);
 
+  // Get artist data when component mounts or when refreshKey changes
+  useEffect(() => {
     fetchArtist();
-  }, [id]);
+  }, [id, refreshKey, fetchArtist]);
 
   //   loading section
   if (loading) {
@@ -171,9 +174,14 @@ const ArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
   }
 
   // handleModalPopUp
-  function handlePopUp () {
+  function handlePopUp() {
     setPopUp(true);
   }
+
+  const handleUpdateComplete = () => {
+    setPopUp(false);
+    setRefreshKey((prevKey) => prevKey + 1);
+  };
 
   return (
     // Wrapper div containing both modals
@@ -290,27 +298,26 @@ const ArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
                         Orchestras
                       </h3>
                       <div className="grid grid-cols-2 gap-3">
-                          {artist.orchestras.map((orchestra) => (
-                            <div
-                              key={orchestra.id}
-                              className="bg-gray-100 p-3 rounded-lg flex items-center"
-                            >
-                              <div className="w-10 h-10 rounded overflow-hidden mr-2">
-                                <div className=" w-full h-full relative">
-                                  <Image
-                                    src={orchestra.picture}
-                                    alt={orchestra.name}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
+                        {artist.orchestras.map((orchestra) => (
+                          <div
+                            key={orchestra.id}
+                            className="bg-gray-100 p-3 rounded-lg flex items-center"
+                          >
+                            <div className="w-10 h-10 rounded overflow-hidden mr-2">
+                              <div className=" w-full h-full relative">
+                                <Image
+                                  src={orchestra.picture}
+                                  alt={orchestra.name}
+                                  fill
+                                  className="object-cover"
+                                />
                               </div>
-                              <span className="font-medium text-black">
-                                {orchestra.name}
-                              </span>
                             </div>
-                          ))}
-
+                            <span className="font-medium text-black">
+                              {orchestra.name}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -378,41 +385,42 @@ const ArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
                   )}
 
                   {/* Students */}
-                  {artist.artistStudents && artist.artistStudents.length > 0 && (
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2 text-blue-700 flex items-center">
-                        <BookOpen size={20} className="mr-2" />
-                        Students
-                      </h3>
-                      <div className="grid grid-cols-1 gap-3">
-                        {artist.artistStudents.map((studentRel) => (
-                          <div
-                            key={studentRel.id}
-                            className="bg-gray-100 p-3 rounded-lg flex items-center"
-                          >
-                            <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
-                              <div className="w-full h-full relative">
-                                <Image
-                                  src={studentRel.student.picture}
-                                  alt={studentRel.student.name}
-                                  fill
-                                  className=" object-cover"
-                                />{" "}
+                  {artist.artistStudents &&
+                    artist.artistStudents.length > 0 && (
+                      <div>
+                        <h3 className="text-xl font-semibold mb-2 text-blue-700 flex items-center">
+                          <BookOpen size={20} className="mr-2" />
+                          Students
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                          {artist.artistStudents.map((studentRel) => (
+                            <div
+                              key={studentRel.id}
+                              className="bg-gray-100 p-3 rounded-lg flex items-center"
+                            >
+                              <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
+                                <div className="w-full h-full relative">
+                                  <Image
+                                    src={studentRel.student.picture}
+                                    alt={studentRel.student.name}
+                                    fill
+                                    className=" object-cover"
+                                  />{" "}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="font-bold text-black">
+                                  {studentRel.student.name}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {studentRel.student.description}
+                                </div>
                               </div>
                             </div>
-                            <div>
-                              <div className="font-bold text-black">
-                                {studentRel.student.name}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {studentRel.student.description}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
             </div>
@@ -439,12 +447,7 @@ const ArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
       {/* Update Artist Modal - Only render when popUp is true with higher z-index */}
       {popUp && (
         <div className="fixed inset-0 bg-black/50 bg-opacity-70 flex items-center justify-center z-60">
-          <UpdateArtist 
-            id={artist.id} 
-            onClose={() => {
-              setPopUp(false);
-            }} 
-          />
+          <UpdateArtist id={artist.id} onClose={handleUpdateComplete} />
         </div>
       )}
     </div>
