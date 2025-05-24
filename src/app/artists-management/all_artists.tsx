@@ -3,7 +3,7 @@ import { Search, X, XCircle, Info } from "lucide-react";
 import Pagination from "@mui/material/Pagination";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-import { ArtistDetails, ApiArtistDetails } from "../../../types/artist.types";
+import { ArtistDetails, ApiArtistDetails } from "../../../types/Types";
 import ArtistDetailModal from "./artist_detail_modal";
 
 export default function All_artists() {

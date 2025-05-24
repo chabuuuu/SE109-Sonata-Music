@@ -1,53 +1,34 @@
 "use client";
 
 import React, { useState } from "react";
-import { SongData } from "../../../types/song";
-import * as ArtistType from "../../../types/artist.types";
+import { FolderPlus, UserIcon } from "lucide-react";
+import * as Types from "../../../types/Types";
 import SearchModal from "@/components/SearchModal";
+import axios from "axios";
+import FileUploadSection from "./upload-file"; // Adjust path as needed
+import { ADMIN_TOKEN } from "@/constant/adminToken";
 
 const AddSongsPage = () => {
-  const [selectedTags, setSelectedTags] = useState<{ [key: string]: string[] }>(
-    {
-      categoryName: [],
-      albumName: [],
-      artistsName: [],
-      composer: [],
-      genre: [],
-      musicalPeriod: [],
-      instrumentPlayed: [],
-    }
-  );
-
-  const [releaseDate, setReleaseDate] = useState("");
   const [description, setDescription] = useState("");
   const [songName, setSongName] = useState("");
   const [lyric, setLyric] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [currentField, setCurrentField] = useState("");
-  const [selectedPeriods, setSelectedPeriods] = useState<ArtistType.Period[]>(
+  const [selectedPeriods, setSelectedPeriods] = useState<Types.Period[]>([]);
+  const [selectedInstruments, setSelectedInstruments] = useState<
+    Types.Instrument[]
+  >([]);
+  const [selectedGenres, setSelectedGenres] = useState<Types.Genre[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<
+    Types.Category[] // Change this to match the structure of category objects
+  >([]);
+  const [selectedArtists, setSelectedArtists] = useState<Types.ArtistDetails[]>(
     []
   );
-  const [selectedOrchestras, setSelectedOrchestras] = useState<
-    ArtistType.Orchestra[]
-  >([]);
-  const [selectedInstruments, setSelectedInstruments] = useState<
-    ArtistType.Instrument[]
-  >([]);
-  const [selectedGenres, setSelectedGenres] = useState<ArtistType.Genre[]>([]);
-  const [selectedStudents, setSelectedStudents] = useState<
-    ArtistType.Student[]
-  >([]);
-  // single hook
-  const [performances, setPerformances] = useState("");
-  const [
-    teachingAndAcademicContributions,
-    setTeachingAndAcademicContributions,
-  ] = useState("");
-  const [nationality, setNationality] = useState("");
-  const [awardsAndHonors, setAwardsAndHonors] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [dateOfDeath, setDateOfDeath] = useState("");
-  const [name, setName] = useState("");
+  const [selectedAlbums, setSelectedAlbums] = useState<Types.Album[]>([]);
+
+  const [musicFileUrl, setMusicFileUrl] = useState("");
+  const [coverArtUrl, setCoverArtUrl] = useState("");
   const [quizzesData, setQuizzesData] = useState({
     content: "",
     answerA: "",
@@ -56,15 +37,6 @@ const AddSongsPage = () => {
     answerD: "",
     correctAnswer: "A",
   });
-
-  const toggleTag = (category: string, tag: string) => {
-    setSelectedTags((prev) => ({
-      ...prev,
-      [category]: prev[category].includes(tag)
-        ? prev[category].filter((t) => t !== tag)
-        : [...prev[category], tag],
-    }));
-  };
 
   const handleShowModal = (field: string) => {
     setShowModal(true);
@@ -76,252 +48,443 @@ const AddSongsPage = () => {
     setCurrentField("");
   };
 
-  const renderTagSection = (
-    title: string,
-    category: string,
-    showIcon: boolean = true
-  ) => (
-    <div className="mb-6 ">
-      <h3 className="text-sm font-medium text-gray-800 mb-3">{title}</h3>
-      <div className="relative min-h-12 bg-gray-100 rounded-xl">
-        <div className="flex flex-wrap gap-2 ">
-          {selectedTags[category]?.map((tag, index) => (
-            <span
-              key={index}
-              className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs "
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+  const handleUploadError = (error: string) => {
+    console.error("Upload failed:", error);
+    alert(`Upload failed: ${error}`);
+  };
 
-        {/* Plus button positioned in the bottom-left corner */}
-        {showIcon && (
-          <button
-            onClick={(value) => {
-              /* handleShowModal logic here */
-              handleShowModal(category);
-            }}
-            className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
-          >
-            <span className="text-lg leading-none">+</span>
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderTextArea = (
-    title: string,
-    value: string,
-    onChange: (value: string) => void
-  ) => (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-sm font-medium text-gray-800">{title}</h3>
-      </div>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-20 p-3 border border-gray-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-        placeholder=""
-      />
-    </div>
-  );
-
-  const renderUploadSection = (title: string, acceptedFormats: string) => (
-    <div>
-      <h3 className="text-sm font-medium text-gray-800 mb-3">{title}</h3>
-      <div className="border-2 border-dashed border-gray-300 rounded p-6 bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <input
-            type="url"
-            // value={link}
-            // onChange={(e) => setLink(e.target.value)}
-            placeholder="Paste link here"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700"
-          />
-        </div>
-        <p className="mt-2 text-xs text-gray-400">{acceptedFormats}</p>
-      </div>
-    </div>
-  );
-
-  type RoleItem = { id: number; name: string };
   type SelectableItem =
-    | ArtistType.Genre
-    | ArtistType.Orchestra
-    | ArtistType.Period
-    | ArtistType.Instrument
-    | ArtistType.Student;
+    | Types.Genre
+    | Types.Orchestra
+    | Types.Period
+    | Types.Instrument
+    | Types.Student
+    | Types.ArtistDetails
+    | Types.Album;
 
+
+  // get selected Items
   const handleSelectedItems = (
     field: string,
     selectedItems: SelectableItem[]
   ) => {
     switch (field) {
       case "periods":
-        setSelectedPeriods(selectedItems as ArtistType.Period[]);
-        break;
-      case "orchestras":
-        setSelectedOrchestras(selectedItems as ArtistType.Orchestra[]);
+        setSelectedPeriods(selectedItems as Types.Period[]);
         break;
       case "instruments":
-        setSelectedInstruments(selectedItems as ArtistType.Instrument[]);
+        setSelectedInstruments(selectedItems as Types.Instrument[]);
         break;
-      case "genres":
-        setSelectedGenres(selectedItems as ArtistType.Genre[]);
+      case "genre":
+        setSelectedGenres(selectedItems as Types.Genre[]);
         break;
-      case "students":
-        setSelectedStudents(selectedItems as ArtistType.Student[]);
+      case "category":
+        setSelectedCategories(selectedItems as Types.Category[]);
+        break;
+      case "artist":
+      case "composer":
+        setSelectedArtists(selectedItems as Types.ArtistDetails[]);
+        break;
+      case "album":
+        setSelectedAlbums(selectedItems as Types.Album[]);
         break;
       default:
         console.log("Unknown field:", field);
     }
   };
 
+  // get the Item when Modal gave back
+  const getExistingItems = (fieldType: string): SelectableItem[] => {
+    switch (fieldType) {
+      case "periods":
+        return selectedPeriods;
+      case "instruments":
+        return selectedInstruments;
+      case "genre":
+        return selectedGenres;
+      case "category":
+        return selectedCategories;
+      case "artist":
+      case "composer":
+        return selectedArtists;
+      case "album":
+        return selectedAlbums;
+      default:
+        return [];
+    }
+  };
+
+  const handleQuizChange = (field: string, value: string) => {
+    setQuizzesData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleAdd = async () => {
+    const albumIds = selectedAlbums.map((album) => album.id);
+    const genreIds = selectedGenres.map((genre) => genre.id);
+    const instrumentIds = selectedInstruments.map(
+      (instrument) => instrument.id
+    );
+    const periodIds = selectedPeriods.map((period) => period.id);
+    const categoryIds = selectedCategories.map((category) => category.id);
+    const artistIds = selectedArtists.map((artist) => artist.id);
+    const composerIds = artistIds;
+
+    const songData = {
+      name: songName,
+      description,
+      lyric,
+      coverPhoto: coverArtUrl,
+      resourceLink: musicFileUrl,
+      albumIds,
+      quizzes: [quizzesData],
+      genreIds,
+      instrumentIds,
+      periodIds,
+      categoryIds,
+      artistIds,
+      composerIds,
+    };
+
+    try {
+      const response = await axios.post(
+        "https://api.sonata.io.vn/api/v1/music",
+        songData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        alert(`Song ${songName} added successfully!`);
+        handleClear();
+      } else {
+        alert(`Error: ${response.data.message || "Failed to add artist"})`);
+      }
+    } catch (err) {
+      console.error("Error adding artist:", err);
+    }
+  };
+
+  const handleClear = () => {
+    setDescription("");
+    setSongName("");
+    setLyric("");
+    setSelectedPeriods([]);
+    setSelectedInstruments([]);
+    setSelectedGenres([]);
+    setSelectedCategories([]);
+    setSelectedArtists([]);
+    setSelectedAlbums([]);
+    setMusicFileUrl("");
+    setCoverArtUrl("");
+    setQuizzesData({
+      content: "",
+      answerA: "",
+      answerB: "",
+      answerC: "",
+      answerD: "",
+      correctAnswer: "A",
+    });
+  };
+
   return (
     <div className="bg-white">
       <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
+          {/* tab sections */}
           <div className="flex items-center gap-4">
-            <button className="bg-blue-500 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium text-sm">
+            <button className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium text-sm">
               <span className="text-lg">+</span>
               Add Songs
             </button>
-            <button className="bg-white text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
+            <button className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
+              <FolderPlus className="w-4 h-4" />
               Add Albums
             </button>
-            <button className="bg-white text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
+            <button className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
+              <UserIcon className="w-4 h-4" />
               All
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </button>
-            <select className="px-3 py-2 border border-gray-300 rounded text-sm bg-white text-gray-600">
-              <option>Last 7 days</option>
-            </select>
-            <button className="px-3 py-2 border border-gray-300 rounded text-sm bg-white flex items-center gap-2 text-gray-600">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              Download as CSV
             </button>
           </div>
         </div>
 
+        {/* main sections */}
         <div className="flex justify-between gap-5 ">
           <div>
-            {/* Filter Title */}
             <h2 className="text-lg font-medium text-gray-900 mb-6">Filter</h2>
-
-            {/* Filter Grid - 3 columns, 3 rows */}
             <div className="grid grid-cols-4 gap-12 mb-8">
-              {/* Row 1 */}
-              <div>{renderTagSection("Category Name", "categoryName")}</div>
-              <div>{renderTagSection("Album Name", "albumName")}</div>
-              <div>{renderTagSection("Artists Name", "artistsName")}</div>
-              <div className="text-black">
-                {renderTextArea("Song name", songName, setSongName)}
-              </div>
-
-              {/* Row 2 */}
-              <div>{renderTagSection("Composer", "composer")}</div>
-              <div>{renderTagSection("Genre", "genre")}</div>
-              <div className="col-span-2 text-black">
-                {renderTextArea("Description", description, setDescription)}
-              </div>
-
-              {/* Row 3 */}
-              <div>{renderTagSection("Musical Period", "musicalPeriod")}</div>
+              {/* Category Name */}
               <div>
-                {renderTagSection("Instrument Played", "instrumentPlayed")}
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">
+                    Category Name
+                  </h3>
+                  <div className="relative min-h-12 bg-gray-100 rounded-xl">
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {selectedCategories.map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleShowModal("category")}
+                      className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {/* Artists Name */}
+              <div>
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">
+                    Artists Name
+                  </h3>
+                  <div className="relative min-h-12 bg-gray-100 rounded-xl">
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {selectedArtists.map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleShowModal("artist")}
+                      className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Composer */}
+              <div>
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">
+                    Composer
+                  </h3>
+                  <div className="relative min-h-12 bg-gray-100 rounded-xl">
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {selectedArtists.map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleShowModal("composer")}
+                      className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {/* Song Name */}
+              <div className="text-black">
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-sm font-medium text-gray-800">
+                      Song name
+                    </h3>
+                  </div>
+                  <textarea
+                    value={songName}
+                    onChange={(e) => setSongName(e.target.value)}
+                    className="w-full h-20 p-3 border border-gray-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder=""
+                  />
+                </div>
+              </div>
+              {/* Genre */}
+              <div>
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">
+                    Genre
+                  </h3>
+                  <div className="relative min-h-12 bg-gray-100 rounded-xl">
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {selectedGenres.map((genre) => (
+                        <span
+                          key={genre.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                        >
+                          {genre.name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleShowModal("genre")}
+                      className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Musical Period */}
+              <div>
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">
+                    Musical Period
+                  </h3>
+                  <div className="relative min-h-12 bg-gray-100 rounded-xl">
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {selectedPeriods.map((period) => (
+                        <span
+                          key={period.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                        >
+                          {period.name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleShowModal("periods")}
+                      className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instrument Played */}
+              <div>
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">
+                    Instrument
+                  </h3>
+                  <div className="relative min-h-12 bg-gray-100 rounded-xl">
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {selectedInstruments.map((instrument) => (
+                        <span
+                          key={instrument.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                        >
+                          {instrument.name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleShowModal("instruments")}
+                      className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Albums */}
+              <div>
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">
+                    Album
+                  </h3>
+                  <div className="relative min-h-12 bg-gray-100 rounded-xl">
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {selectedAlbums.map((album) => (
+                        <span
+                          key={album.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                        >
+                          {album.name}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleShowModal("album")}
+                      className="absolute top-7 bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {/* Description */}
               <div className="col-span-2 text-black">
-                {renderTextArea("Lyric", lyric, setLyric)}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-sm font-medium text-gray-800">
+                      Description
+                    </h3>
+                  </div>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full h-20 p-3 border border-gray-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder=""
+                  />
+                </div>
+              </div>
+              {/* Lyric */}
+              <div className="col-span-2 text-black">
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-sm font-medium text-gray-800">Lyric</h3>
+                  </div>
+                  <textarea
+                    value={lyric}
+                    onChange={(e) => setLyric(e.target.value)}
+                    className="w-full h-20 p-3 border border-gray-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder=""
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Upload Sections - 2 columns */}
             <div className="grid grid-cols-2 gap-12">
               <div>
-                {renderUploadSection(
-                  "Upload Song",
-                  "JPG, PNG or PDF, file size no more than 10MB"
-                )}
+                <FileUploadSection
+                  title="Upload Music File"
+                  acceptedFormats="Accepted formats: MP3, WAV, FLAC"
+                  acceptTypes=".mp3,.wav,.flac"
+                  fileType="music"
+                  uploadedUrl={musicFileUrl}
+                  onUploadSuccess={(mediaUrl) => setMusicFileUrl(mediaUrl)}
+                  onUploadError={handleUploadError}
+                />
               </div>
               <div>
-                {renderUploadSection(
-                  "Upload Cover Art",
-                  "JPG, PNG or PDF, file size no more than 10MB"
-                )}
+                <FileUploadSection
+                  title="Upload Cover Art"
+                  acceptedFormats="JPG, PNG files, max 10MB each"
+                  acceptTypes="image/*,.jpg,.jpeg,.png"
+                  fileType="cover"
+                  uploadedUrl={coverArtUrl}
+                  onUploadSuccess={(mediaUrl) => setCoverArtUrl(mediaUrl)}
+                  onUploadError={handleUploadError}
+                />
               </div>
             </div>
           </div>
-
-          {/* second sections */}
+          {/* quizzes */}
           <div className="flex flex-col items-end gap-4 justify-between mt-15 ">
-
-            {/* quizzes form section */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">Quiz Questions</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-6">
+                Quiz Questions
+              </h3>
               <form className="space-y-4 w-80 text-black">
                 <div>
                   <label className="block text-sm font-medium text-gray-800 mb-2">
@@ -330,15 +493,13 @@ const AddSongsPage = () => {
                   <input
                     name="content"
                     value={quizzesData.content}
-                    onChange={(e) => setQuizzesData({
-                      ...quizzesData,
-                      content:e.target.value,
-                    })}
+                    onChange={(e) =>
+                      handleQuizChange("content", e.target.value)
+                    }
                     placeholder="Enter your question"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   />
                 </div>
-
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-800 mb-2">
@@ -347,7 +508,9 @@ const AddSongsPage = () => {
                     <input
                       name="answerA"
                       value={quizzesData.answerA}
-                      // onChange={handleChange}
+                      onChange={(e) =>
+                        handleQuizChange("answerA", e.target.value)
+                      }
                       placeholder="Option A"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
@@ -359,7 +522,9 @@ const AddSongsPage = () => {
                     <input
                       name="answerB"
                       value={quizzesData.answerB}
-                      // onChange={handleChange}
+                      onChange={(e) =>
+                        handleQuizChange("answerB", e.target.value)
+                      }
                       placeholder="Option B"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
@@ -371,7 +536,9 @@ const AddSongsPage = () => {
                     <input
                       name="answerC"
                       value={quizzesData.answerC}
-                      // onChange={handleChange}
+                      onChange={(e) =>
+                        handleQuizChange("answerC", e.target.value)
+                      }
                       placeholder="Option C"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
@@ -383,13 +550,14 @@ const AddSongsPage = () => {
                     <input
                       name="answerD"
                       value={quizzesData.answerD}
-                      // onChange={handleChange}
+                      onChange={(e) =>
+                        handleQuizChange("answerD", e.target.value)
+                      }
                       placeholder="Option D"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-800 mb-2">
                     Correct Answer
@@ -397,6 +565,9 @@ const AddSongsPage = () => {
                   <select
                     name="correctAnswer"
                     value={quizzesData.correctAnswer}
+                    onChange={(e) =>
+                      handleQuizChange("correctAnswer", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
                   >
                     <option value="A">Answer A</option>
@@ -407,13 +578,14 @@ const AddSongsPage = () => {
                 </div>
               </form>
             </div>
-
-            {/* buttons section */}
-            <div>
+            <div className="flex gap-5">
               <button className="px-6 w-40 h-10 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors bg-white">
                 Clear
               </button>
-              <button className="px-6 w-40 h-10 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+              <button
+                onClick={handleAdd}
+                className="px-6 w-40 h-10 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+              >
                 Add
               </button>
             </div>
@@ -424,12 +596,10 @@ const AddSongsPage = () => {
         <SearchModal
           onClose={handleCloseModal}
           fieldType={currentField}
-          onSelect={(selectedItems) => {
-            handleSelectedItems(
-              currentField,
-              selectedItems as SelectableItem[]
-            );
-          }}
+          onSelect={(selectedItems) =>
+            handleSelectedItems(currentField, selectedItems as SelectableItem[])
+          }
+          existingItems={getExistingItems(currentField)}
         />
       ) : null}
     </div>

@@ -32,6 +32,59 @@ export interface Instrument {
   picture: string;
 }
 
+export interface Music {
+  createAt: string;
+  updateAt: string;
+  deleteAt: string | null;
+  id: number;
+  name: string;
+  description: string;
+  approved: boolean;
+  approvedById: string;
+  approvedAt: string;
+  lyric: string;
+  coverPhoto: string;
+  resourceLink: string;
+  uploadedById: string;
+  listenCount: number;
+  favoriteCount: number;
+}
+
+export interface Category {
+  createAt: string;
+  updateAt: string;
+  deleteAt: string | null;
+  id: string;
+  name: string;
+  picture: string;
+  description: string | null;
+  viewCount: number;
+  musics: Music[];
+}
+
+export interface Album {
+  createAt: string;
+  updateAt: string;
+  deleteAt: string | null;
+  id: string;
+  name: string;
+  coverPhoto: string;
+  releaseDate: string;
+  albumType: "SINGLE" | "ALBUM" | string; // you can extend this if needed
+  description: string;
+  viewCount: number;
+}
+
+export interface AlbumResponse {
+  status: string;
+  code: number;
+  success: boolean;
+  message: string;
+  data: Album;
+  errors: any; // or you can define a more specific type for errors
+}
+
+
 // This interface represents what comes from the API
 export interface ApiArtistDetails {
   id: number;

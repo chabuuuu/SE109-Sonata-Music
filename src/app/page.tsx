@@ -7,10 +7,9 @@ import { getPopularAlbums, Album } from '@/services/albumService';
 import { getTimelessPieces } from '@/services/timelessService';
 import { getTopArtists, Artist } from '@/services/artistService';
 import { getInstrumentSpotlight, InstrumentSpotlight, Instrument } from '@/services/instrumentService';
-import { getErasAndStyles, EraStyle, Period } from '@/services/eraService';
+import { getErasAndStyles, EraStyle } from '@/services/eraService';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
-import { getToken } from '@/services/authService';
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -34,17 +33,17 @@ interface ArtistApiResponse {
   awardsAndHonors: string;
 }
 
-// Interface cho thông tin người dùng
-interface UserProfile {
-  id: string;
-  username: string;
-  fullname: string;
-  gender: string;
-  email: string;
-  createAt: string;
-  updateAt: string;
-  favoriteLists: any[];
-}
+// // Interface cho thông tin người dùng
+// interface UserProfile {
+//   id: string;
+//   username: string;
+//   fullname: string;
+//   gender: string;
+//   email: string;
+//   createAt: string;
+//   updateAt: string;
+//   favoriteLists: any[];
+// }
 
 // Background images for random rotation
 const backgroundImages = [
