@@ -1,30 +1,30 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+// import React, { useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+// import { useAuth } from "@/context/AuthContext";
+// import { useRouter } from "next/navigation";
 
 const ClassicalNavbar = () => {
-  const { isLoggedIn, logout, userProfile } = useAuth();
-  const router = useRouter();
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  // const { logout } = useAuth();
+  // const router = useRouter();
+  // const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    router.push('/user-login');
-  };
+  // const handleLogout = () => {
+  //   logout();
+  //   router.push('/user-login');
+  // };
 
   // Tạo avatar từ fullname
-  const getInitials = (name: string) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+  // const getInitials = (name: string) => {
+  //   if (!name) return 'U';
+  //   return name
+  //     .split(' ')
+  //     .map(part => part[0])
+  //     .join('')
+  //     .toUpperCase()
+  //     .substring(0, 2);
+  // };
 
   return (
     <aside className="w-48 h-screen pb-24 bg-gradient-to-b from-[#3A2A24] to-[#1A0F0D] flex flex-col justify-between border-r border-[#D3B995] shadow-lg">
