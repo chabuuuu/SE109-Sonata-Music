@@ -4,12 +4,15 @@ import Pagination from "@mui/material/Pagination";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import { ArtistDetails, ApiArtistDetails } from "./artist.types";
+import ArtistDetailModal from "./artist_detail_modal";
 
 export default function All_artists() {
   const [artists, setArtists] = useState<ArtistDetails[]>([]);
   const [totalFound, setToTalFound] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPopup, setIsPopup] = useState(false);
+  const [artistDetailKey, setArtistDetailKey] = useState("");
   const artistPerPage = 10;
   const totalPages = Math.ceil(totalFound / artistPerPage);
 
@@ -52,7 +55,7 @@ export default function All_artists() {
         // Map API response to our display format
         const LstArtists: ArtistDetails[] = artists.map(
           (artist: ApiArtistDetails) => ({
-            id: artist.id?.toString() || "N/A",
+            id: artist.id || "N/A",
             name: artist.name || "Unknown",
             genres:
               artist.genres?.length > 0
@@ -83,19 +86,24 @@ export default function All_artists() {
       await axios.delete(
         `https://api.sonata.io.vn/api/v1/artist/${id}`,
 
-      {
-        headers: 
-          {
+        {
+          headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
           },
-        });
+        }
+      );
 
-        setCurrentPage(1);
+      setCurrentPage(1);
     } catch (err) {
       console.log("Can not delete the artist, please try again.", err);
       alert("Failed to delete artist. Please try again.");
-    };
+    }
+  };
+
+  const handlePopup = (c: string) => {
+    setIsPopup(true);
+    setArtistDetailKey(c);
   };
 
   return (
@@ -291,7 +299,7 @@ export default function All_artists() {
                     <button onClick={() => handleDelete(artist.id)}>
                       <XCircle size={20} className="text-red-500" />
                     </button>
-                    <button>
+                    <button onClick={() => handlePopup(artist.id)}>
                       <Info size={20} className="text-blue-600" />
                     </button>
                   </div>
@@ -310,19 +318,19 @@ export default function All_artists() {
               />
             </div>
 
-            <button className="text-blue-500">Show all</button>
 
-            <div className="flex items-center">
-              <button className="border border-gray-300 rounded py-1 px-6 mr-2 text-black rounded-2xl hover:bg-gray-300">
-                Edit
-              </button>
-              <button className="bg-gray-200 border border-gray-300 rounded py-1 px-4 text-black rounded-2xl hover:bg-white">
-                Delete
-              </button>
-            </div>
           </div>
         </div>
       </div>
+      {isPopup && (
+        <ArtistDetailModal
+          id={artistDetailKey}
+          onClose={() => {
+            setIsPopup(false);
+            setArtistDetailKey("");
+          }}
+        />
+      )}
     </div>
   );
 }
