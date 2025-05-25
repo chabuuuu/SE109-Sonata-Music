@@ -166,10 +166,10 @@ const AddSongsPage = () => {
             <FolderPlus className="w-4 h-4" />
             Add Albums
           </button>
-          <button className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all">
+          <a href="../admin-view-all" className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all">
             <UserIcon className="w-4 h-4" />
             View All
-          </button>
+          </a>
         </div>
 
         {/* Main Content */}
@@ -206,6 +206,7 @@ const AddSongsPage = () => {
                   />
                 </div>
 
+              {/* set Release Date */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Release Date *

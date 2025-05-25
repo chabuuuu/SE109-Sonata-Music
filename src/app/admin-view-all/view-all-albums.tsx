@@ -1,39 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import * as XLSX from "xlsx";
-import {
-  Download,
-  Search,
-  XCircle,
-  Info,
-} from "lucide-react";
+import { Download, Search, XCircle, Info } from "lucide-react";
 import axios from "axios";
-import DetailModal from "@/components/DetailModal";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-
-interface Category {
-  id: string;
-  name: string;
-  songsCount: string;
-  totalMusics: string;
-  viewCount: string;
-  views: string;
-  releaseDate: string;
-  createAt: string;
-  createdBy: string;
-  description: string;
-  picture: string;
-}
+import * as AlbumType from "./album-api-type";
+import AddAlbumsModal from "./edit-album-modal";
 
 export default function AllAlbumsPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [albums, setAlbums] = useState<AlbumType.Album[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [popup, setPopup] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+  const [selectedAlbum, setSelectedAlbum] = useState<AlbumType.Album | null>(
     null
   );
 
@@ -46,14 +27,14 @@ export default function AllAlbumsPage() {
         const filters = searchTerm
           ? [
               {
-                operator: "equal",
+                operator: "like",
                 key: "name",
                 value: searchTerm,
               },
             ]
           : [];
         const response = await axios.post(
-          `https://api.sonata.io.vn/api/v1/category/search?rpp=${pageSize}&page=${currentPage}`,
+          `https://api.sonata.io.vn/api/v1/album/search?rpp=${pageSize}&page=${currentPage}`,
           { filters, sorts: [{ key: "id", type: "DESC" }] },
           {
             headers: {
@@ -63,37 +44,20 @@ export default function AllAlbumsPage() {
           }
         );
 
-        const { items, total } = response.data.data;
-
-        // Map API items into our Category shape
-        const mapped: Category[] = items.map((item: Category) => ({
-          id: item.id,
-          name: item.name || "Untitled",
-          picture: item.picture || "default.jpg",
-          songsCount: String(item.totalMusics ?? 0),
-          views: String(item.viewCount ?? 0),
-          releaseDate: item.createAt
-            ? new Date(item.createAt).toLocaleDateString()
-            : "Unknown",
-          createAt: item.createAt || "",
-          createdBy: "System",
-          description: item.description || "Imported from API",
-        }));
-
-        setCategories(mapped);
-        setTotalCount(total);
+        setAlbums(response.data.data.items);
+        setTotalCount(response.data.data.total);
       } catch (err) {
-        console.error("Failed to fetch/search categories:", err);
+        console.error("Failed to fetch/search albums:", err);
       }
     };
 
     fetchCategories();
-  }, [searchTerm, currentPage, pageSize]);
+  }, [searchTerm, currentPage, pageSize, albums]);
 
   // handle delete
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`https://api.sonata.io.vn/api/v1/category/${id}`, {
+      await axios.delete(`https://api.sonata.io.vn/api/v1/album/${id}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
@@ -102,8 +66,8 @@ export default function AllAlbumsPage() {
       // Refetch current page so count & pages stay in sync
       setCurrentPage(1);
     } catch (err) {
-      console.error("Error deleting category:", err);
-      alert("Failed to delete category. Please try again.");
+      console.error("Error deleting music:", err);
+      alert("Failed to delete music. Please try again.");
     }
   };
 
@@ -112,58 +76,64 @@ export default function AllAlbumsPage() {
     setCurrentPage(1);
   };
 
-  // const handleDownloadCSV = () => {
-  //   const headers = [
-  //     "ID",
-  //     "Name",
-  //     "Songs count",
-  //     "Views",
-  //     "Release date",
-  //     "Created by",
-  //     "Description",
-  //   ];
-  //   const rows = categories.map((c) => [
-  //     c.id,
-  //     c.name,
-  //     c.songsCount,
-  //     c.views,
-  //     c.releaseDate,
-  //     c.createdBy,
-  //     c.description,
-  //   ]);
-  //   const csv = [headers, ...rows]
-  //     .map((r) => r.map((v) => `"${v}"`).join(","))
-  //     .join("\n");
-  //   const blob = new Blob([csv], { type: "text/csv" });
-  //   const url = URL.createObjectURL(blob);
-  //   const a = document.createElement("a");
-  //   a.href = url;
-  //   a.download = "categories.csv";
-  //   a.click();
-  //   URL.revokeObjectURL(url);
-  // };
+  const handleDownloadCSV = () => {
+    const headers = [
+      "Name",
+      "Album Type",
+      "Release date (Create at)",
+      "Picture Link",
+      "Description",
+      
+    ];
 
-  const handleExportExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(
-      categories.map((c) => ({
-        ID: c.id,
-        Name: c.name,
-        "Songs count": c.songsCount,
-        Views: c.views,
-        "Release date": c.releaseDate,
-        "Created by": c.createdBy,
-        Description: c.description,
-      }))
-    );
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Categories");
-    XLSX.writeFile(wb, "categories.xlsx");
+    const rows = albums.map((c) => [
+      c.name,
+      c.albumType,
+      c.releaseDate,
+      c.coverPhoto,
+      c.description,
+    ]);
+
+    // Add BOM (Byte Order Mark) for proper UTF-8 encoding
+    const BOM = "\uFEFF";
+    const csv =
+      BOM +
+      [headers, ...rows]
+        .map((r) =>
+          r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")
+        )
+        .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Albums.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="h-full bg-gray-100 p-6 relative">
-      <div className="h-full bg-white p-6 flex flex-col overflow-hidden justify-start ">
+  const handleCloseModal = () => {
+    setPopup(false);
+    setSelectedAlbum(null);
+  };
 
+
+  const formatDate = (isoDate: string): string => {
+    const date = new Date(isoDate);
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0"); // Month is 0-based
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}/${month}/${day}`;
+  };
+
+  // Example usage
+  const formatted = formatDate("1905-06-15T00:00:00.000Z");
+  console.log(formatted); // "1905/06/15"
+
+  return (
+    <div className="">
+      <div className="h-full bg-white p-6 flex flex-col justify-start ">
         {/* Main content */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4 ">
@@ -201,7 +171,7 @@ export default function AllAlbumsPage() {
           </div>
 
           <button
-            onClick={handleExportExcel}
+            onClick={handleDownloadCSV}
             className="inline-flex items-center bg-white rounded-lg shadow-sm border border-blue-600 px-4 h-10"
           >
             <Download size={16} className="mr-2 text-blue-600" />
@@ -217,13 +187,10 @@ export default function AllAlbumsPage() {
             <thead>
               <tr className="bg-gray-200">
                 {[
-                  "ID",
                   "Name",
-                  "Songs count",
-                  "Views",
-                  "Release date",
-                  "Created by",
+                  "Album Type",
                   "Description",
+                  "Release date (Create at)",
                   "Actions",
                 ].map((h) => (
                   <th
@@ -236,25 +203,22 @@ export default function AllAlbumsPage() {
               </tr>
             </thead>
             <tbody>
-              {categories.map((c) => (
+              {albums.map((c) => (
                 <tr
-                  key={c.id}
+                  key={c.name}
                   className="odd:bg-gray-50 even:bg-white hover:bg-gray-100"
                 >
-                  <td className="px-3 py-2 text-black">{c.id}</td>
                   <td className="px-3 py-2 text-black">{c.name}</td>
-                  <td className="px-3 py-2 text-black">{c.songsCount}</td>
-                  <td className="px-3 py-2 text-black">{c.views}</td>
-                  <td className="px-3 py-2 text-black">{c.releaseDate}</td>
-                  <td className="px-3 py-2 text-black">{c.createdBy}</td>
+                  <td className="px-3 py-2 text-black">{c.albumType}</td>
                   <td className="px-3 py-2 text-black">{c.description}</td>
+                  <td className="px-3 py-2 text-black">{formatDate(c.releaseDate)}</td>
                   <td className="px-3 py-2 flex space-x-2">
                     <button onClick={() => handleDelete(c.id)}>
                       <XCircle size={20} className="text-red-500" />
                     </button>
                     <button
                       onClick={() => {
-                        setSelectedCategory(c);
+                        setSelectedAlbum(c);
                         setPopup(true);
                       }}
                     >
@@ -315,23 +279,8 @@ export default function AllAlbumsPage() {
           </button>
         </div>
       </div>
-      {popup && selectedCategory && (
-        <DetailModal
-          data={{
-            id: selectedCategory.id,
-            title: selectedCategory.name,
-            createAt: selectedCategory.releaseDate,
-            description: selectedCategory.description,
-            songsCount: selectedCategory.songsCount,
-            views: selectedCategory.views,
-            createdBy: selectedCategory.createdBy,
-            picture: selectedCategory.picture,
-          }}
-          onClose={() => {
-            setPopup(false);
-            setSelectedCategory(null);
-          }}
-        />
+      {popup && selectedAlbum && (
+        <AddAlbumsModal albumId={selectedAlbum.id} onClose={handleCloseModal} />
       )}
     </div>
   );

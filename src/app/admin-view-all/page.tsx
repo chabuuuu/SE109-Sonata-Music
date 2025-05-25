@@ -38,10 +38,10 @@ export default function AdminViewAllPage() {
                 <Music className="w-4 h-4" />
                 Add Songs
               </a>
-              <button className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all">
+              <a href="../admin-add-albums" className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all">
                 <FolderPlus className="w-4 h-4" />
                 Add Albums
-              </button>
+              </a>
               <button className="bg-blue-500 text-white px-6 py-3 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-all hover:bg-blue-600">
                 <UserIcon className="w-4 h-4" />
                 View All
