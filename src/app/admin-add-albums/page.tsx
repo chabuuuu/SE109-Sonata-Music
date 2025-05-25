@@ -392,7 +392,7 @@ const AddSongsPage = () => {
                   disabled={!albumName}
                   className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-95"
                 >
-                  Add Song
+                  Add Album
                 </button>
 
                 <button
