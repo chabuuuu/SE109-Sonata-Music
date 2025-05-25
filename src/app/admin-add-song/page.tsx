@@ -196,6 +196,15 @@ const AddSongsPage = () => {
   return (
     <div className="bg-white">
       <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Songs Management
+          </h1>
+          <p className="text-gray-600">
+            Add and organize your music collection
+          </p>
+        </div>
         <div className="flex items-center justify-between mb-6">
           {/* tab sections */}
           <div className="flex items-center gap-4">
@@ -203,10 +212,10 @@ const AddSongsPage = () => {
               <span className="text-lg">+</span>
               Add Songs
             </button>
-            <button className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
+            <a href="../admin-add-albums" className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
               <FolderPlus className="w-4 h-4" />
               Add Albums
-            </button>
+            </a>
             <button className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
               <UserIcon className="w-4 h-4" />
               All
