@@ -256,7 +256,7 @@ const Add_artist = () => {
                       {/* Container for the tags */}
                       <div className="flex flex-wrap gap-2">
                         {selectedPeriods.map((period) => (
-                          <span
+                          <span   
                             key={period.id}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
