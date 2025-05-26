@@ -3,7 +3,7 @@ import NavMenu from "@/components/navmenu";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from "next/navigation";
 import React, { ReactNode, useEffect } from "react";
 import styles from "./adminNavbar.module.css";
 
@@ -15,13 +15,18 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // add hooks navigation
   const router = useRouter();
-  const [activeItem, setActiveItem] = React.useState("dashboard"); //track which text is Active right now
+  const pathName = usePathname();
 
-  function handleNavigation(item: string, path: string) {
-    setActiveItem(item);
-    router.push(path);
-    return true;
-  }
+
+  // Compute the “active key” from the path:
+  const activeItem = React.useMemo(() => {
+    if (pathName.startsWith("/artists-management")) return "artists";
+    if (pathName.startsWith("/admin-view-all")) return "viewAll";
+    if (pathName.startsWith("/admin-categories-all")) return "categories";
+    if (pathName === "/" || pathName === "/contributors") return "contributors";
+    if (pathName.startsWith("/admin-quizzes")) return "quizzes";
+    return "dashboard";
+  }, [pathName]);
 
   useEffect(() => {
     const token = localStorage.getItem(ADMIN_TOKEN); // hoặc key mà mày lưu
@@ -49,32 +54,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </div>
             <nav className="flex-1 pt-2">
               <ul className={styles.menu}>
-
-                {/* Home Logo */}
-                <li
-                  className={`${styles.menuItem} ${
-                    activeItem === "dashboard" ? styles.active : ""
-                  }`}
-                  onClick={() => handleNavigation("dashboard", "/dashboard")}
-                >
-                  <Image
-                    src="/layout_imgs/Home_logo.png"
-                    alt="home logo"
-                    height={20} // equivalent to h-5 (20px)
-                    width={20} // equivalent to w-5 (20px)
-                    className="object-contain" // optional to ensure proper scaling
-                  />
-                  <span className="text-base">Dashboard</span>
-                </li>
-
                 {/* Artist Management */}
                 <li
                   className={`${styles.menuItem} ${
                     activeItem === "artists" ? styles.active : ""
                   }`}
-                  onClick={() =>
-                    handleNavigation("artists", "/artists-management")
-                  }
+                  onClick={() => router.push('/artists-management')}
                 >
                   <Image
                     src="/layout_imgs/search_logo.png"
@@ -86,14 +71,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <span className="text-base">Artists Management</span>
                 </li>
 
-                {/* Album Management */}
+                {/* Songs & Albums Management */}
                 <li
                   className={`${styles.menuItem} ${
-                    activeItem === "albums" ? styles.active : ""
+                    activeItem === "viewAll" ? styles.active : ""
                   }`}
-                  onClick={() =>
-                    handleNavigation("albums", "/albums-management")
-                  }
+                  onClick={() => router.push('/admin-view-all')}
                 >
                   <Image
                     src="/layout_imgs/library_logo.png"
@@ -102,17 +85,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     width={20} // equivalent to w-5 (20px)
                     className="object-contain" // optional to ensure proper scaling
                   />
-                  <span className="text-base">Albums Management</span>
+                  <span className="text-base">Songs & Albums Management</span>
                 </li>
 
-                {/* Contributors Management */}
+                {/* Category Manage*/}
                 <li
                   className={`${styles.menuItem} ${
-                    activeItem === "contributors" ? styles.active : ""
+                    activeItem === "categories" ? styles.active : ""
                   }`}
-                  onClick={() =>
-                    handleNavigation("contributors", "/admin-view-all")
-                  }
+                  onClick={() => router.push('/admin-categories-all')}
                 >
                   <Image
                     src="/layout_imgs/createPlaylist_logo.png"
@@ -121,7 +102,41 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     width={20} // equivalent to w-5 (20px)
                     className="object-contain" // optional to ensure proper scaling
                   />
+                  <span className="text-base">Category Management</span>
+                </li>
+
+                {/* Contributors Manage*/}
+                <li
+                  className={`${styles.menuItem} ${
+                    activeItem === "contributors" ? styles.active : ""
+                  }`}
+                  onClick={() => router.push('/')}
+                >
+                  <Image
+                    src="/layout_imgs/contributor.png"
+                    alt="create playlist logo"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain bg-white" // optional to ensure proper scaling
+                  />
                   <span className="text-base">Contributors Management</span>
+                </li>
+
+                {/* Quizzes Manage*/}
+                <li
+                  className={`${styles.menuItem} ${
+                    activeItem === "quizzes" ? styles.active : ""
+                  }`}
+                  onClick={() => router.push('/admin-quizzes-feedback')}
+                >
+                  <Image
+                    src="/layout_imgs/quizzes.png"
+                    alt="create playlist logo"
+                    height={20} // equivalent to h-5 (20px)
+                    width={20} // equivalent to w-5 (20px)
+                    className="object-contain" // optional to ensure proper scaling
+                  />
+                  <span className="text-base">Quizzes Management</span>
                 </li>
               </ul>
             </nav>
