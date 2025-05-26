@@ -62,7 +62,6 @@ const AddSongsPage = () => {
     | Types.ArtistDetails
     | Types.Album;
 
-
   // get selected Items
   const handleSelectedItems = (
     field: string,
@@ -212,13 +211,27 @@ const AddSongsPage = () => {
               <span className="text-lg">+</span>
               Add Songs
             </button>
-            <a href="../admin-add-albums" className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
+            <a
+              href="../admin-add-albums"
+              className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm"
+            >
               <FolderPlus className="w-4 h-4" />
               Add Albums
             </a>
-            <a href="../admin-view-all" className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm">
+            <a
+              href="../admin-view-all"
+              className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm"
+            >
               <UserIcon className="w-4 h-4" />
               All
+            </a>
+
+            <a
+              href="../admin-approve-music"
+              className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm"
+            >
+              <UserIcon className="w-4 h-4" />
+              Approve music
             </a>
           </div>
         </div>

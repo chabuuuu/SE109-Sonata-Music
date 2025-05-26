@@ -170,6 +170,11 @@ const AddSongsPage = () => {
             <UserIcon className="w-4 h-4" />
             View All
           </a>
+
+          <a href="../admin-approve-music" className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all">
+            <UserIcon className="w-4 h-4" />
+            Approve music
+          </a>
         </div>
 
         {/* Main Content */}
