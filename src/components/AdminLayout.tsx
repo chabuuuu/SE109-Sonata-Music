@@ -103,7 +103,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     activeItem === "contributors" ? styles.active : ""
                   }`}
                   onClick={() =>
-                    handleNavigation("contributors", "/contributors-management")
+                    handleNavigation("contributors", "/admin-view-all")
                   }
                 >
                   <Image
