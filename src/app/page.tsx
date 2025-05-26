@@ -1,20 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Navbar from "@/components/navbar";
-import BottomBanner from "@/components/bottom_banner";
-import { getRecommendedSongs, Song } from "@/services/recommendService";
-import { getPopularAlbums, Album } from "@/services/albumService";
-import { getTimelessPieces } from "@/services/timelessService";
-import { getTopArtists, Artist } from "@/services/artistService";
-import {
-  getInstrumentSpotlight,
-  InstrumentSpotlight,
-  Instrument,
-} from "@/services/instrumentService";
-import { getErasAndStyles, EraStyle } from "@/services/eraService";
-import axios from "axios";
-import { useAuth } from "@/context/AuthContext";
-import Image from "next/image";
+import React, { useState, useEffect } from 'react';
+import Navbar from '@/components/navbar';
+import SearchBarComponent from '@/components/SearchBar';
+import BottomBanner from '@/components/bottom_banner';
+import { getRecommendedSongs, Song } from '@/services/recommendService';
+import { getPopularAlbums, Album, searchAlbums, AlbumSearchResponse } from '@/services/albumService';
+import { getTimelessPieces } from '@/services/timelessService';
+import { getTopArtists, Artist } from '@/services/artistService';
+import { getInstrumentSpotlight, InstrumentSpotlight, Instrument } from '@/services/instrumentService';
+import { getErasAndStyles, EraStyle, Period } from '@/services/eraService';
+import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
+import { getToken } from '@/services/authService';
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -591,6 +588,7 @@ const ArtistCard: React.FC<{
 //   );
 // };
 
+
 // Search bar (classical theme)
 const SearchBar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -778,7 +776,7 @@ const SearchBar: React.FC = () => {
   );
 };
 
-// Instrument spotlight component - refactored
+
 const InstrumentSpotlightSection: React.FC<{
   spotlights: InstrumentSpotlight[];
   loading: boolean;
@@ -1487,7 +1485,7 @@ const HomePage: React.FC = () => {
       {/* Main */}
       <main className="flex-1 overflow-y-auto h-screen pb-28">
         {/* Search */}
-        <SearchBar />
+        <SearchBarComponent />
 
         {/* Hero */}
         <section
