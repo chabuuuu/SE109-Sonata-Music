@@ -36,11 +36,8 @@ const NavMenu = () => {
 
       {/* Auth Buttons */}
       <div className="flex space-x-2">
-        <a href="/login">
-          <Button data="Đăng nhập" />
-        </a>
-        <a href="/register">
-          <Button data="Đăng ký" />
+        <a>
+          <Button data="Đăng xuất" />
         </a>
       </div>
     </div>

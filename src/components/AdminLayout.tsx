@@ -49,6 +49,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </div>
             <nav className="flex-1 pt-2">
               <ul className={styles.menu}>
+
+                {/* Home Logo */}
                 <li
                   className={`${styles.menuItem} ${
                     activeItem === "dashboard" ? styles.active : ""
@@ -64,6 +66,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   />
                   <span className="text-base">Dashboard</span>
                 </li>
+
+                {/* Artist Management */}
                 <li
                   className={`${styles.menuItem} ${
                     activeItem === "artists" ? styles.active : ""
@@ -81,6 +85,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   />
                   <span className="text-base">Artists Management</span>
                 </li>
+
+                {/* Album Management */}
                 <li
                   className={`${styles.menuItem} ${
                     activeItem === "albums" ? styles.active : ""
@@ -98,6 +104,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   />
                   <span className="text-base">Albums Management</span>
                 </li>
+
+                {/* Contributors Management */}
                 <li
                   className={`${styles.menuItem} ${
                     activeItem === "contributors" ? styles.active : ""
