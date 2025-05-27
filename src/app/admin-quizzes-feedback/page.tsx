@@ -65,7 +65,20 @@ export default function QuizzesFeedbackAdmin() {
   const handleClick = (quizId: string) => {
     setIsModalOpen(true);
     setChosenQuiz(quizId);
-  }
+  };
+
+  const handleDelete = async (quizId: string) => {
+    try {
+      await axios.delete(`https://api.sonata.io.vn/api/v1/quiz/${quizId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}` },
+      });
+      setRefreshTrigger((prev) => prev + 1);
+      alert("Delete quiz successfully!");
+    } catch (err) {
+      alert("Failed to delete!");
+      console.log("Failed to delete!", err);
+    }
+  };
 
   // Move QuizCard outside and make it a proper React component
   function QuizCard({ quiz }: { quiz: QuizType.QuizItem }) {
@@ -168,7 +181,10 @@ export default function QuizzesFeedbackAdmin() {
                 >
                   Edit Quiz
                 </button>
-                <button className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium">
+                <button
+                  onClick={() => handleDelete(quiz.id)}
+                  className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium"
+                >
                   Delete
                 </button>
               </div>
@@ -182,7 +198,7 @@ export default function QuizzesFeedbackAdmin() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setRefreshTrigger((prev) => prev + 1);
-  }
+  };
 
   return (
     <AdminLayout>
@@ -275,10 +291,7 @@ export default function QuizzesFeedbackAdmin() {
           </div>
         </div>
         {isModalOpen ? (
-          <QuizEditModal
-            onClose={handleCloseModal}
-            quizId={chosenQuiz}
-          />
+          <QuizEditModal onClose={handleCloseModal} quizId={chosenQuiz} />
         ) : null}
       </div>
     </AdminLayout>
