@@ -8,119 +8,16 @@ import Image from "next/image";
 import * as QuizType from "./quiz-type-api";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-
-// Move QuizCard outside and make it a proper React component
-function QuizCard({ quiz }: { quiz: QuizType.QuizItem }) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold text-sm">
-              Q{quiz.id}
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg">
-                Quiz ID: {quiz.id}
-              </h3>
-              <p className="text-sm text-gray-500">Music ID: {quiz.musicId}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsCollapsed((c) => !c)}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              {isCollapsed ? "▼" : "▲"}
-            </button>
-          </div>
-        </div>
-
-        {/* Question */}
-        <div className="mb-4">
-          <h4 className="font-medium text-gray-900 mb-2">Question:</h4>
-          <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
-            {quiz.content}
-          </p>
-        </div>
-
-        {/* Collapsible Content */}
-        {!isCollapsed && (
-          <div className="space-y-4 border-t border-gray-100 pt-4">
-            {/* Answer Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 p-3 bg-gray-50 border border-red-200 rounded-md">
-                <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  A
-                </span>
-                <span className="text-gray-700">{quiz.answerA}</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  B
-                </span>
-                <span className="text-gray-700">{quiz.answerB}</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  C
-                </span>
-                <span className="text-gray-700">{quiz.answerC}</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  D
-                </span>
-                <span className="text-gray-700">{quiz.answerD}</span>
-              </div>
-              <div>
-                <span className="font-medium text-black text-xl">
-                  Correct Answer:{" "}
-                  <span className="text-blue-500">{quiz.correctAnswer}</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Metadata */}
-            <div className="flex  gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
-              <div>
-                <span className="font-medium">Created:</span>{" "}
-                {new Date(quiz.createAt).toLocaleDateString("en-CA")}
-              </div>
-              <div>
-                <span className="font-medium">Updated:</span>{" "}
-                {new Date(quiz.updateAt).toLocaleDateString("en-CA")}
-              </div>
-              <div>
-                <span className="font-medium">Created by ID:</span>{" "}
-                {quiz.createdById}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-2">
-              <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">
-                Edit Quiz
-              </button>
-              <button className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium">
-                Delete
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import QuizEditModal from "./quiz-modal";
 
 export default function QuizzesFeedbackAdmin() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [quizzes, setQuizzes] = useState<QuizType.QuizItem[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [chosenQuiz, setChosenQuiz] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const QuizPerPage = 4;
   const totalPages = Math.ceil(totalCount / QuizPerPage);
@@ -156,7 +53,7 @@ export default function QuizzesFeedbackAdmin() {
       }
     };
     fetchData();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, refreshTrigger]);
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
@@ -164,6 +61,128 @@ export default function QuizzesFeedbackAdmin() {
   ) => {
     setCurrentPage(value);
   };
+
+  const handleClick = (quizId: string) => {
+    setIsModalOpen(true);
+    setChosenQuiz(quizId);
+  }
+
+  // Move QuizCard outside and make it a proper React component
+  function QuizCard({ quiz }: { quiz: QuizType.QuizItem }) {
+    const [isCollapsed, setIsCollapsed] = useState(true);
+
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold text-sm">
+                Q{quiz.id}
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-lg">
+                  Quiz ID: {quiz.id}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Music ID: {quiz.musicId}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsCollapsed((c) => !c)}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                {isCollapsed ? "▼" : "▲"}
+              </button>
+            </div>
+          </div>
+
+          {/* Question */}
+          <div className="mb-4">
+            <h4 className="font-medium text-gray-900 mb-2">Question:</h4>
+            <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+              {quiz.content}
+            </p>
+          </div>
+
+          {/* Collapsible Content */}
+          {!isCollapsed && (
+            <div className="space-y-4 border-t border-gray-100 pt-4">
+              {/* Answer Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 p-3 bg-gray-50 border border-red-200 rounded-md">
+                  <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                    A
+                  </span>
+                  <span className="text-gray-700">{quiz.answerA}</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                  <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                    B
+                  </span>
+                  <span className="text-gray-700">{quiz.answerB}</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                  <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                    C
+                  </span>
+                  <span className="text-gray-700">{quiz.answerC}</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                  <span className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                    D
+                  </span>
+                  <span className="text-gray-700">{quiz.answerD}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-black text-xl">
+                    Correct Answer:{" "}
+                    <span className="text-blue-500">{quiz.correctAnswer}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="flex  gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
+                <div>
+                  <span className="font-medium">Created:</span>{" "}
+                  {new Date(quiz.createAt).toLocaleDateString("en-CA")}
+                </div>
+                <div>
+                  <span className="font-medium">Updated:</span>{" "}
+                  {new Date(quiz.updateAt).toLocaleDateString("en-CA")}
+                </div>
+                <div>
+                  <span className="font-medium">Created by ID:</span>{" "}
+                  {quiz.createdById}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => handleClick(quiz.id)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium"
+                >
+                  Edit Quiz
+                </button>
+                <button className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium">
+                  Delete
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setRefreshTrigger((prev) => prev + 1);
+  }
 
   return (
     <AdminLayout>
@@ -255,6 +274,12 @@ export default function QuizzesFeedbackAdmin() {
             <button className="text-blue-500 text-sm ml-5">Show all</button>
           </div>
         </div>
+        {isModalOpen ? (
+          <QuizEditModal
+            onClose={handleCloseModal}
+            quizId={chosenQuiz}
+          />
+        ) : null}
       </div>
     </AdminLayout>
   );
