@@ -161,7 +161,7 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-700">Don’t have an account?</p>
             <a
-              href="/register"
+              href="/contributor-register"
               className="inline-block mt-2 px-6 py-2 border border-gray-400 text-gray-800 rounded-full text-sm font-semibold hover:bg-gray-100"
             >
               SIGN UP FOR SONATA
