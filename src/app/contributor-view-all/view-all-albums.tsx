@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Download, Search, XCircle, Info } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import axios from "axios";
-import { ADMIN_TOKEN } from "@/constant/adminToken";
 import * as AlbumType from "./album-api-type";
 import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
 

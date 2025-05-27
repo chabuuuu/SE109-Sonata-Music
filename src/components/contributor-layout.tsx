@@ -17,14 +17,12 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
   const router = useRouter();
   const pathName = usePathname();
 
-
   // Compute the “active key” from the path:
   const activeItem = React.useMemo(() => {
-    if (pathName.startsWith("/artists-management")) return "artists";
-    if (pathName.startsWith("/admin-view-all")) return "viewAll";
-    if (pathName.startsWith("/admin-categories-all")) return "categories";
-    if (pathName === "/" || pathName === "/contributors") return "contributors";
-    if (pathName.startsWith("/admin-quizzes")) return "quizzes";
+    if (pathName.startsWith("/contributor-artist-view")) return "artists";
+    if (pathName.startsWith("/contributor-view-all")) return "viewAll";
+    if (pathName.startsWith("/contributor-categories-all")) return "categories";
+    if (pathName.startsWith("/contributor-quizzes-view")) return "quizzes";
     return "dashboard";
   }, [pathName]);
 
@@ -52,21 +50,29 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                 className="object-contain"
               />
             </div>
-            <nav className="flex-1 pt-2">
+            <nav className="flex-1 pt-6">
+              {/* Enhanced Contributor Header */}
+              <div className="px-4 mb-6">
+                <h1 className="text-xl font-semibold text-white mb-1">
+                  Contributor
+                </h1>
+                <div className="w-12 h-0.5 bg-white rounded-full"></div>
+              </div>
+
               <ul className={styles.menu}>
                 {/* Artist Management */}
                 <li
                   className={`${styles.menuItem} ${
                     activeItem === "artists" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/artists-management')}
+                  onClick={() => router.push("/contributor-artist-view")}
                 >
                   <Image
                     src="/layout_imgs/search_logo.png"
                     alt="search logo"
-                    height={20} // equivalent to h-5 (20px)
-                    width={20} // equivalent to w-5 (20px)
-                    className="object-contain" // optional to ensure proper scaling
+                    height={20}
+                    width={20}
+                    className="object-contain"
                   />
                   <span className="text-base">Artists Management</span>
                 </li>
@@ -76,67 +82,33 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                   className={`${styles.menuItem} ${
                     activeItem === "viewAll" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/admin-view-all')}
+                  onClick={() => router.push("/contributor-view-all")}
                 >
                   <Image
                     src="/layout_imgs/library_logo.png"
                     alt="Library logo"
-                    height={20} // equivalent to h-5 (20px)
-                    width={20} // equivalent to w-5 (20px)
-                    className="object-contain" // optional to ensure proper scaling
+                    height={20}
+                    width={20}
+                    className="object-contain"
                   />
                   <span className="text-base">Songs & Albums Management</span>
                 </li>
 
-                {/* Category Manage*/}
+                {/* Category Management */}
                 <li
                   className={`${styles.menuItem} ${
                     activeItem === "categories" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/admin-categories-all')}
+                  onClick={() => router.push("/admin-categories-all")}
                 >
                   <Image
                     src="/layout_imgs/createPlaylist_logo.png"
                     alt="create playlist logo"
-                    height={20} // equivalent to h-5 (20px)
-                    width={20} // equivalent to w-5 (20px)
-                    className="object-contain" // optional to ensure proper scaling
+                    height={20}
+                    width={20}
+                    className="object-contain"
                   />
                   <span className="text-base">Category Management</span>
-                </li>
-
-                {/* Contributors Manage*/}
-                <li
-                  className={`${styles.menuItem} ${
-                    activeItem === "contributors" ? styles.active : ""
-                  }`}
-                  onClick={() => router.push('/')}
-                >
-                  <Image
-                    src="/layout_imgs/contributor.png"
-                    alt="create playlist logo"
-                    height={20} // equivalent to h-5 (20px)
-                    width={20} // equivalent to w-5 (20px)
-                    className="object-contain bg-white" // optional to ensure proper scaling
-                  />
-                  <span className="text-base">Contributors Management</span>
-                </li>
-
-                {/* Quizzes Manage*/}
-                <li
-                  className={`${styles.menuItem} ${
-                    activeItem === "quizzes" ? styles.active : ""
-                  }`}
-                  onClick={() => router.push('/admin-quizzes-feedback')}
-                >
-                  <Image
-                    src="/layout_imgs/quizzes.png"
-                    alt="create playlist logo"
-                    height={20} // equivalent to h-5 (20px)
-                    width={20} // equivalent to w-5 (20px)
-                    className="object-contain" // optional to ensure proper scaling
-                  />
-                  <span className="text-base">Quizzes Management</span>
                 </li>
               </ul>
             </nav>

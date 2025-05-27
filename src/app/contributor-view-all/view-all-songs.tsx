@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Download, Search, XCircle, Info } from "lucide-react";
 import axios from "axios";
-import { ADMIN_TOKEN } from "@/constant/adminToken";
+import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
 import * as MusicType from "../../../types/search-music-type";
-// import AddSongsModal from "./edit-modal-song";
+import ContributorViewSongsModal from "./contributor-modal-song";
 
 export default function AllSongsPage() {
   const [musics, setMusics] = useState<MusicType.Music[]>([]);
@@ -34,12 +34,12 @@ export default function AllSongsPage() {
             ]
           : [];
         const response = await axios.post(
-          `https://api.sonata.io.vn/api/v1/music/search?rpp=${pageSize}&page=${currentPage}`,
+          `https://api.sonata.io.vn/api/v1/music/search/my-upload?rpp=${pageSize}&page=${currentPage}`,
           { filters, sorts: [{ key: "id", type: "DESC" }] },
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+              Authorization: `Bearer ${localStorage.getItem(CONTRIBUTOR_TOKEN)}`,
             },
           }
         );
@@ -60,7 +60,7 @@ export default function AllSongsPage() {
       await axios.delete(`https://api.sonata.io.vn/api/v1/music/${id}`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+          Authorization: `Bearer ${localStorage.getItem(CONTRIBUTOR_TOKEN)}`,
         },
       });
       // Refetch current page so count & pages stay in sync
@@ -290,7 +290,7 @@ export default function AllSongsPage() {
         </div>
       </div>
       {popup && selectedMusic && (
-        <AddSongsModal musicId={selectedMusic.id} onClose={handleCloseModal} />
+        <ContributorViewSongsModal musicId={selectedMusic.id} onClose={handleCloseModal} />
       )}
     </div>
   );

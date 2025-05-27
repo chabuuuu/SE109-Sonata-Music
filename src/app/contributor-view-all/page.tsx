@@ -28,28 +28,16 @@ export default function ContributorViewAllPage() {
             {/* Main tab */}
             <div className="flex">
               <a
-                href="../admin-add-song"
+                href="../contributor-add-song"
                 className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all"
               >
                 <Music className="w-4 h-4" />
                 Add Songs
               </a>
-              <a
-                href="../admin-add-albums"
-                className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all"
-              >
-                <FolderPlus className="w-4 h-4" />
-                Add Albums
-              </a>
               <button className="bg-blue-500 text-white px-6 py-3 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-all hover:bg-blue-600">
                 <UserIcon className="w-4 h-4" />
                 View All
               </button>
-
-              <a href="../admin-approve-music" className="bg-white hover:bg-gray-50 text-gray-600 px-6 py-3 rounded-lg flex items-center gap-2 text-sm font-medium transition-all">
-                <UserIcon className="w-4 h-4" />
-                Approve Music
-              </a>
             </div>
           </div>
           {/* Sub tabs */}
