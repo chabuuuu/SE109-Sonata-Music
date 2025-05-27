@@ -40,7 +40,7 @@ export default function LoginPage() {
       if (token) {
         localStorage.setItem(CONTRIBUTOR_TOKEN, token);
         
-        router.push("/");
+        router.push("/contributor-view-all");
       } else {
         setError("Không nhận được token từ server.");
       }

@@ -111,6 +111,7 @@ export default function ContributorRegisterPage() {
       setShowOtpForm(true);
     } catch (err: unknown) {
       console.error("Registration error:", err);
+      setError("Username or email has been taken.");
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +145,7 @@ export default function ContributorRegisterPage() {
       }, 3000);
     } catch (err: unknown) {
       console.error("Activation error:", err);
+      setError("Wrong OTP!");
     } finally {
       setIsActivating(false);
     }
@@ -195,9 +197,6 @@ export default function ContributorRegisterPage() {
 
           {error && (
             <div>
-              <p className="text-red-500 text-sm text-center">
-                User or Email has been taken.
-              </p>
               <p className="text-red-500 text-sm text-center mb-4">{error}</p>
             </div>
           )}
