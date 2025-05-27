@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar';
+import Image from 'next/image';
 import SearchBarComponent from '@/components/SearchBar';
 import BottomBanner from '@/components/bottom_banner';
 import { getRecommendedSongs, Song } from '@/services/recommendService';
