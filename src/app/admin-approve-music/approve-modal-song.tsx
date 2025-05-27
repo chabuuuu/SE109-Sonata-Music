@@ -1,33 +1,34 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { FolderPlus, UserIcon } from "lucide-react";
-import * as Types from "../../../types/Types";
-import SearchModal from "@/components/SearchModal";
+import React, { useState } from "react";
+import { X } from "lucide-react";
+import FileUploadSection from "@/components/upload-file";
+import * as Types from "./api-type";
 import axios from "axios";
-import FileUploadSection from "./upload-file"; // Adjust path as needed
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-import AdminLayout from "@/components/AdminLayout";
+import SearchModal from "@/components/SearchModal";
 
-const AddSongsPage = () => {
+interface SearchModalProps {
+  onClose: () => void;
+  musicId: number;
+}
+
+const ApproveModal = ({ onClose, musicId }: SearchModalProps) => {
+  const [showModal, setShowModal] = useState(false);
+  const [currentField, setCurrentField] = useState("");
   const [description, setDescription] = useState("");
   const [songName, setSongName] = useState("");
   const [lyric, setLyric] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [currentField, setCurrentField] = useState("");
   const [selectedPeriods, setSelectedPeriods] = useState<Types.Period[]>([]);
   const [selectedInstruments, setSelectedInstruments] = useState<
     Types.Instrument[]
   >([]);
   const [selectedGenres, setSelectedGenres] = useState<Types.Genre[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<
-    Types.Category[] // Change this to match the structure of category objects
+    Types.Category[]
   >([]);
-  const [selectedArtists, setSelectedArtists] = useState<Types.ArtistDetails[]>(
-    []
-  );
+  const [selectedArtists, setSelectedArtists] = useState<Types.Artist[]>([]);
   const [selectedAlbums, setSelectedAlbums] = useState<Types.Album[]>([]);
-
   const [musicFileUrl, setMusicFileUrl] = useState("");
   const [coverArtUrl, setCoverArtUrl] = useState("");
   const [quizzesData, setQuizzesData] = useState({
@@ -39,16 +40,11 @@ const AddSongsPage = () => {
     correctAnswer: "A",
   });
 
-  const [mediaId, setMediaId] = useState("");
-
-  const handleShowModal = (field: string) => {
-    setShowModal(true);
-    setCurrentField(field);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setCurrentField("");
+  const handleQuizChange = (field: string, value: string) => {
+    setQuizzesData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const handleUploadError = (error: string) => {
@@ -56,14 +52,81 @@ const AddSongsPage = () => {
     alert(`Upload failed: ${error}`);
   };
 
+  const handleReject = async () => {
+    try {
+      await axios.put(`https://api.sonata.io.vn/api/v1/music/reject/${musicId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+        },
+      });
+      // Refetch current page so count & pages stay in sync
+    } catch (err) {
+      console.error("Error deleting music:", err);
+      alert("Failed to delete music. Please try again.");
+    }
+  };
+
   type SelectableItem =
     | Types.Genre
-    | Types.Orchestra
     | Types.Period
     | Types.Instrument
-    | Types.Student
-    | Types.ArtistDetails
+    | Types.Artist
     | Types.Album;
+
+  const handleResponseGetData = (ResponseData: Types.MusicData) => {
+    setDescription(ResponseData.description || "");
+    setSongName(ResponseData.name || "");
+    setLyric(ResponseData.lyric || "");
+    setSelectedPeriods(ResponseData.periods || []);
+    setSelectedInstruments(ResponseData.instruments || []);
+    setSelectedGenres(ResponseData.genres || []);
+    setSelectedCategories(ResponseData.categories || []);
+    setSelectedArtists(ResponseData.artists || []);
+    setSelectedAlbums(ResponseData.albums || []);
+    // Fix: Corrected the mapping based on variable names
+    setMusicFileUrl(ResponseData.resourceLink || ""); // Music file URL
+    setCoverArtUrl(ResponseData.coverPhoto || ""); // Cover art URL
+
+    // Fix: Added safety checks for quiz data
+    const quiz = ResponseData.quizzes?.[0];
+    setQuizzesData({
+      content: quiz?.content || "",
+      answerA: quiz?.answerA || "",
+      answerB: quiz?.answerB || "",
+      answerC: quiz?.answerC || "",
+      answerD: quiz?.answerD || "",
+      correctAnswer: "A",
+    });
+  };
+
+  const fetchData = React.useCallback(async () => {
+    if (!musicId) return;
+
+    try {
+      const response = await axios.get(
+        `https://api.sonata.io.vn/api/v1/music/${musicId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+          },
+        }
+      );
+      console.log(response.data);
+      handleResponseGetData(response.data.data);
+    } catch (error) {
+      console.error("Failed to fetch music data:", error);
+      alert("Failed to load music data. Please try again.");
+    }
+  }, [musicId]); // only remakes when musicId changes
+
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setCurrentField("");
+  };
 
   // get selected Items
   const handleSelectedItems = (
@@ -85,7 +148,7 @@ const AddSongsPage = () => {
         break;
       case "artist":
       case "composer":
-        setSelectedArtists(selectedItems as Types.ArtistDetails[]);
+        setSelectedArtists(selectedItems as Types.Artist[]);
         break;
       case "album":
         setSelectedAlbums(selectedItems as Types.Album[]);
@@ -95,7 +158,6 @@ const AddSongsPage = () => {
     }
   };
 
-  // get the Item when Modal gave back
   const getExistingItems = (fieldType: string): SelectableItem[] => {
     switch (fieldType) {
       case "periods":
@@ -116,156 +178,51 @@ const AddSongsPage = () => {
     }
   };
 
-  const handleQuizChange = (field: string, value: string) => {
-    setQuizzesData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleShowModal = (field: string) => {
+    setShowModal(true);
+    setCurrentField(field);
   };
 
-  useEffect(() => {
-    // remember to create function
-    const fetchMediaId = async () => {
-      try {
-        const response = await axios.get(
-          `https://api.sonata.io.vn/media-service/api/v1/media/media-id`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
-            },
-          }
-        );
-        setMediaId(response.data.data.mediaId);
-        console.log("Successfully get media ID.", response.data.data.mediaId);
-      } catch (err) {
-        console.log("Failed to get media ID: ", err);
-      }
-    };
-
-    fetchMediaId();
-  }, []); //use only once to get mediaId
-
-  const handleAdd = async () => {
-    const albumIds = selectedAlbums.map((album) => album.id);
-    const genreIds = selectedGenres.map((genre) => genre.id);
-    const instrumentIds = selectedInstruments.map(
-      (instrument) => instrument.id
-    );
-    const periodIds = selectedPeriods.map((period) => period.id);
-    const categoryIds = selectedCategories.map((category) => category.id);
-    const artistIds = selectedArtists.map((artist) => artist.id);
-    const composerIds = artistIds;
-
-    const songData = {
-      name: songName,
-      mediaId,
-      description,
-      lyric,
-      coverPhoto: coverArtUrl,
-      resourceLink: musicFileUrl,
-      albumIds,
-      quizzes: [quizzesData],
-      genreIds,
-      instrumentIds,
-      periodIds,
-      categoryIds,
-      artistIds,
-      composerIds,
-    };
-
+  // call approve put api 
+  const handleApprove = async () => {
     try {
-      const response = await axios.post(
-        "https://api.sonata.io.vn/api/v1/music",
-        songData,
+      const response = await axios.put(
+        `https://api.sonata.io.vn/api/v1/music/approve/${musicId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
-            "Content-Type": "application/json",
           },
         }
       );
 
       if (response.data.success) {
-        alert(`Song ${songName} added successfully!`);
-        handleClear();
+        alert(`Song ${songName} has been approved!`);
       } else {
-        alert(`Error: ${response.data.message || "Failed to add artist"})`);
+        alert(`Error: ${response.data.message || "Failed to approve song"})`);
       }
     } catch (err) {
-      console.error("Error adding artist:", err);
+      console.error("Error approving artist:", err);
     }
   };
 
-  const handleClear = () => {
-    setDescription("");
-    setSongName("");
-    setLyric("");
-    setSelectedPeriods([]);
-    setSelectedInstruments([]);
-    setSelectedGenres([]);
-    setSelectedCategories([]);
-    setSelectedArtists([]);
-    setSelectedAlbums([]);
-    setMusicFileUrl("");
-    setCoverArtUrl("");
-    setQuizzesData({
-      content: "",
-      answerA: "",
-      answerB: "",
-      answerC: "",
-      answerD: "",
-      correctAnswer: "A",
-    });
-  };
-
   return (
-    <AdminLayout>
-      <div className="bg-white">
-        <div className="max-w-7xl mx-auto p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Songs Management
-            </h1>
-            <p className="text-gray-600">
-              Add and organize your music collection
-            </p>
-          </div>
           <div className="flex items-center justify-between mb-6">
-            {/* tab sections */}
-            <div className="flex items-center gap-4">
-              <button className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium text-sm">
-                <span className="text-lg">+</span>
-                Add Songs
-              </button>
-              <a
-                href="../admin-add-albums"
-                className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm"
-              >
-                <FolderPlus className="w-4 h-4" />
-                Add Albums
-              </a>
-              <a
-                href="../admin-view-all"
-                className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm"
-              >
-                <UserIcon className="w-4 h-4" />
-                All
-              </a>
-
-              <a
-                href="../admin-approve-music"
-                className="bg-white hover:bg-blue-400  text-gray-600 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-gray-300 shadow-sm text-sm"
-              >
-                <UserIcon className="w-4 h-4" />
-                Approve music
-              </a>
-            </div>
+            <div></div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-500" />
+            </button>
           </div>
 
-          {/* main sections */}
-          <div className="flex justify-between gap-5 ">
-            <div>
+          {/* Main sections */}
+          <div className="flex justify-between gap-5">
+            <div className="flex-1">
               <h2 className="text-lg font-medium text-gray-900 mb-6">Filter</h2>
               <div className="grid grid-cols-4 gap-12 mb-8">
                 {/* Category Name */}
@@ -276,9 +233,9 @@ const AddSongsPage = () => {
                     </h3>
                     <div className="relative min-h-12 bg-gray-100 rounded-xl">
                       <div className="flex flex-wrap gap-2 p-2">
-                        {selectedCategories.map((tag) => (
+                        {selectedCategories.map((tag, index) => (
                           <span
-                            key={tag.id}
+                            key={index}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
                             {tag.name}
@@ -303,9 +260,9 @@ const AddSongsPage = () => {
                     </h3>
                     <div className="relative min-h-12 bg-gray-100 rounded-xl">
                       <div className="flex flex-wrap gap-2 p-2">
-                        {selectedArtists.map((tag) => (
+                        {selectedArtists.map((tag, index) => (
                           <span
-                            key={tag.id}
+                            key={index}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
                             {tag.name}
@@ -330,9 +287,9 @@ const AddSongsPage = () => {
                     </h3>
                     <div className="relative min-h-12 bg-gray-100 rounded-xl">
                       <div className="flex flex-wrap gap-2 p-2">
-                        {selectedArtists.map((tag) => (
+                        {selectedArtists.map((tag, index) => (
                           <span
-                            key={tag.id}
+                            key={index}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
                             {tag.name}
@@ -348,6 +305,7 @@ const AddSongsPage = () => {
                     </div>
                   </div>
                 </div>
+
                 {/* Song Name */}
                 <div className="text-black">
                   <div className="mb-6">
@@ -364,6 +322,7 @@ const AddSongsPage = () => {
                     />
                   </div>
                 </div>
+
                 {/* Genre */}
                 <div>
                   <div className="mb-6">
@@ -372,9 +331,9 @@ const AddSongsPage = () => {
                     </h3>
                     <div className="relative min-h-12 bg-gray-100 rounded-xl">
                       <div className="flex flex-wrap gap-2 p-2">
-                        {selectedGenres.map((genre) => (
+                        {selectedGenres.map((genre, index) => (
                           <span
-                            key={genre.id}
+                            key={index}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
                             {genre.name}
@@ -399,9 +358,9 @@ const AddSongsPage = () => {
                     </h3>
                     <div className="relative min-h-12 bg-gray-100 rounded-xl">
                       <div className="flex flex-wrap gap-2 p-2">
-                        {selectedPeriods.map((period) => (
+                        {selectedPeriods.map((period, index) => (
                           <span
-                            key={period.id}
+                            key={index}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
                             {period.name}
@@ -426,9 +385,9 @@ const AddSongsPage = () => {
                     </h3>
                     <div className="relative min-h-12 bg-gray-100 rounded-xl">
                       <div className="flex flex-wrap gap-2 p-2">
-                        {selectedInstruments.map((instrument) => (
+                        {selectedInstruments.map((instrument, index) => (
                           <span
-                            key={instrument.id}
+                            key={index}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
                             {instrument.name}
@@ -453,9 +412,9 @@ const AddSongsPage = () => {
                     </h3>
                     <div className="relative min-h-12 bg-gray-100 rounded-xl">
                       <div className="flex flex-wrap gap-2 p-2">
-                        {selectedAlbums.map((album) => (
+                        {selectedAlbums.map((album, index) => (
                           <span
-                            key={album.id}
+                            key={index}
                             className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                           >
                             {album.name}
@@ -471,6 +430,7 @@ const AddSongsPage = () => {
                     </div>
                   </div>
                 </div>
+
                 {/* Description */}
                 <div className="col-span-2 text-black">
                   <div className="mb-6">
@@ -487,6 +447,7 @@ const AddSongsPage = () => {
                     />
                   </div>
                 </div>
+
                 {/* Lyric */}
                 <div className="col-span-2 text-black">
                   <div className="mb-6">
@@ -505,6 +466,7 @@ const AddSongsPage = () => {
                 </div>
               </div>
 
+              {/* File Upload Sections */}
               <div className="grid grid-cols-2 gap-12">
                 <div>
                   <FileUploadSection
@@ -512,7 +474,6 @@ const AddSongsPage = () => {
                     acceptedFormats="Accepted formats: MP3, WAV, FLAC"
                     acceptTypes=".mp3,.wav,.flac"
                     fileType="music"
-                    mediaId={mediaId}
                     uploadedUrl={musicFileUrl}
                     onUploadSuccess={(mediaUrl) => setMusicFileUrl(mediaUrl)}
                     onUploadError={handleUploadError}
@@ -531,13 +492,14 @@ const AddSongsPage = () => {
                 </div>
               </div>
             </div>
-            {/* quizzes */}
-            <div className="flex flex-col items-end gap-4 justify-between mt-15 ">
+
+            {/* Quiz Section */}
+            <div className="flex flex-col items-end gap-4 justify-between mt-15">
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-6">
                   Quiz Questions
                 </h3>
-                <form className="space-y-4 w-80 text-black">
+                <div className="space-y-4 w-80 text-black">
                   <div>
                     <label className="block text-sm font-medium text-gray-800 mb-2">
                       Question
@@ -628,38 +590,38 @@ const AddSongsPage = () => {
                       <option value="D">Answer D</option>
                     </select>
                   </div>
-                </form>
+                </div>
               </div>
               <div className="flex gap-5">
-                <button className="px-6 w-40 h-10 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors bg-white">
-                  Clear
+                <button
+                  onClick={handleReject}
+                  className="px-6 w-40 h-10 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors bg-white"
+                >
+                  Reject
                 </button>
                 <button
-                  onClick={handleAdd}
+                  onClick={handleApprove}
                   className="px-6 w-40 h-10 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                 >
-                  Add
+                  Approve
                 </button>
               </div>
             </div>
           </div>
         </div>
-        {showModal ? (
-          <SearchModal
-            onClose={handleCloseModal}
-            fieldType={currentField}
-            onSelect={(selectedItems) =>
-              handleSelectedItems(
-                currentField,
-                selectedItems as SelectableItem[]
-              )
-            }
-            existingItems={getExistingItems(currentField)}
-          />
-        ) : null}
       </div>
-    </AdminLayout>
+      {showModal ? (
+        <SearchModal
+          onClose={handleCloseModal}
+          fieldType={currentField}
+          onSelect={(selectedItems) =>
+            handleSelectedItems(currentField, selectedItems as SelectableItem[])
+          }
+          existingItems={getExistingItems(currentField)}
+        />
+      ) : null}
+    </div>
   );
 };
 
-export default AddSongsPage;
+export default ApproveModal;

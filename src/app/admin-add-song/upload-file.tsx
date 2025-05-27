@@ -21,6 +21,7 @@ interface FileUploadSectionProps {
   acceptTypes: string;
   fileType: "music" | "cover";
   uploadedUrl: string;
+  mediaId?: string;
   onUploadSuccess: (mediaUrl: string) => void;
   onUploadError: (error: string) => void;
 }
@@ -31,6 +32,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   acceptTypes,
   fileType,
   uploadedUrl,
+  mediaId,
   onUploadSuccess,
   onUploadError,
 }) => {
@@ -54,7 +56,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
 
       const uploadUrl =
         fileType === "music"
-          ? "https://api.sonata.io.vn/media-service/api/v1/media/upload/music?mediaCategory=GENERAL&musicId=100"
+          ? `https://api.sonata.io.vn/media-service/api/v1/media/upload/music?mediaCategory=GENERAL&mediaId=${mediaId}`
           : "https://api.sonata.io.vn/media-service/api/v1/media/upload/image?mediaCategory=GENERAL";
 
       const response = await axios.post<UploadResponse>(uploadUrl, formData, {
