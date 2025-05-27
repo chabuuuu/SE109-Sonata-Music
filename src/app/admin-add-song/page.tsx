@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FolderPlus, UserIcon } from "lucide-react";
 import * as Types from "../../../types/Types";
 import SearchModal from "@/components/SearchModal";
@@ -38,6 +38,8 @@ const AddSongsPage = () => {
     answerD: "",
     correctAnswer: "A",
   });
+
+  const [mediaId, setMediaId] = useState("");
 
   const handleShowModal = (field: string) => {
     setShowModal(true);
@@ -121,6 +123,28 @@ const AddSongsPage = () => {
     }));
   };
 
+  useEffect(() => {
+    // remember to create function
+    const fetchMediaId = async () => {
+      try {
+        const response = await axios.get(
+          `https://api.sonata.io.vn/media-service/api/v1/media/media-id`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+            },
+          }
+        );
+        setMediaId(response.data.data.mediaId);
+        console.log("Successfully get media ID.", response.data.data.mediaId);
+      } catch (err) {
+        console.log("Failed to get media ID: ", err);
+      }
+    };
+
+    fetchMediaId();
+  }, []); //use only once to get mediaId
+
   const handleAdd = async () => {
     const albumIds = selectedAlbums.map((album) => album.id);
     const genreIds = selectedGenres.map((genre) => genre.id);
@@ -134,6 +158,7 @@ const AddSongsPage = () => {
 
     const songData = {
       name: songName,
+      mediaId,
       description,
       lyric,
       coverPhoto: coverArtUrl,
@@ -487,6 +512,7 @@ const AddSongsPage = () => {
                     acceptedFormats="Accepted formats: MP3, WAV, FLAC"
                     acceptTypes=".mp3,.wav,.flac"
                     fileType="music"
+                    mediaId={mediaId}
                     uploadedUrl={musicFileUrl}
                     onUploadSuccess={(mediaUrl) => setMusicFileUrl(mediaUrl)}
                     onUploadError={handleUploadError}
