@@ -834,7 +834,6 @@ const TagsSection = ({ music }: { music: Music }) => {
         {tagSections.map((section, sectionIndex) => (
           <div key={section.title}>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm">{section.icon}</span>
               <h4 className="text-sm font-semibold text-[#5D4037]">
                 {section.title}
               </h4>
