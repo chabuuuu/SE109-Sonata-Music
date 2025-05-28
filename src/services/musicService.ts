@@ -222,9 +222,9 @@ export async function searchMusicsByCategory(
     const requestData = {
       filters: [
         {
-          operator: "equal",
+          operator: "in",
           key: "categories.id",
-          value: parseInt(categoryId.toString())
+          value: [parseInt(categoryId.toString())]
         }
         // Không filter theo approved để lấy tất cả nhạc như category API
       ],
