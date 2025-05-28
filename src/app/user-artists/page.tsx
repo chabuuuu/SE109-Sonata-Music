@@ -162,7 +162,7 @@ export default function ClassicalMusicArtistsPage() {
   // BƯỚC 2: KẾT NỐI VỚI MUSIC PLAYER CONTEXT
   // Chúng ta chỉ cần hàm `playMusic` từ context.
   // Mọi state khác (isPlaying, currentMusic...) đều được quản lý toàn cục.
-  const { playMusic } = useMusicPlayer();
+  const { playSongById } = useMusicPlayer();
 
   // State cục bộ của trang này (bộ lọc, sắp xếp, tìm kiếm...) -> Giữ nguyên
   const [selectedTopTab, setSelectedTopTab] = useState<
@@ -246,7 +246,7 @@ export default function ClassicalMusicArtistsPage() {
     };
 
     // Gọi hàm `playMusic` từ context toàn cục
-    playMusic(musicToPlay);
+    playSongById(musicToPlay.id);
   };
 
   return (
