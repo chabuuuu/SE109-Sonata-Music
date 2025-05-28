@@ -54,7 +54,25 @@ export interface MusicSearchResponse {
     total: number;
     items: Music[];
   };
-  errors: null | any;
+  errors: unknown;
+}
+
+// Interface cho raw music data từ API
+interface RawMusicData {
+  id?: number;
+  name?: string;
+  approved?: boolean;
+  coverPhoto?: string;
+  resourceLink?: string;
+  listenCount?: number;
+  favoriteCount?: number;
+  createAt?: string;
+  updateAt?: string;
+  albums?: SimpleAlbum[];
+  genres?: SimpleGenre[];
+  artists?: SimpleArtist[];
+  composers?: SimpleArtist[];
+  categories?: SimpleCategory[];
 }
 
 /**
@@ -116,7 +134,7 @@ export async function searchMusics(
     if (response.data && response.data.success && response.data.data) {
       const { total, items } = response.data.data;
       
-      const mappedItems = (items || []).map((music: any) => ({
+      const mappedItems = (items || []).map((music: RawMusicData) => ({
         id: music.id || 0,
         name: music.name || 'Unknown Music',
         approved: music.approved || false,
@@ -124,8 +142,8 @@ export async function searchMusics(
         resourceLink: music.resourceLink || '',
         listenCount: music.listenCount || 0,
         favoriteCount: music.favoriteCount || 0,
-        createAt: music.createAt,
-        updateAt: music.updateAt,
+        createAt: music.createAt || '',
+        updateAt: music.updateAt || '',
         albums: music.albums || [],
         genres: music.genres || [],
         artists: music.artists || [],
@@ -245,7 +263,7 @@ export async function searchMusicsByCategory(
     if (response.data && response.data.success && response.data.data) {
       const { total, items } = response.data.data;
       
-      const mappedItems = (items || []).map((music: any) => ({
+      const mappedItems = (items || []).map((music: RawMusicData) => ({
         id: music.id || 0,
         name: music.name || 'Unknown Music',
         approved: music.approved || false,
@@ -253,8 +271,8 @@ export async function searchMusicsByCategory(
         resourceLink: music.resourceLink || '',
         listenCount: music.listenCount || 0,
         favoriteCount: music.favoriteCount || 0,
-        createAt: music.createAt,
-        updateAt: music.updateAt,
+        createAt: music.createAt || '',
+        updateAt: music.updateAt || '',
         albums: music.albums || [],
         genres: music.genres || [],
         artists: music.artists || [],

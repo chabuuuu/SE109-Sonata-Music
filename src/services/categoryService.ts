@@ -14,6 +14,16 @@ export interface CategorySearchResponse {
   errors: null | any;
 }
 
+// Interface cho raw category data từ API
+interface RawCategoryData {
+  id?: string;
+  name?: string;
+  picture?: string;
+  description?: string;
+  viewCount?: number;
+  totalMusics?: number;
+}
+
 /**
  * Lấy danh sách categories từ API
  * @returns Danh sách categories
@@ -29,11 +39,11 @@ export async function getCategories(): Promise<Category[]> {
     
     // Kiểm tra response theo cấu trúc API thực tế
     if (response.data && response.data.success && Array.isArray(response.data.data)) {
-      return response.data.data.map((category: any) => ({
+      return response.data.data.map((category: RawCategoryData) => ({
         id: category.id || '',
         name: category.name || 'Unknown Category',
         picture: category.picture || '/default-category.jpg',
-        description: category.description,
+        description: category.description || null,
         viewCount: category.viewCount || 0,
         totalMusics: category.totalMusics || 0
       }));

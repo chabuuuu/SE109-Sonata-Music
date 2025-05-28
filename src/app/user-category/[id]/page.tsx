@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
@@ -27,33 +27,8 @@ export default function CategoryDetailPage() {
   const [itemsPerPage] = useState(12);
   const [currentPlayingId, setCurrentPlayingId] = useState<number | null>(null);
 
-  // Lấy thông tin category và danh sách nhạc
-  useEffect(() => {
-    const fetchCategoryAndMusics = async () => {
-      try {
-        setLoading(true);
-        
-        // Lấy thông tin category
-        const categoriesData = await getCategories();
-        const foundCategory = categoriesData.find(cat => cat.id === categoryId);
-        setCategory(foundCategory || null);
-
-        // Lấy danh sách nhạc của category
-        await fetchMusics(1);
-      } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu category:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (categoryId) {
-      fetchCategoryAndMusics();
-    }
-  }, [categoryId]);
-
   // Hàm lấy danh sách nhạc theo trang
-  const fetchMusics = async (page: number) => {
+  const fetchMusics = useCallback(async (page: number) => {
     try {
       setMusicLoading(true);
       const response = await searchMusicsByCategory(categoryId, itemsPerPage, page);
@@ -82,14 +57,32 @@ export default function CategoryDetailPage() {
     } finally {
       setMusicLoading(false);
     }
-  };
+  }, [categoryId, itemsPerPage, category?.totalMusics]);
 
-  // Hàm format thời gian
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Lấy thông tin category và danh sách nhạc
+  const fetchCategoryAndMusics = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Lấy thông tin category
+      const categoriesData = await getCategories();
+      const foundCategory = categoriesData.find(cat => cat.id === categoryId);
+      setCategory(foundCategory || null);
+
+      // Lấy danh sách nhạc của category
+      await fetchMusics(1);
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu category:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [categoryId, fetchMusics]);
+
+  useEffect(() => {
+    if (categoryId) {
+      fetchCategoryAndMusics();
+    }
+  }, [fetchCategoryAndMusics, categoryId]);
 
   // Hàm format số lượt nghe
   const formatPlayCount = (count: number): string => {
