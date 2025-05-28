@@ -20,9 +20,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
   // Compute the “active key” from the path:
   const activeItem = React.useMemo(() => {
     if (pathName.startsWith("/contributor-artist-view")) return "artists";
-    if (pathName.startsWith("/contributor-view-all")) return "viewAll";
-    if (pathName.startsWith("/contributor-categories-all")) return "categories";
-    if (pathName.startsWith("/contributor-quizzes-view")) return "quizzes";
+    if (pathName.startsWith("/contributor-view-all") || pathName.startsWith("/contributor-add-song")) return "viewAll";
     return "dashboard";
   }, [pathName]);
 
@@ -94,22 +92,6 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                   <span className="text-base">Songs & Albums Management</span>
                 </li>
 
-                {/* Category Management */}
-                <li
-                  className={`${styles.menuItem} ${
-                    activeItem === "categories" ? styles.active : ""
-                  }`}
-                  onClick={() => router.push("/admin-categories-all")}
-                >
-                  <Image
-                    src="/layout_imgs/createPlaylist_logo.png"
-                    alt="create playlist logo"
-                    height={20}
-                    width={20}
-                    className="object-contain"
-                  />
-                  <span className="text-base">Category Management</span>
-                </li>
               </ul>
             </nav>
           </div>

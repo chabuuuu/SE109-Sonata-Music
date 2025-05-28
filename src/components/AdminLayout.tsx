@@ -23,8 +23,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     if (pathName.startsWith("/artists-management")) return "artists";
     if (pathName.startsWith("/admin-view-all")) return "viewAll";
     if (pathName.startsWith("/admin-categories-all")) return "categories";
-    if (pathName === "/" || pathName === "/contributors") return "contributors";
-    if (pathName.startsWith("/admin-quizzes")) return "quizzes";
+    if (pathName === "/admin-contributor-management") return "contributors";
     return "dashboard";
   }, [pathName]);
 
@@ -110,7 +109,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   className={`${styles.menuItem} ${
                     activeItem === "contributors" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push('/admin-contributor-management')}
                 >
                   <Image
                     src="/layout_imgs/contributor.png"
@@ -120,23 +119,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     className="object-contain bg-white" // optional to ensure proper scaling
                   />
                   <span className="text-base">Contributors Management</span>
-                </li>
-
-                {/* Quizzes Manage*/}
-                <li
-                  className={`${styles.menuItem} ${
-                    activeItem === "quizzes" ? styles.active : ""
-                  }`}
-                  onClick={() => router.push('/admin-quizzes-feedback')}
-                >
-                  <Image
-                    src="/layout_imgs/quizzes.png"
-                    alt="create playlist logo"
-                    height={20} // equivalent to h-5 (20px)
-                    width={20} // equivalent to w-5 (20px)
-                    className="object-contain" // optional to ensure proper scaling
-                  />
-                  <span className="text-base">Quizzes Management</span>
                 </li>
               </ul>
             </nav>
