@@ -131,7 +131,7 @@ const sortOptions = [
 ];
 
 export default function ClassicalMusicArtistsPage() {
-  // BƯỚC 2: KẾT NỐI VỚI MUSIC PLAYER CONTEXT
+
   const { playSongById } = useMusicPlayer();
 
   // State cục bộ của trang này
@@ -262,6 +262,7 @@ export default function ClassicalMusicArtistsPage() {
       }
     };
 
+
     filterByInstrument();
   }, [selectedInstrument, searchTerm]);
 
@@ -335,6 +336,7 @@ export default function ClassicalMusicArtistsPage() {
     } catch (error) {
       console.error('Lỗi khi phát nhạc của nghệ sĩ:', error);
     }
+
   };
 
   return (
