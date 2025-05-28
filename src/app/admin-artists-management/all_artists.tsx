@@ -107,7 +107,7 @@ export default function All_artists() {
   };
 
   return (
-    <div className="bg-white p-6 w-full mx-auto">
+    <div className="bg-white p-6 w-full mx-auto h-full">
       {/* Main content area */}
       <div className="flex justify-between items-center mb-4">
         <div className="w-2/3">
