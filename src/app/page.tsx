@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/navbar';
 import Image from 'next/image';
-import SearchBarComponent from '@/components/SearchBar';
+import SearchBar from '@/components/SearchBar';
 import BottomBanner from '@/components/bottom_banner';
 import { getRecommendedSongs, Song } from '@/services/recommendService';
 import { getPopularAlbums, Album, searchAlbums, AlbumSearchResponse } from '@/services/albumService';
@@ -13,6 +14,7 @@ import { getErasAndStyles, EraStyle, Period } from '@/services/eraService';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { getToken } from '@/services/authService';
+import Link from 'next/link';
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -195,7 +197,9 @@ const PlaylistCard: React.FC<{
   title: string;
   description: string;
   image: string;
-}> = ({ title, description, image }) => (
+  songId?: number;
+  onPlayClick?: () => void;
+}> = ({ title, description, image, songId, onPlayClick }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
       <Image
@@ -207,7 +211,10 @@ const PlaylistCard: React.FC<{
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       {/* Play button */}
-      <button className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white">
+      <button 
+        onClick={onPlayClick}
+        className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
+      >
         <svg
           width="24"
           height="24"
@@ -220,7 +227,7 @@ const PlaylistCard: React.FC<{
         </svg>
       </button>
       <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        Playlist
+        {songId ? "Song" : "Playlist"}
       </div>
     </figure>
     <div className="flex-1 flex flex-col">
@@ -475,73 +482,96 @@ const AlbumCard: React.FC<{
 const ArtistCard: React.FC<{
   artist: Artist;
 }> = ({ artist }) => (
-  <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
-    <figure className="relative mb-4 rounded-md overflow-hidden">
-      <Image
-        src={artist.picture}
-        alt={artist.name}
-        width={500}
-        height={500}
-        className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      {/* Play button */}
-      <button className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
+  <Link href={`/artist/${artist.id}`} className="block h-full">
+    <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer">
+      <figure className="relative mb-4 rounded-md overflow-hidden">
+        <Image
+          src={artist.picture}
+          alt={artist.name}
+          width={500}
+          height={500}
+          className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        {/* Play button */}
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Thêm logic phát nhạc của nghệ sĩ ở đây
+          }}
+          className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
         >
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-      </button>
-      <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        Artist
-      </div>
-    </figure>
-    <div className="flex-1 flex flex-col">
-      <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
-        {artist.name}
-      </h3>
-      <p className="text-sm text-[#6D4C41] line-clamp-2">
-        {artist.description}
-      </p>
-      <div className="mt-auto pt-3 flex justify-between items-center">
-        <span className="text-xs text-[#8D6C61]">
-          {artist.followers} followers
-        </span>
-        <div className="flex space-x-2">
-          <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </button>
+        <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          Artist
+        </div>
+      </figure>
+      <div className="flex-1 flex flex-col">
+        <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
+          {artist.name}
+        </h3>
+        <p className="text-sm text-[#6D4C41] line-clamp-2">
+          {artist.description}
+        </p>
+        <div className="mt-auto pt-3 flex justify-between items-center">
+          <span className="text-xs text-[#8D6C61]">
+            {artist.followers} followers
+          </span>
+          <div className="flex space-x-2">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Thêm logic thích nghệ sĩ ở đây
+              }}
+              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
             >
-              <path
-                fillRule="evenodd"
-                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-          <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Thêm logic thêm vào playlist ở đây
+              }}
+              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
             >
-              <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </article>
+    </article>
+  </Link>
 );
 
 // Instrument card component
@@ -591,7 +621,7 @@ const ArtistCard: React.FC<{
 
 
 // Search bar (classical theme)
-const SearchBar: React.FC = () => {
+const SearchBarComponent: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const { isLoggedIn, userProfile } = useAuth();
@@ -781,7 +811,8 @@ const SearchBar: React.FC = () => {
 const InstrumentSpotlightSection: React.FC<{
   spotlights: InstrumentSpotlight[];
   loading: boolean;
-}> = ({ spotlights, loading }) => {
+  onPlayClick?: (songId: number) => void;
+}> = ({ spotlights, loading, onPlayClick }) => {
   const [selectedInstrument, setSelectedInstrument] = useState<number | null>(
     null
   );
@@ -1059,7 +1090,10 @@ const InstrumentSpotlightSection: React.FC<{
                       className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <button className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white">
+                    <button 
+                      onClick={() => onPlayClick && onPlayClick(song.id)}
+                      className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
+                    >
                       <svg
                         width="24"
                         height="24"
@@ -1227,6 +1261,7 @@ const EraStyleSection: React.FC<{
  */
 
 const HomePage: React.FC = () => {
+  const router = useRouter();
   const [currentArtistIndex, setCurrentArtistIndex] = useState(0);
   const [currentBackgroundIndex, setCurrentBackgroundIndex] = useState(0);
   const [featuredArtists, setFeaturedArtists] =
@@ -1253,6 +1288,11 @@ const HomePage: React.FC = () => {
   const [instrumentsLoading, setInstrumentsLoading] = useState(false);
   const [erasLoading, setErasLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Handle play click function
+  const handlePlayClick = (songId: number) => {
+    router.push(`/music/${songId}`);
+  };
 
   // Fetch featured artists from API
   useEffect(() => {
@@ -1486,7 +1526,7 @@ const HomePage: React.FC = () => {
       {/* Main */}
       <main className="flex-1 overflow-y-auto h-screen pb-28">
         {/* Search */}
-        <SearchBarComponent />
+        <SearchBar />
 
         {/* Hero */}
         <section
@@ -1574,6 +1614,8 @@ const HomePage: React.FC = () => {
                     title={song.name}
                     description={song.description || "Recommended for you"}
                     image={song.coverPhoto}
+                    songId={song.id}
+                    onPlayClick={() => handlePlayClick(song.id)}
                   />
                 ))
               : // Fallback to default playlists if API fails
@@ -1654,6 +1696,8 @@ const HomePage: React.FC = () => {
                   title={song.name}
                   description={song.description || "Timeless piece"}
                   image={song.coverPhoto}
+                  songId={song.id}
+                  onPlayClick={() => handlePlayClick(song.id)}
                 />
               ))
             ) : (
@@ -1701,6 +1745,7 @@ const HomePage: React.FC = () => {
           <InstrumentSpotlightSection
             spotlights={instrumentSpotlights}
             loading={instrumentsLoading}
+            onPlayClick={handlePlayClick}
           />
         </div>
       </main>

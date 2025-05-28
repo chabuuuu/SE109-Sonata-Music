@@ -258,7 +258,7 @@ const SearchBar: React.FC = () => {
                         key={`album-${album.id}`}
                         className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3]"
                         onClick={() => {
-                          window.location.href = `/user-albums?id=${album.id}`;
+                          window.location.href = `/album/${album.id}`;
                         }}
                       >
                         <img
@@ -304,7 +304,7 @@ const SearchBar: React.FC = () => {
                         key={`artist-${artist.id}`}
                         className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
                         onClick={() => {
-                          window.location.href = `/user-artists?id=${artist.id}`;
+                          window.location.href = `/artist/${artist.id}`;
                         }}
                       >
                         <img
@@ -356,10 +356,34 @@ const SearchBar: React.FC = () => {
                         key={`category-${category.id}`}
                         className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
                         onClick={() => {
-                          window.location.href = `/user-categories?id=${category.id}`;
+                          window.location.href = `/user-category/${category.id}`;
                         }}
                       >
-                                                <img                          src={category.picture}                          alt={category.name}                          className="w-12 h-12 rounded-lg object-cover mr-3"                          onError={(e) => {                            (e.target as HTMLImageElement).src = '/default-category.jpg';                          }}                        />                        <div className="flex-1 min-w-0">                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">                            {category.name}                          </h4>                          <p className="text-xs text-[#6D4C41] truncate mt-1">                            {category.description || 'Category'}                          </p>                          <div className="flex items-center text-xs text-[#8D6C61] mt-1">                            <span>{category.totalMusics || 0} songs</span>                            {category.viewCount && (                              <>                                <span className="mx-1">•</span>                                <span>{category.viewCount} views</span>                              </>                            )}                          </div>                        </div>
+                        <img
+                          src={category.picture}
+                          alt={category.name}
+                          className="w-12 h-12 rounded-lg object-cover mr-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/default-category.jpg';
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                            {category.name}
+                          </h4>
+                          <p className="text-xs text-[#6D4C41] truncate mt-1">
+                            {category.description || 'Category'}
+                          </p>
+                          <div className="flex items-center text-xs text-[#8D6C61] mt-1">
+                            <span>{category.totalMusics || 0} songs</span>
+                            {category.viewCount && (
+                              <>
+                                <span className="mx-1">•</span>
+                                <span>{category.viewCount} views</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -378,9 +402,25 @@ const SearchBar: React.FC = () => {
                         key={`genre-${genre.id}`}
                         className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
                         onClick={() => {
-                          window.location.href = `/user-genres?id=${genre.id}`;
+                          window.location.href = `/user-categories`;
                         }}
-                                            >                        <img                          src={genre.picture}                          alt={genre.name}                          className="w-12 h-12 rounded-lg object-cover mr-3"                          onError={(e) => {                            (e.target as HTMLImageElement).src = '/default-genre.jpg';                          }}                        />                        <div className="flex-1 min-w-0">                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">                            {genre.name}                          </h4>                          <p className="text-xs text-[#6D4C41] truncate mt-1">                            {genre.description || 'Thể loại nhạc'}                          </p>                        </div>
+                      >
+                        <img
+                          src={genre.picture}
+                          alt={genre.name}
+                          className="w-12 h-12 rounded-lg object-cover mr-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/default-genre.jpg';
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                            {genre.name}
+                          </h4>
+                          <p className="text-xs text-[#6D4C41] truncate mt-1">
+                            {genre.description || 'Thể loại nhạc'}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -399,10 +439,17 @@ const SearchBar: React.FC = () => {
                         key={`music-${music.id}`}
                         className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
                         onClick={() => {
-                          window.location.href = `/user-musics?id=${music.id}`;
+                          window.location.href = `/music/${music.id}`;
                         }}
                       >
-                                                <img                          src={music.coverPhoto || '/default-music.jpg'}                          alt={music.name}                          className="w-12 h-12 rounded-lg object-cover mr-3"                          onError={(e) => {                            (e.target as HTMLImageElement).src = '/default-music.jpg';                          }}                        />
+                        <img
+                          src={music.coverPhoto || '/default-music.jpg'}
+                          alt={music.name}
+                          className="w-12 h-12 rounded-lg object-cover mr-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/default-music.jpg';
+                          }}
+                        />
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
                             {music.name}
@@ -438,7 +485,7 @@ const SearchBar: React.FC = () => {
                         key={`instrument-${instrument.id}`}
                         className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
                         onClick={() => {
-                          window.location.href = `/user-instruments?id=${instrument.id}`;
+                          window.location.href = `/user-categories`;
                         }}
                       >
                         <img
@@ -475,9 +522,25 @@ const SearchBar: React.FC = () => {
                         key={`orchestra-${orchestra.id}`}
                         className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
                         onClick={() => {
-                          window.location.href = `/user-orchestras?id=${orchestra.id}`;
+                          window.location.href = `/user-categories`;
                         }}
-                                              >                        <img                          src={orchestra.picture}                          alt={orchestra.name}                          className="w-12 h-12 rounded-lg object-cover mr-3"                          onError={(e) => {                            (e.target as HTMLImageElement).src = '/default-orchestra.jpg';                          }}                        />                        <div className="flex-1 min-w-0">                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">                            {orchestra.name}                          </h4>                          <p className="text-xs text-[#6D4C41] truncate mt-1">                            {orchestra.description || 'Orchestra'}                          </p>                        </div>
+                      >
+                        <img
+                          src={orchestra.picture}
+                          alt={orchestra.name}
+                          className="w-12 h-12 rounded-lg object-cover mr-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/default-orchestra.jpg';
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                            {orchestra.name}
+                          </h4>
+                          <p className="text-xs text-[#6D4C41] truncate mt-1">
+                            {orchestra.description || 'Orchestra'}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
