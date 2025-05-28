@@ -29,7 +29,16 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
     picture: data.picture,
     description: data.description,
   });
-  const [coverArtUrl, setCoverArtUrl] = useState("");
+  const [coverArtUrl, setCoverArtUrl] = useState(data.picture);
+
+  // update Edit data when coverArtUrl change
+
+  useEffect(() => {
+    setEditData((prev) => ({
+      ...prev,
+      picture: coverArtUrl || data.picture, // Use coverArtUrl if available, else data.picture
+    }));
+  }, [coverArtUrl, data.picture]);
 
   useEffect(() => {
     setEditData({
@@ -37,6 +46,7 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
       picture: coverArtUrl,
       description: data.description,
     });
+    setCoverArtUrl(data.picture);
   }, [data]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
