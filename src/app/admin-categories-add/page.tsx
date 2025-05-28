@@ -72,21 +72,6 @@ export default function AdminCategoriesPage() {
           </Link>
         </div>
 
-        {/* Right controls */}
-        <div className="absolute top-6 right-6 flex items-center space-x-3">
-          <button className="w-10 h-10 bg-white rounded-lg shadow border border-gray-200 flex items-center justify-center">
-            <Cog size={20} />
-          </button>
-          <button className="inline-flex items-center bg-white rounded-lg shadow border border-gray-200 px-3 h-10">
-            <span className="text-sm text-gray-800">Last 7 days</span>
-            <ChevronDown size={16} className="ml-1 text-gray-400" />
-          </button>
-          <button className="inline-flex items-center bg-white rounded-lg shadow border border-gray-200 px-3 h-10">
-            <span className="text-sm text-gray-800">Download as CSV</span>
-            <Download size={16} className="ml-1" />
-          </button>
-        </div>
-
         {/* Main content area */}
         <div className="h-full bg-white p-6 pt-24 flex flex-col overflow-hidden">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter</h2>
