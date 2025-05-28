@@ -1,5 +1,5 @@
-import { CONTRIBUTOR_TOKEN } from '@/constant/contributorToken';
-import axios from 'axios';
+import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
+import axios from "axios";
 
 export interface LoginRequest {
   usernameOrEmail: string;
@@ -33,40 +33,43 @@ export interface ActivateEmailResponse {
  * @param data Thông tin đăng ký (email, username, password, fullname)
  * @returns Thông báo xác nhận đã gửi OTP
  */
-export async function register(data: RegisterRequest): Promise<RegisterResponse> {
+export async function register(
+  data: RegisterRequest
+): Promise<RegisterResponse> {
   try {
     const response = await axios.post(
-      'https://api.sonata.io.vn/api/v1/contributor/register',
+      "https://api.sonata.io.vn/api/v1/contributor/register",
       data,
       {
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        timeout: 8000 // 8 giây timeout
+        timeout: 8000, // 8 giây timeout
       }
     );
 
     if (response.data && response.data.success) {
       return {
         success: true,
-        message: response.data.message || 'The OTP has been sent to your email'
+        message: response.data.message || "The OTP has been sent to your email",
       };
     } else {
-      throw new Error(response.data.message || 'Registration failed');
+      throw new Error(response.data.message || "Registration failed");
     }
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
         // Lỗi từ server (4xx, 5xx)
-        const errorMessage = error.response.data?.message || error.response.statusText;
+        const errorMessage =
+          error.response.data?.message || error.response.statusText;
         throw new Error(errorMessage);
       } else if (error.request) {
         // Không nhận được response
-        throw new Error('Cannot connect to server');
+        throw new Error("Cannot connect to server");
       }
     }
     // Lỗi khác
-    throw new Error(error.message || 'An error occurred during registration');
+    throw new Error(error.message || "An error occurred during registration");
   }
 }
 
@@ -75,7 +78,7 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
  */
 export function logout(): void {
   localStorage.removeItem(CONTRIBUTOR_TOKEN);
-  localStorage.removeItem('userId');
+  localStorage.removeItem("userId");
   // Có thể thêm redirect về trang đăng nhập ở đây nếu cần
 }
 
@@ -84,9 +87,9 @@ export function logout(): void {
  * @returns true nếu đã đăng nhập, false nếu chưa
  */
 export function isAuthenticated(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   const token = localStorage.getItem(CONTRIBUTOR_TOKEN);
-  console.log('Checking auth, token:', token);
+  // console.log('Checking auth, token:', token);
   return !!token;
 }
 
@@ -95,9 +98,9 @@ export function isAuthenticated(): boolean {
  * @returns Access token hoặc null nếu chưa đăng nhập
  */
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   const token = localStorage.getItem(CONTRIBUTOR_TOKEN);
-  console.log('Retrieved token:', token);
+  console.log("Retrieved token:", token);
   return token;
 }
 
@@ -106,8 +109,8 @@ export function getToken(): string | null {
  * @returns User ID hoặc null nếu chưa đăng nhập
  */
 export function getUserId(): number | null {
-  if (typeof window === 'undefined') return null;
-  const userId = localStorage.getItem('userId');
+  if (typeof window === "undefined") return null;
+  const userId = localStorage.getItem("userId");
   return userId ? parseInt(userId) : null;
 }
 
@@ -126,35 +129,43 @@ export function getAuthHeaders() {
  * @param email Email đã đăng ký
  * @returns Thông báo kích hoạt thành công
  */
-export async function activateEmail(otp: string, email: string): Promise<ActivateEmailResponse> {
+export async function activateEmail(
+  otp: string,
+  email: string
+): Promise<ActivateEmailResponse> {
   try {
     const response = await axios.get(
       `https://api.sonata.io.vn/api/v1/contributor/activate/email?email=${email}&otp=${otp}`,
       {
-        timeout: 8000 // 8 giây timeout
+        timeout: 8000, // 8 giây timeout
       }
     );
 
     if (response.data && response.data.success) {
       return {
         success: true,
-        message: response.data.message || 'Account activated successfully, you can login now'
+        message:
+          response.data.message ||
+          "Account activated successfully, you can login now",
       };
     } else {
-      throw new Error(response.data.message || 'Activation failed');
+      throw new Error(response.data.message || "Activation failed");
     }
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
         // Lỗi từ server (4xx, 5xx)
-        const errorMessage = error.response.data?.message || error.response.statusText;
+        const errorMessage =
+          error.response.data?.message || error.response.statusText;
         throw new Error(errorMessage);
       } else if (error.request) {
         // Không nhận được response
-        throw new Error('Cannot connect to server');
+        throw new Error("Cannot connect to server");
       }
     }
     // Lỗi khác
-    throw new Error(error.message || 'An error occurred during account activation');
+    throw new Error(
+      error.message || "An error occurred during account activation"
+    );
   }
-} 
+}
