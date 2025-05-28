@@ -20,7 +20,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   // Compute the “active key” from the path:
   const activeItem = React.useMemo(() => {
-    if (pathName.startsWith("/artists-management")) return "artists";
+    if (pathName.startsWith("/admin-artists-management")) return "artists";
     if (pathName.startsWith("/admin-view-all")) return "viewAll";
     if (pathName.startsWith("/admin-categories-all")) return "categories";
     if (pathName === "/admin-contributor-management") return "contributors";
@@ -58,7 +58,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   className={`${styles.menuItem} ${
                     activeItem === "artists" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/artists-management')}
+                  onClick={() => router.push('/admin-artists-management')}
                 >
                   <Image
                     src="/layout_imgs/search_logo.png"
