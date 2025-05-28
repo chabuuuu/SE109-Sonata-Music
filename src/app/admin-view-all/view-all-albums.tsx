@@ -52,7 +52,7 @@ export default function AllAlbumsPage() {
     };
 
     fetchCategories();
-  }, [searchTerm, currentPage, pageSize, albums]);
+  }, [searchTerm, currentPage, pageSize]);
 
   // handle delete
   const handleDelete = async (id: string) => {

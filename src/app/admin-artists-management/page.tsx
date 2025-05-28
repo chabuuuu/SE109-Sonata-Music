@@ -49,27 +49,6 @@ export default function ArtistsManagement() {
               <div className="text-xs mt-1">All Artists</div>
             </div>
           </div>
-
-          {/* Utility Buttons */}
-          <div className="flex md:ml-auto items-center space-x-2 overflow-x-auto pb-2 md:pb-0">
-            <button className="border border-gray-500 rounded-md p-2 flex-shrink-0">
-              <Settings size={16} className="text-gray-500" />
-            </button>
-
-            <div className="border border-gray-500 rounded-md px-2 md:px-3 py-2 flex items-center flex-shrink-0">
-              <span className="text-xs md:text-sm mr-1 md:mr-2 text-gray-500">
-                Last 7 days
-              </span>
-              <ChevronDown size={16} className="text-gray-500" />
-            </div>
-
-            <button className="border border-gray-500 rounded-md px-2 md:px-3 py-2 flex items-center flex-shrink-0">
-              <Download size={16} className="text-gray-500 mr-1 md:mr-2" />
-              <span className="text-xs md:text-sm text-gray-500">
-                Download as CSV
-              </span>
-            </button>
-          </div>
         </div>
       </div>
 

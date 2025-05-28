@@ -4,6 +4,7 @@ import SearchModal from "@/components/SearchModal";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import FileUploadSection from "@/components/upload-file";
+import DropdownRoles from "./role-dropdown";
 
 // API Response Types
 interface ApiResponse<T> {
@@ -94,6 +95,15 @@ interface Artist {
   artistStudents: ArtistStudent[];
 }
 
+export interface RolesResponse {
+  status: string;
+  code: number;
+  success: boolean;
+  message: string;
+  data: string[]; // Array of role strings like "SINGER", "BAND", etc.
+  errors: any | null;
+}
+
 // Type for items that can be selected
 type RoleItem = { id: number; name: string };
 type SelectableItem =
@@ -115,7 +125,7 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
   const [currentFieldType, setCurrentFieldType] = useState("");
   const [artist, setArtist] = useState<Artist | null>(null);
   const [coverArtUrl, setCoverArtUrl] = useState("");
-  const BASE_URL = "https://api.sonata.io.vn/api/v1";
+  const [roleArtist, setRoleArtist] = useState<RolesResponse | undefined>(undefined);
 
   // Function to open modal with specific field type
   const handleOpenModal = (fieldType: string) => {
@@ -141,7 +151,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
   ) => {
     if (!artist) return;
 
-    // Update the artist state with the selected items based on fieldType
     setArtist((prev) => {
       if (!prev) return null;
 
@@ -160,7 +169,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
         case "genres":
           return { ...prev, genres: selectedItems as Genre[] };
         case "students":
-          // Transform the selected students into artistStudents format
           const artistStudents = (selectedItems as Student[]).map(
             (student) => ({
               id: Math.random(), // This would be handled properly on the backend
@@ -182,7 +190,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
       case "periods":
         return artist.periods || [];
       case "roles":
-        // Transform roles (which are strings) to objects with id and name
         return (artist.roles || []).map((role, index) => ({
           id: index,
           name: role,
@@ -194,7 +201,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
       case "genres":
         return artist.genres || [];
       case "students":
-        // Transform artistStudents to student objects
         return (artist.artistStudents || []).map(
           (artistStudent) => artistStudent.student
         );
@@ -218,59 +224,82 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
     );
   };
 
+  // Handle role selection from DropdownRoles
+  const handleRoleSelect = (role: string | null) => {
+    setArtist((prev) =>
+      prev
+        ? {
+            ...prev,
+            roles: role ? [role] : [], // Single-select: replace roles array with selected role
+          }
+        : null
+    );
+  };
+
   // Fetch artist data
   useEffect(() => {
     const fetchArtist = async () => {
       try {
         const response = await axios.get<ApiResponse<Artist>>(
-          `${BASE_URL}/artist/${id}`,
+          `https://api.sonata.io.vn/api/v1/artist/${id}`,
           {
             headers: {
-              Authorization: `Bearer ${ADMIN_TOKEN}`,
+              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
             },
           }
         );
         setArtist(response.data.data);
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error("Error fetching artist:", err);
       }
     };
     fetchArtist();
   }, [id]);
+
+  // Fetch roles data
+  useEffect(() => {
+    const fetchArtistRoles = async () => {
+      try {
+        const response = await axios.get<RolesResponse>(
+          "https://api.sonata.io.vn/api/v1/artist/roles",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+            },
+          }
+        );
+        setRoleArtist(response.data);
+      } catch (err) {
+        console.error("Failed to fetch artist roles:", err);
+      }
+    };
+    fetchArtistRoles();
+  }, []);
 
   // Handle form submission
   const handleUpdate = async () => {
     if (!artist) return;
 
     try {
-      // Create the properly formatted request body
       const updateData = {
         name: artist.name,
         description: artist.description,
-        picture: coverArtUrl,
+        picture: coverArtUrl || artist.picture,
         awardsAndHonors: artist.awardsAndHonors,
         nationality: artist.nationality,
-        teachingAndAcademicContributions:
-          artist.teachingAndAcademicContributions,
+        teachingAndAcademicContributions: artist.teachingAndAcademicContributions,
         significantPerformences: artist.significantPerformences,
         roles: artist.roles,
         dateOfBirth: artist.dateOfBirth,
         dateOfDeath: artist.dateOfDeath,
-
-        // Convert related objects to ID arrays
-        artistStudentIds:
-          artist.artistStudents?.map((as) => as.student.id) || [],
+        artistStudentIds: artist.artistStudents?.map((as) => as.student.id) || [],
         periodIds: artist.periods?.map((period) => period.id) || [],
         orchestraIds: artist.orchestras?.map((orchestra) => orchestra.id) || [],
         genreIds: artist.genres?.map((genre) => genre.id) || [],
-        instrumentIds:
-          artist.instruments?.map((instrument) => instrument.id) || [],
+        instrumentIds: artist.instruments?.map((instrument) => instrument.id) || [],
       };
 
-      console.log("Sending update data:", updateData);
-
-      // Send the properly formatted data
-      await axios.put(`${BASE_URL}/artist/${id}`, updateData, {
+      await axios.put(`https://api.sonata.io.vn/api/v1/artist/${id}`, updateData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
           "Content-Type": "application/json",
@@ -278,7 +307,7 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
       });
 
       alert("Artist updated successfully!");
-      onClose(); // Close the modal on successful update
+      onClose();
     } catch (err) {
       console.error("Error updating artist:", err);
       alert("Failed to update artist");
@@ -310,15 +339,12 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
   return (
     <div className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto w-[90%] max-w-5xl">
       <div className="w-full mx-auto p-2 md:p-4 bg-white">
-        {/* Main Content Area */}
         <div className="flex flex-col lg:flex-row lg:justify-around lg:items-end gap-3 md:gap-5">
-          {/* Form Container */}
           <div className="w-full lg:w-5/6">
             <h2 className="font-bold text-black text-xl md:text-2xl mb-3 md:mb-4">
               Update Artist
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              {/* Left Column */}
               <div className="space-y-3 md:space-y-4">
                 <div>
                   <label className="block text-sm text-black mb-1">Name</label>
@@ -364,17 +390,13 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
 
                   <div>
                     <label className="block text-sm mb-1 text-black">
-                      Role
+                      Artist Role
                     </label>
-                    <div className="bg-gray-100 w-full p-3 md:p-4 rounded-lg relative min-h-12">
-                      {renderTags("roles")}
-                      <button
-                        onClick={() => handleOpenModal("roles")}
-                        className="absolute left-[1px] bg-blue-500 text-white rounded-full w-6 h-6 hover:bg-blue-300"
-                      >
-                        <span className="text-lg leading-none">+</span>
-                      </button>
-                    </div>
+                    <DropdownRoles
+                      roleArtist={roleArtist}
+                      selectedRole={artist?.roles[0] || null} // First role or null
+                      onSelectRole={handleRoleSelect}
+                    />
                   </div>
 
                   <div>
@@ -421,7 +443,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
                 </div>
               </div>
 
-              {/* Right Column */}
               <div className="space-y-3 md:space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
@@ -500,7 +521,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
                 </div>
               </div>
             </div>
-            {/* File Upload Area */}
             <div className="border border-dashed border-gray-300 rounded-lg p-4 md:p-8 mt-4 flex flex-col items-center justify-center">
               <div>
                 <FileUploadSection
@@ -516,7 +536,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-center md:justify-end mt-4 space-x-2 mb-4 lg:mb-0">
             <button
               onClick={onClose}
@@ -534,7 +553,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
         </div>
       </div>
 
-      {/* Render SearchModal conditionally */}
       {showModal && (
         <SearchModal
           onClose={handleCloseModal}
