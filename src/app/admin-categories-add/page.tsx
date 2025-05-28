@@ -6,9 +6,6 @@ import AdminLayout from '@/components/AdminLayout';
 import {
   FolderPlus,
   Inbox,
-  Cog,
-  ChevronDown,
-  Download,
 } from 'lucide-react';
 import { ADMIN_TOKEN } from '@/constant/adminToken';
 
