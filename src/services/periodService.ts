@@ -173,4 +173,130 @@ export async function searchPeriodsByKeyword(
       errors: error
     };
   }
+}
+
+/**
+ * Lấy thông tin chi tiết period theo ID
+ * @param id ID của period
+ * @returns Thông tin chi tiết period
+ */
+export async function getPeriodById(id: string | number): Promise<Period | null> {
+  try {
+    const url = `https://api.sonata.io.vn/api/v1/period/${id}`;
+    
+    console.log('📅 Getting period by ID:', { id, url });
+    
+    const response = await axios.get(url, {
+      timeout: 8000
+    });
+    
+    console.log('📅 Period Detail Response:', response.data);
+    
+    if (response.data && response.data.success && response.data.data) {
+      const period = response.data.data;
+      
+      return {
+        id: period.id || 0,
+        name: period.name || 'Unknown Period',
+        description: period.description || '',
+        picture: period.picture || '/default-period.jpg',
+        createAt: period.createAt,
+        updateAt: period.updateAt,
+        deleteAt: period.deleteAt
+      };
+    } else {
+      console.warn('📅 API period detail trả về dữ liệu không như mong đợi:', response.data);
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Lỗi khi lấy thông tin period:', error);
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
+        console.error('⏰ Timeout khi lấy period:', error.message);
+      } else if (error.response) {
+        console.error('🚫 Lỗi API period detail:', {
+          status: error.response.status,
+          data: error.response.data,
+          url: error.config?.url
+        });
+      } else if (error.request) {
+        console.error('📡 Không nhận được response từ API period detail:', error.message);
+      }
+    } else {
+      console.error('💥 Lỗi không xác định khi lấy period:', error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Lấy danh sách nhạc theo period ID  
+ * @param periodId ID của period
+ * @param rpp Số kết quả trên trang (records per page)
+ * @param page Trang hiện tại
+ * @returns Danh sách nhạc của period
+ */
+export async function getMusicsByPeriodId(
+  periodId: string | number,
+  rpp: number = 20,
+  page: number = 1
+): Promise<{ total: number; items: any[] }> {
+  try {
+    const url = `https://api.sonata.io.vn/api/v1/music/search?rpp=${rpp}&page=${page}`;
+    
+    const requestData = {
+      filters: [
+        {
+          operator: "=", 
+          key: "periodId",
+          value: periodId.toString()
+        }
+      ],
+      sorts: [
+        {
+          key: "name",
+          type: "ASC"
+        }
+      ]
+    };
+    
+    console.log('📅 Getting musics by period ID:', { periodId, url, requestData });
+    
+    const response = await axios.post(url, requestData, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 8000
+    });
+    
+    console.log('📅 Musics by Period Response:', response.data);
+    
+    if (response.data && response.data.success && response.data.data) {
+      const { total, items } = response.data.data;
+      
+      const mappedItems = (items || []).map((music: any) => ({
+        id: music.id || 0,
+        name: music.name || 'Unknown Music',
+        description: music.description || '',
+        coverPhoto: music.coverPhoto || '/default-music.jpg',
+        lyric: music.lyric,
+        audioFile: music.audioFile,
+        viewCount: music.viewCount,
+        likeCount: music.likeCount,
+        artists: music.artists || [],
+        albums: music.albums || []
+      }));
+      
+      return {
+        total: total || 0,
+        items: mappedItems
+      };
+    } else {
+      console.warn('📅 API musics by period trả về dữ liệu không như mong đợi:', response.data);
+      return { total: 0, items: [] };
+    }
+  } catch (error) {
+    console.error('❌ Lỗi khi lấy nhạc theo period:', error);
+    return { total: 0, items: [] };
+  }
 } 

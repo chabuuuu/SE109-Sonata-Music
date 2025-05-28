@@ -135,12 +135,21 @@ export const testSearchArtists = async (): Promise<void> => {
 
 export const searchArtists = async (searchTerm: string, rpp: number = 10, page: number = 1): Promise<ArtistSearchResponse> => {
   try {
-    console.log('Searching artists with term:', searchTerm);
+    // Chuẩn hóa search term - trim và đảm bảo có ít nhất 1 ký tự
+    const normalizedSearchTerm = searchTerm.trim();
     
-    // Test API trước để đảm bảo endpoint hoạt động
-    if (process.env.NODE_ENV === 'development') {
-      await testSearchArtists();
+    if (!normalizedSearchTerm) {
+      return {
+        status: "OK",
+        code: 200,
+        success: true,
+        message: "Empty search term",
+        data: { total: 0, items: [] },
+        errors: null
+      };
     }
+
+    console.log('Searching artists with term:', normalizedSearchTerm);
     
     const config = {
       method: 'post',
@@ -154,7 +163,7 @@ export const searchArtists = async (searchTerm: string, rpp: number = 10, page: 
           {
             operator: "like",
             key: "name",
-            value: searchTerm
+            value: normalizedSearchTerm
           }
         ],
         sorts: [
@@ -174,12 +183,17 @@ export const searchArtists = async (searchTerm: string, rpp: number = 10, page: 
       }
     };
 
-    console.log('API Request config:', JSON.stringify(config, null, 2));
+    console.log('API Request config for search:', {
+      url: config.url,
+      searchTerm: normalizedSearchTerm,
+      page,
+      rpp
+    });
 
     const response = await axios(config);
     const data: ArtistSearchResponse = response.data;
     
-    console.log('API Response:', JSON.stringify(data, null, 2));
+    console.log(`API Response: Found ${data.data?.total || 0} artists for "${normalizedSearchTerm}"`);
     
     if (data.success) {
       return data;
@@ -193,7 +207,21 @@ export const searchArtists = async (searchTerm: string, rpp: number = 10, page: 
       data: { total: 0, items: [] },
       errors: null
     };
-    } catch (error: any) {    console.error('Lỗi khi tìm kiếm nghệ sĩ:', error);    if (error.response) {      console.error('Error response data:', error.response.data);      console.error('Error response status:', error.response.status);    }    return {      status: "ERROR",      code: 500,      success: false,      message: "Search failed",      data: { total: 0, items: [] },      errors: error    };  }
+  } catch (error: any) {
+    console.error('Lỗi khi tìm kiếm nghệ sĩ:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    }
+    return {
+      status: "ERROR",
+      code: 500,
+      success: false,
+      message: "Search failed",
+      data: { total: 0, items: [] },
+      errors: error
+    };
+  }
 };
 
 // Simple function để test API search artists với exact example từ user

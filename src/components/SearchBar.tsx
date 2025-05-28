@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { searchAlbums, Album } from '@/services/albumService';
 import { searchArtists, Artist } from '@/services/artistService';
@@ -11,6 +12,7 @@ import { searchInstruments, Instrument } from '@/services/instrumentService';
 import { searchOrchestrasByKeyword, Orchestra } from '@/services/orchestraService';
 
 const SearchBar: React.FC = () => {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const { isLoggedIn, userProfile } = useAuth();
@@ -47,6 +49,21 @@ const SearchBar: React.FC = () => {
     const value = e.target.value;
     const capitalizedValue = capitalizeFirstLetter(value);
     setSearchTerm(capitalizedValue);
+  };
+
+  // Function để clear search và navigate
+  const clearSearchAndNavigate = (url: string) => {
+    setSearchTerm("");
+    setShowResults(false);
+    setIsExpanded(false);
+    setAlbumResults([]);
+    setArtistResults([]);
+    setCategoryResults([]);
+    setGenreResults([]);
+    setMusicResults([]);
+    setInstrumentResults([]);
+    setOrchestraResults([]);
+    router.push(url);
   };
 
   // Function tìm kiếm albums, artists, categories, genres và musics với debounce
@@ -209,7 +226,33 @@ const SearchBar: React.FC = () => {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 ></path>
               </svg>
-              <input                type="text"                placeholder="Search songs, albums, artists, categories, instruments, orchestras..."                className={`bg-transparent border-none focus:outline-none flex-grow text-[#3A2A24] font-['Playfair_Display',serif] transition-all ${                  isExpanded ? "text-base" : "text-sm"                }`}                value={searchTerm}                onChange={handleSearchChange}                onFocus={() => setIsExpanded(true)}                onBlur={(e) => {                  if (!e.relatedTarget?.closest('.search-results')) {                    if (!searchTerm) setIsExpanded(false);                    setTimeout(() => setShowResults(false), 200);                  }                }}                onKeyDown={(e) => {                  if (e.key === 'Escape') {                    setShowResults(false);                    setIsExpanded(false);                    e.currentTarget.blur();                  }                }}              />
+              <input
+                type="text"
+                placeholder="Tìm kiếm bài hát, album, nghệ sĩ, thể loại, nhạc cụ, dàn nhạc..."
+                className={`bg-transparent border-none focus:outline-none flex-grow text-[#3A2A24] font-['Playfair_Display',serif] transition-all ${
+                  isExpanded ? "text-base" : "text-sm"
+                }`}
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onFocus={() => setIsExpanded(true)}
+                onBlur={(e) => {
+                  if (!e.relatedTarget?.closest('.search-results')) {
+                    if (!searchTerm) setIsExpanded(false);
+                    setTimeout(() => setShowResults(false), 200);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowResults(false);
+                    setIsExpanded(false);
+                    e.currentTarget.blur();
+                  }
+                  if (e.key === 'Enter' && albumResults.length > 0) {
+                    // Nếu nhấn Enter và có kết quả album, chuyển đến album đầu tiên
+                    clearSearchAndNavigate(`/album/${albumResults[0].id}`);
+                  }
+                }}
+              />
               {isSearching && (
                 <div className="mr-2">
                   <svg className="animate-spin h-4 w-4 text-[#6D4C41]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -248,43 +291,50 @@ const SearchBar: React.FC = () => {
                 {/* Albums Section */}
                 {albumResults.length > 0 && (
                   <div>
-                    <div className="p-3 border-b border-[#D3B995]">
-                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif]">
-                        Albums ({albumResults.length} results)
+                    <div className="p-3 border-b border-[#D3B995] bg-gradient-to-r from-[#E6D7C3] to-[#D3B995]">
+                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif] flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                        Albums ({albumResults.length} kết quả)
                       </h3>
                     </div>
                     {albumResults.map((album) => (
                       <div
                         key={`album-${album.id}`}
-                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3]"
-                        onClick={() => {
-                          window.location.href = `/album/${album.id}`;
-                        }}
+                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-all duration-300 cursor-pointer border-b border-[#E6D7C3] group"
+                        onClick={() => clearSearchAndNavigate(`/album/${album.id}`)}
                       >
-                        <img
-                          src={album.coverPhoto}
-                          alt={album.name}
-                          className="w-12 h-12 rounded-lg object-cover mr-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-album.jpg';
-                          }}
-                        />
+                        <div className="w-12 h-12 rounded-lg overflow-hidden mr-3 border-2 border-[#D3B995] group-hover:border-[#C8A97E] transition-colors">
+                          <img
+                            src={album.coverPhoto}
+                            alt={album.name}
+                            className="w-full h-full object-cover grayscale-[20%] sepia-[10%] group-hover:grayscale-0 group-hover:sepia-0 transition-all duration-500"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-album.jpg';
+                            }}
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif] group-hover:text-[#C8A97E] transition-colors">
                             {album.name}
                           </h4>
                           <p className="text-xs text-[#6D4C41] truncate mt-1">
-                            {album.description || 'No description'}
+                            {album.description || 'Không có mô tả'}
                           </p>
                           <div className="flex items-center text-xs text-[#8D6C61] mt-1">
-                            <span>{album.albumType || 'Album'}</span>
+                            <span className="bg-[#E6D7C3] px-2 py-1 rounded-full mr-2">{album.albumType || 'Album'}</span>
                             {album.viewCount && (
                               <>
-                                <span className="mx-1">•</span>
-                                <span>{album.viewCount} views</span>
+                                <span>{album.viewCount} lượt xem</span>
                               </>
                             )}
                           </div>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
                       </div>
                     ))}
@@ -294,49 +344,48 @@ const SearchBar: React.FC = () => {
                 {/* Artists Section */}
                 {artistResults.length > 0 && (
                   <div>
-                    <div className="p-3 border-b border-[#D3B995]">
-                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif]">
-                        Artists ({artistResults.length} results)
+                    <div className="p-3 border-b border-[#D3B995] bg-gradient-to-r from-[#E6D7C3] to-[#D3B995]">
+                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif] flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Nghệ sĩ ({artistResults.length} kết quả)
                       </h3>
                     </div>
                     {artistResults.map((artist) => (
                       <div
                         key={`artist-${artist.id}`}
-                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
-                        onClick={() => {
-                          window.location.href = `/artist/${artist.id}`;
-                        }}
+                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-all duration-300 cursor-pointer border-b border-[#E6D7C3] group"
+                        onClick={() => clearSearchAndNavigate(`/artist/${artist.id}`)}
                       >
-                        <img
-                          src={artist.picture}
-                          alt={artist.name}
-                          className="w-12 h-12 rounded-full object-cover mr-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-artist.jpg';
-                          }}
-                        />
+                        <div className="w-12 h-12 rounded-full overflow-hidden mr-3 border-2 border-[#D3B995] group-hover:border-[#C8A97E] transition-colors">
+                          <img
+                            src={artist.picture}
+                            alt={artist.name}
+                            className="w-full h-full object-cover grayscale-[20%] sepia-[10%] group-hover:grayscale-0 group-hover:sepia-0 transition-all duration-500"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-artist.jpg';
+                            }}
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif] group-hover:text-[#C8A97E] transition-colors">
                             {artist.name}
                           </h4>
                           <p className="text-xs text-[#6D4C41] truncate mt-1">
-                            {artist.description || 'Artist'}
+                            {artist.description || 'Nghệ sĩ'}
                           </p>
                           <div className="flex items-center text-xs text-[#8D6C61] mt-1">
-                            <span>{artist.nationality || 'Artist'}</span>
-                            {artist.viewCount && (
-                              <>
-                                <span className="mx-1">•</span>
-                                <span>{artist.viewCount} views</span>
-                              </>
-                            )}
+                            <span className="bg-[#E6D7C3] px-2 py-1 rounded-full mr-2">{artist.nationality || 'Nghệ sĩ'}</span>
                             {artist.followers > 0 && (
-                              <>
-                                <span className="mx-1">•</span>
-                                <span>{artist.followers} followers</span>
-                              </>
+                              <span>{artist.followers} người theo dõi</span>
                             )}
                           </div>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
                       </div>
                     ))}
@@ -346,43 +395,48 @@ const SearchBar: React.FC = () => {
                 {/* Categories Section */}
                 {categoryResults.length > 0 && (
                   <div>
-                    <div className="p-3 border-b border-[#D3B995]">
-                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif]">
-                        Categories ({categoryResults.length} results)
+                    <div className="p-3 border-b border-[#D3B995] bg-gradient-to-r from-[#E6D7C3] to-[#D3B995]">
+                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif] flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        Thể loại ({categoryResults.length} kết quả)
                       </h3>
                     </div>
                     {categoryResults.map((category) => (
                       <div
                         key={`category-${category.id}`}
-                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
-                        onClick={() => {
-                          window.location.href = `/user-category/${category.id}`;
-                        }}
+                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-all duration-300 cursor-pointer border-b border-[#E6D7C3] group"
+                        onClick={() => clearSearchAndNavigate(`/user-category/${category.id}`)}
                       >
-                        <img
-                          src={category.picture}
-                          alt={category.name}
-                          className="w-12 h-12 rounded-lg object-cover mr-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-category.jpg';
-                          }}
-                        />
+                        <div className="w-12 h-12 rounded-lg overflow-hidden mr-3 border-2 border-[#D3B995] group-hover:border-[#C8A97E] transition-colors">
+                          <img
+                            src={category.picture}
+                            alt={category.name}
+                            className="w-full h-full object-cover grayscale-[20%] sepia-[10%] group-hover:grayscale-0 group-hover:sepia-0 transition-all duration-500"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-category.jpg';
+                            }}
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif] group-hover:text-[#C8A97E] transition-colors">
                             {category.name}
                           </h4>
                           <p className="text-xs text-[#6D4C41] truncate mt-1">
-                            {category.description || 'Category'}
+                            {category.description || 'Thể loại'}
                           </p>
                           <div className="flex items-center text-xs text-[#8D6C61] mt-1">
-                            <span>{category.totalMusics || 0} songs</span>
+                            <span className="bg-[#E6D7C3] px-2 py-1 rounded-full mr-2">{category.totalMusics || 0} bài hát</span>
                             {category.viewCount && (
-                              <>
-                                <span className="mx-1">•</span>
-                                <span>{category.viewCount} views</span>
-                              </>
+                              <span>{category.viewCount} lượt xem</span>
                             )}
                           </div>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
                       </div>
                     ))}
@@ -392,34 +446,42 @@ const SearchBar: React.FC = () => {
                 {/* Genres Section */}
                 {genreResults.length > 0 && (
                   <div>
-                    <div className="p-3 border-b border-[#D3B995]">
-                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif]">
-                        Genres ({genreResults.length} results)
+                    <div className="p-3 border-b border-[#D3B995] bg-gradient-to-r from-[#E6D7C3] to-[#D3B995]">
+                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif] flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                        Phong cách ({genreResults.length} kết quả)
                       </h3>
                     </div>
                     {genreResults.map((genre) => (
                       <div
                         key={`genre-${genre.id}`}
-                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
-                        onClick={() => {
-                          window.location.href = `/user-categories`;
-                        }}
+                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-all duration-300 cursor-pointer border-b border-[#E6D7C3] group"
+                        onClick={() => clearSearchAndNavigate(`/user-categories`)}
                       >
-                        <img
-                          src={genre.picture}
-                          alt={genre.name}
-                          className="w-12 h-12 rounded-lg object-cover mr-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-genre.jpg';
-                          }}
-                        />
+                        <div className="w-12 h-12 rounded-lg overflow-hidden mr-3 border-2 border-[#D3B995] group-hover:border-[#C8A97E] transition-colors">
+                          <img
+                            src={genre.picture}
+                            alt={genre.name}
+                            className="w-full h-full object-cover grayscale-[20%] sepia-[10%] group-hover:grayscale-0 group-hover:sepia-0 transition-all duration-500"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-genre.jpg';
+                            }}
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif] group-hover:text-[#C8A97E] transition-colors">
                             {genre.name}
                           </h4>
                           <p className="text-xs text-[#6D4C41] truncate mt-1">
                             {genre.description || 'Thể loại nhạc'}
                           </p>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
                       </div>
                     ))}
@@ -429,120 +491,63 @@ const SearchBar: React.FC = () => {
                 {/* Musics Section */}
                 {musicResults.length > 0 && (
                   <div>
-                    <div className="p-3 border-b border-[#D3B995]">
-                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif]">
-                        Songs ({musicResults.length} results)
+                    <div className="p-3 border-b border-[#D3B995] bg-gradient-to-r from-[#E6D7C3] to-[#D3B995]">
+                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif] flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                        Bài hát ({musicResults.length} kết quả)
                       </h3>
                     </div>
                     {musicResults.map((music) => (
                       <div
                         key={`music-${music.id}`}
-                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
-                        onClick={() => {
-                          window.location.href = `/music/${music.id}`;
-                        }}
+                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-all duration-300 cursor-pointer border-b border-[#E6D7C3] group"
+                        onClick={() => clearSearchAndNavigate(`/music/${music.id}`)}
                       >
-                        <img
-                          src={music.coverPhoto || '/default-music.jpg'}
-                          alt={music.name}
-                          className="w-12 h-12 rounded-lg object-cover mr-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-music.jpg';
-                          }}
-                        />
+                        <div className="w-12 h-12 rounded-lg overflow-hidden mr-3 border-2 border-[#D3B995] group-hover:border-[#C8A97E] transition-colors">
+                          <img
+                            src={music.coverPhoto || '/default-music.jpg'}
+                            alt={music.name}
+                            className="w-full h-full object-cover grayscale-[20%] sepia-[10%] group-hover:grayscale-0 group-hover:sepia-0 transition-all duration-500"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-music.jpg';
+                            }}
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
+                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif] group-hover:text-[#C8A97E] transition-colors">
                             {music.name}
                           </h4>
                           <p className="text-xs text-[#6D4C41] truncate mt-1">
                             {music.artists.length > 0 ? music.artists[0].name : 'Bài hát'}
                           </p>
                           <div className="flex items-center text-xs text-[#8D6C61] mt-1">
-                            <span>{music.listenCount} lượt nghe</span>
+                            <span className="bg-[#E6D7C3] px-2 py-1 rounded-full mr-2">{music.listenCount} lượt nghe</span>
                             {music.favoriteCount > 0 && (
-                              <>
-                                <span className="mx-1">•</span>
-                                <span>{music.favoriteCount} yêu thích</span>
-                              </>
+                              <span>{music.favoriteCount} yêu thích</span>
                             )}
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Instruments Section */}
-                {instrumentResults.length > 0 && (
-                  <div>
-                    <div className="p-3 border-b border-[#D3B995]">
-                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif]">
-                        Instruments ({instrumentResults.length} results)
-                      </h3>
-                    </div>
-                    {instrumentResults.map((instrument) => (
-                      <div
-                        key={`instrument-${instrument.id}`}
-                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
-                        onClick={() => {
-                          window.location.href = `/user-categories`;
-                        }}
-                      >
-                        <img
-                          src={instrument.picture}
-                          alt={instrument.name}
-                          className="w-12 h-12 rounded-lg object-cover mr-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-instrument.jpg';
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
-                            {instrument.name}
-                          </h4>
-                          <p className="text-xs text-[#6D4C41] truncate mt-1">
-                            {instrument.description || 'Nhạc cụ'}
-                          </p>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Orchestras Section */}
-                {orchestraResults.length > 0 && (
-                  <div>
-                    <div className="p-3 border-b border-[#D3B995]">
-                      <h3 className="text-sm font-semibold text-[#3A2A24] font-['Playfair_Display',serif]">
-                        Orchestras ({orchestraResults.length} results)
-                      </h3>
-                    </div>
-                    {orchestraResults.map((orchestra) => (
-                      <div
-                        key={`orchestra-${orchestra.id}`}
-                        className="flex items-center p-3 hover:bg-[#E6D7C3] transition-colors cursor-pointer border-b border-[#E6D7C3] last:border-b-0"
-                        onClick={() => {
-                          window.location.href = `/user-categories`;
-                        }}
-                      >
-                        <img
-                          src={orchestra.picture}
-                          alt={orchestra.name}
-                          className="w-12 h-12 rounded-lg object-cover mr-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-orchestra.jpg';
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif]">
-                            {orchestra.name}
-                          </h4>
-                          <p className="text-xs text-[#6D4C41] truncate mt-1">
-                            {orchestra.description || 'Orchestra'}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                {/* Quick Actions */}
+                {albumResults.length > 0 && (
+                  <div className="p-3 border-t border-[#D3B995] bg-[#E6D7C3]">
+                    <button
+                      onClick={() => clearSearchAndNavigate('/user-albums')}
+                      className="w-full text-center text-sm text-[#6D4C41] hover:text-[#C8A97E] transition-colors font-['Playfair_Display',serif] font-medium"
+                    >
+                      Xem tất cả album →
+                    </button>
                   </div>
                 )}
               </div>
@@ -551,11 +556,20 @@ const SearchBar: React.FC = () => {
             {/* No Results Message */}
             {showResults && hasNoResults && (
               <div className="search-results absolute top-full left-0 right-0 mt-2 bg-[#F0E6D6] border border-[#D3B995] rounded-lg shadow-lg z-50">
-                <div className="p-4 text-center">
-                  <svg className="w-12 h-12 text-[#8D6C61] mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-6 text-center">
+                  <svg className="w-16 h-16 text-[#8D6C61] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0118 12M6 20.291A7.962 7.962 0 016 12m0 8.291zm12 0z"></path>
                   </svg>
-                  <p className="text-sm text-[#6D4C41] font-['Playfair_Display',serif]">                    Không tìm thấy bài hát, album, nghệ sĩ, thể loại, nhạc cụ hoặc orchestra nào với từ khóa "{searchTerm}"                  </p>
+                  <h3 className="text-lg font-semibold text-[#3A2A24] mb-2 font-['Playfair_Display',serif]">Không tìm thấy kết quả</h3>
+                  <p className="text-sm text-[#6D4C41] font-['Playfair_Display',serif] mb-4">
+                    Không tìm thấy bài hát, album, nghệ sĩ, thể loại, nhạc cụ hoặc dàn nhạc nào với từ khóa "{searchTerm}"
+                  </p>
+                  <button
+                    onClick={() => clearSearchAndNavigate('/user-albums')}
+                    className="px-4 py-2 bg-[#C8A97E] hover:bg-[#A67C52] text-white rounded-full font-semibold transition-colors shadow-md"
+                  >
+                    Khám phá album
+                  </button>
                 </div>
               </div>
             )}

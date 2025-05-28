@@ -9,67 +9,10 @@ import { getPopularAlbums, searchAlbums, Album, AlbumSearchResponse } from "@/se
  *  CLASSICAL ALBUMS PAGE – Unified Top‑Bar + Working Grid/List
  *****************************************************************/
 
-const albumsData = [
-  {
-    id: 1,
-    title: "Symphony No. 9 in D minor, Op. 125",
-    artist: "Ludwig van Beethoven",
-    releaseYear: 1824,
-    image: "/albums/beethoven9.jpg",
-    tracks: 4,
-    duration: "1 hr 5 min",
-    genres: ["Symphony", "Classical"],
-    featured: true,
-    background: "/backgrounds/beethoven9-bg.jpg",
-  },
-  {
-    id: 2,
-    title: "Requiem in D minor, K. 626",
-    artist: "Wolfgang Amadeus Mozart",
-    releaseYear: 1791,
-    image: "/albums/mozart_requiem.jpg",
-    tracks: 14,
-    duration: "55 min",
-    genres: ["Choral", "Classical"],
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "The Four Seasons",
-    artist: "Antonio Vivaldi",
-    releaseYear: 1725,
-    image: "/albums/vivaldi_four_seasons.jpg",
-    tracks: 12,
-    duration: "42 min",
-    genres: ["Concerto", "Baroque"],
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Swan Lake, Op. 20",
-    artist: "Pyotr Ilyich Tchaikovsky",
-    releaseYear: 1876,
-    image: "/albums/tchaikovsky_swan_lake.jpg",
-    tracks: 29,
-    duration: "2 hr 35 min",
-    genres: ["Ballet", "Romantic"],
-    featured: false,
-  },
-];
+// Loại bỏ albumsData cũ vì không cần thiết
+// Chỉ giữ lại albumFilters với "All Albums"
+const albumFilters = ["All Albums"];
 
-const albumFilters = [
-  "All Albums",
-  "Recent Releases",
-  "Symphony",
-  "Concerto",
-  "Choral",
-  "Ballet",
-];
-const browseCategories = [
-  { name: "Baroque Gems", color: "from-[#C8A97E] to-[#A67C52]" },
-  { name: "Classical Highlights", color: "from-[#D3B995] to-[#B08C66]" },
-  { name: "Romantic Masterpieces", color: "from-[#E6D7C3] to-[#C9AE8E]" },
-];
 const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
   "Categories",
   "Artists",
@@ -137,22 +80,32 @@ const AlbumRow: React.FC<{ album: Album; index: number }> = ({
   </Link>
 );
 
+// Helper function để viết hoa chữ cái đầu tiên
+const capitalizeFirstLetter = (str: string): string => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 /**************************
  *  SEARCH BAR COMPONENT  *
  **************************/
-const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void }> = ({
+const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void; isSearching?: boolean }> = ({
   term,
   setTerm,
+  isSearching = false,
 }) => {
-  const [focus, setFocus] = useState(false);
+  // Xử lý thay đổi input với tự động viết hoa chữ cái đầu
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Tự động viết hoa chữ cái đầu tiên
+    const capitalizedValue = capitalizeFirstLetter(value);
+    setTerm(capitalizedValue);
+  };
+
   return (
-    <div
-      className={`flex items-center bg-[#E6D7C3] rounded-full overflow-hidden transition-shadow duration-200 ${
-        focus ? "shadow-lg" : "shadow"
-      }`}
-    >
+    <div className="flex items-center bg-[#E6D7C3] rounded-full overflow-hidden shadow">
       <svg
-        className="w-5 h-5 ml-3 text-[#6D4C41]"
+        className={`w-5 h-5 ml-3 text-[#6D4C41] ${isSearching ? 'animate-spin' : ''}`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -165,12 +118,10 @@ const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void }> = ({
         />
       </svg>
       <input
-        placeholder="Tìm kiếm albums..."
+        placeholder="Tìm kiếm albums cổ điển..."
         className="flex-1 bg-transparent text-sm py-2 px-3 focus:outline-none placeholder-[#6D4C41]"
         value={term}
-        onChange={(e) => setTerm(e.target.value)}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onChange={handleInputChange}
       />
       {term && (
         <button
@@ -211,6 +162,9 @@ export default function AlbumsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<AlbumSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Featured album state - thêm state để quản lý featured album ngẫu nhiên
+  const [featuredAlbum, setFeaturedAlbum] = useState<Album | null>(null);
 
   // Fetch popular albums on component mount
   useEffect(() => {
@@ -220,6 +174,12 @@ export default function AlbumsPage() {
         setError(null);
         const popularAlbums = await getPopularAlbums(20); // Lấy 20 albums phổ biến
         setAlbums(popularAlbums);
+        
+        // Set featured album ngẫu nhiên từ danh sách
+        if (popularAlbums.length > 0) {
+          const randomIndex = Math.floor(Math.random() * popularAlbums.length);
+          setFeaturedAlbum(popularAlbums[randomIndex]);
+        }
       } catch (err) {
         console.error('Lỗi khi tải albums:', err);
         setError('Không thể tải danh sách albums. Vui lòng thử lại sau.');
@@ -231,6 +191,18 @@ export default function AlbumsPage() {
     fetchPopularAlbums();
   }, []);
 
+  // Auto-rotate featured album every 30 seconds (chỉ khi không search)
+  useEffect(() => {
+    if (!term.trim() && albums.length > 0) {
+      const interval = setInterval(() => {
+        const randomIndex = Math.floor(Math.random() * albums.length);
+        setFeaturedAlbum(albums[randomIndex]);
+      }, 30000); // 30 giây
+
+      return () => clearInterval(interval);
+    }
+  }, [albums, term]);
+
   // Search albums when search term changes
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
@@ -239,26 +211,33 @@ export default function AlbumsPage() {
           setIsSearching(true);
           const results = await searchAlbums(term.trim(), 20, 1);
           setSearchResults(results);
+          // Khi search, set featured album là kết quả đầu tiên
+          if (results.items.length > 0) {
+            setFeaturedAlbum(results.items[0]);
+          }
         } catch (err) {
           console.error('Lỗi khi tìm kiếm albums:', err);
           setSearchResults({ total: 0, items: [] });
+          setFeaturedAlbum(null);
         } finally {
           setIsSearching(false);
         }
       } else {
         setSearchResults(null);
+        // Quay lại featured album ngẫu nhiên từ danh sách gốc
+        if (albums.length > 0) {
+          const randomIndex = Math.floor(Math.random() * albums.length);
+          setFeaturedAlbum(albums[randomIndex]);
+        }
       }
     }, 300); // Debounce 300ms
 
     return () => clearTimeout(searchTimeout);
-  }, [term]);
+  }, [term, albums]);
 
   // Determine which albums to display
   const displayAlbums = term.trim() && searchResults ? searchResults.items : albums;
   
-  // Featured album (first album or fallback)
-  const featured = displayAlbums.length > 0 ? displayAlbums[0] : null;
-
   const filteredAlbums = displayAlbums;
 
   return (
@@ -268,7 +247,7 @@ export default function AlbumsPage() {
         {/* TOP BAR */}
         <div className="sticky top-0 z-30 bg-[#D3B995] shadow-md px-8 py-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <SearchBar term={term} setTerm={setTerm} />
+            <SearchBar term={term} setTerm={setTerm} isSearching={isSearching} />
             <div className="flex flex-col md:flex-row md:items-center md:space-x-6 gap-3">
               <div className="flex space-x-3 order-2 md:order-1">
                 {navTabs.map((t) => (
@@ -345,42 +324,45 @@ export default function AlbumsPage() {
         <section className="px-8 pt-6">
           <h1 className="text-3xl font-bold mb-6 tracking-wide">Albums</h1>
 
-          {/* Featured */}
-          {featured && (
+          {/* Featured Album - Hiển thị album ngẫu nhiên */}
+          {featuredAlbum && (
             <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
               <div
                 className="h-72 bg-cover bg-center relative"
                 style={{
-                  backgroundImage: `url(${featured.coverPhoto})`,
+                  backgroundImage: `url(${featuredAlbum.coverPhoto})`,
                 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-[#E6D7C3] via-[#C8A97E]/80 to-transparent" />
                 <div className="absolute inset-0 p-8 flex flex-col md:flex-row items-start md:items-center">
                   <div className="relative w-48 h-48 md:w-56 md:h-56 mb-4 md:mb-0 md:mr-8">
                     <Image
-                      src={featured.coverPhoto}
-                      alt={featured.name}
+                      src={featuredAlbum.coverPhoto}
+                      alt={featuredAlbum.name}
                       fill
                       className="rounded-md shadow-xl object-cover"
                     />
                   </div>
                   <div>
-                    <p className="text-xs uppercase font-semibold">
+                    <p className="text-xs uppercase font-semibold flex items-center gap-2">
+                      <span className="animate-pulse">🎵</span>
                       Featured Album
                     </p>
                     <h2 className="text-4xl font-bold mb-1 max-w-xl leading-snug">
-                      {featured.name}
+                      {featuredAlbum.name}
                     </h2>
-                    <p className="text-xl opacity-80 mb-4">{featured.description}</p>
+                    <p className="text-xl opacity-80 mb-4">{featuredAlbum.description}</p>
                     <p className="mb-6">
-                      {new Date(featured.releaseDate).getFullYear()} • {featured.musics?.length || 0} tracks • {featured.albumType || 'Album'}
+                      {new Date(featuredAlbum.releaseDate).getFullYear()} • {featuredAlbum.musics?.length || 0} tracks • {featuredAlbum.albumType || 'Album'}
                     </p>
                     <div className="flex space-x-4">
-                      <button className="bg-[#C8A97E] hover:bg-[#A67C52] text-white font-medium rounded-full px-8 py-3 shadow-lg">
-                        Play
-                      </button>
-                      <button className="border border-[#C8A97E] text-[#3A2A24] font-medium rounded-full px-8 py-3 hover:bg-[#C8A97E]/20">
-                        Save
+                      <Link href={`/album/${featuredAlbum.id}`}>
+                        <button className="bg-[#C8A97E] hover:bg-[#A67C52] text-white font-medium rounded-full px-8 py-3 shadow-lg transition-colors">
+                          Nghe ngay
+                        </button>
+                      </Link>
+                      <button className="border border-[#C8A97E] text-[#3A2A24] font-medium rounded-full px-8 py-3 hover:bg-[#C8A97E]/20 transition-colors">
+                        Lưu
                       </button>
                     </div>
                   </div>
@@ -411,49 +393,53 @@ export default function AlbumsPage() {
           )}
 
           {/* Search results info */}
-          {term.trim() && searchResults && (
-            <div className="mb-6 p-4 bg-[#E6D7C3] rounded-lg">
-              <p className="text-[#3A2A24]">
-                {isSearching 
-                  ? 'Đang tìm kiếm...' 
-                  : `Tìm thấy ${searchResults.total} kết quả cho "${term}"`
-                }
-              </p>
+          {term.trim() && (
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-[#E6D7C3] to-[#F0E6D6] rounded-lg p-4 border border-[#D3B995]/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {isSearching ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#C8A97E]"></div>
+                        <p className="text-[#3A2A24] font-medium">Đang tìm kiếm albums...</p>
+                      </>
+                    ) : searchResults ? (
+                      <>
+                        <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <p className="text-[#3A2A24] font-medium">
+                          Tìm thấy <span className="text-[#C8A97E] font-bold">{searchResults.total}</span> album cho 
+                          <span className="text-[#6D4C41] font-semibold ml-1">"{term}"</span>
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5 text-[#8D6E63]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <p className="text-[#6D4C41]">Không tìm thấy album nào</p>
+                      </>
+                    )}
+                  </div>
+                  
+                  {term && (
+                    <button
+                      onClick={() => setTerm("")}
+                      className="flex items-center gap-1 text-[#6D4C41] hover:text-[#C8A97E] transition-colors text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Browse categories */}
-          <h2 className="text-2xl font-bold mb-6">Browse Categories</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            {browseCategories.map((c) => (
-              <Link
-                href={`/browse/${c.name.toLowerCase().replace(/\s+/g, "-")}`}
-                key={c.name}
-              >
-                <div
-                  className={`bg-gradient-to-r ${c.color} h-24 rounded-xl p-5 text-white flex items-center justify-between hover:shadow-xl transition-shadow`}
-                >
-                  <h3 className="text-xl font-bold drop-shadow-md">{c.name}</h3>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-white/80"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Filter chips */}
+          {/* Filter chips - chỉ hiển thị "All Albums" */}
           <div className="flex overflow-x-auto space-x-2 pb-4 mb-6 border-b border-[#D3B995]">
             {albumFilters.map((f) => (
               <button
@@ -488,6 +474,19 @@ export default function AlbumsPage() {
               {filteredAlbums.map((album, idx) => (
                 <AlbumRow key={album.id} album={album} index={idx} />
               ))}
+            </div>
+          )}
+
+          {/* Hiển thị thông báo nếu không có albums */}
+          {!loading && filteredAlbums.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🎵</div>
+              <h3 className="text-xl font-semibold text-[#6D4C41] mb-2">
+                {term.trim() ? 'Không tìm thấy album phù hợp' : 'Chưa có albums nào'}
+              </h3>
+              <p className="text-[#8D6E63]">
+                {term.trim() ? 'Hãy thử từ khóa khác' : 'Vui lòng quay lại sau'}
+              </p>
             </div>
           )}
         </section>
