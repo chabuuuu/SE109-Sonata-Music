@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import Image from "next/image";
+import { getPopularAlbums, searchAlbums, Album, AlbumSearchResponse } from "@/services/albumService";
 
 /*****************************************************************
  *  CLASSICAL ALBUMS PAGE – Unified Top‑Bar + Working Grid/List
@@ -16,7 +17,7 @@ const albumsData = [
     releaseYear: 1824,
     image: "/albums/beethoven9.jpg",
     tracks: 4,
-    duration: "1 hr 5 min",
+    duration: "1 hr 5 min",
     genres: ["Symphony", "Classical"],
     featured: true,
     background: "/backgrounds/beethoven9-bg.jpg",
@@ -28,7 +29,7 @@ const albumsData = [
     releaseYear: 1791,
     image: "/albums/mozart_requiem.jpg",
     tracks: 14,
-    duration: "55 min",
+    duration: "55 min",
     genres: ["Choral", "Classical"],
     featured: false,
   },
@@ -39,7 +40,7 @@ const albumsData = [
     releaseYear: 1725,
     image: "/albums/vivaldi_four_seasons.jpg",
     tracks: 12,
-    duration: "42 min",
+    duration: "42 min",
     genres: ["Concerto", "Baroque"],
     featured: false,
   },
@@ -50,7 +51,7 @@ const albumsData = [
     releaseYear: 1876,
     image: "/albums/tchaikovsky_swan_lake.jpg",
     tracks: 29,
-    duration: "2 hr 35 min",
+    duration: "2 hr 35 min",
     genres: ["Ballet", "Romantic"],
     featured: false,
   },
@@ -78,13 +79,13 @@ const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
 /**************************
  *  ALBUM CARD COMPONENT  *
  **************************/
-const AlbumCard: React.FC<{ album: (typeof albumsData)[0] }> = ({ album }) => (
+const AlbumCard: React.FC<{ album: Album }> = ({ album }) => (
   <Link href={`/album/${album.id}`} className="group">
     <div className="relative rounded-md overflow-hidden shadow hover:shadow-lg transition-all">
       <div className="relative w-full aspect-square">
         <Image
-          src={album.image}
-          alt={album.title}
+          src={album.coverPhoto}
+          alt={album.name}
           fill
           className="object-cover"
         />
@@ -102,15 +103,15 @@ const AlbumCard: React.FC<{ album: (typeof albumsData)[0] }> = ({ album }) => (
         </button>
       </div>
     </div>
-    <h3 className="mt-2 font-semibold truncate">{album.title}</h3>
-    <p className="text-sm text-[#6D4C41] truncate">{album.artist}</p>
+    <h3 className="mt-2 font-semibold truncate">{album.name}</h3>
+    <p className="text-sm text-[#6D4C41] truncate">{album.description}</p>
   </Link>
 );
 
 /**************************
  *  ALBUM ROW COMPONENT   *
  **************************/
-const AlbumRow: React.FC<{ album: (typeof albumsData)[0]; index: number }> = ({
+const AlbumRow: React.FC<{ album: Album; index: number }> = ({
   album,
   index,
 }) => (
@@ -118,19 +119,19 @@ const AlbumRow: React.FC<{ album: (typeof albumsData)[0]; index: number }> = ({
     <div className="grid grid-cols-12 items-center px-4 py-3 hover:bg-[#E6D7C3] rounded-md cursor-pointer">
       <span className="col-span-1 text-sm text-[#6D4C41]">{index + 1}</span>
       <div className="col-span-6 flex items-center space-x-4">
-        <div className="w-12 h-12">
-          <Image src={album.image} alt={album.title} fill className="rounded" />
+        <div className="w-12 h-12 relative">
+          <Image src={album.coverPhoto} alt={album.name} fill className="rounded object-cover" />
         </div>
         <div>
-          <h3 className="font-medium truncate">{album.title}</h3>
-          <p className="text-sm text-[#6D4C41] truncate">{album.artist}</p>
+          <h3 className="font-medium truncate">{album.name}</h3>
+          <p className="text-sm text-[#6D4C41] truncate">{album.description}</p>
         </div>
       </div>
       <span className="col-span-3 text-sm text-[#6D4C41] truncate">
-        {album.genres.join(", ")}
+        {album.albumType || 'Album'}
       </span>
       <span className="col-span-2 text-right text-sm text-[#6D4C41]">
-        {album.duration}
+        {album.musics?.length || 0} tracks
       </span>
     </div>
   </Link>
@@ -203,15 +204,62 @@ export default function AlbumsPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selectedFilter, setSelectedFilter] = useState("All Albums");
   const [term, setTerm] = useState("");
+  
+  // API state management
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<AlbumSearchResponse | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const filteredAlbums =
-    selectedFilter === "All Albums"
-      ? albumsData
-      : selectedFilter === "Recent Releases"
-      ? albumsData.filter((a) => a.releaseYear >= 1800)
-      : albumsData.filter((a) => a.genres.includes(selectedFilter));
+  // Fetch popular albums on component mount
+  useEffect(() => {
+    const fetchPopularAlbums = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const popularAlbums = await getPopularAlbums(20); // Lấy 20 albums phổ biến
+        setAlbums(popularAlbums);
+      } catch (err) {
+        console.error('Lỗi khi tải albums:', err);
+        setError('Không thể tải danh sách albums. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const featured = albumsData.find((a) => a.featured) ?? albumsData[0];
+    fetchPopularAlbums();
+  }, []);
+
+  // Search albums when search term changes
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (term.trim()) {
+        try {
+          setIsSearching(true);
+          const results = await searchAlbums(term.trim(), 20, 1);
+          setSearchResults(results);
+        } catch (err) {
+          console.error('Lỗi khi tìm kiếm albums:', err);
+          setSearchResults({ total: 0, items: [] });
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults(null);
+      }
+    }, 300); // Debounce 300ms
+
+    return () => clearTimeout(searchTimeout);
+  }, [term]);
+
+  // Determine which albums to display
+  const displayAlbums = term.trim() && searchResults ? searchResults.items : albums;
+  
+  // Featured album (first album or fallback)
+  const featured = displayAlbums.length > 0 ? displayAlbums[0] : null;
+
+  const filteredAlbums = displayAlbums;
 
   return (
     <div className="flex h-screen bg-[#F8F0E3] text-[#3A2A24] font-['Playfair_Display',serif]">
@@ -298,49 +346,81 @@ export default function AlbumsPage() {
           <h1 className="text-3xl font-bold mb-6 tracking-wide">Albums</h1>
 
           {/* Featured */}
-          <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
-            <div
-              className="h-72 bg-cover bg-center relative"
-              style={{
-                backgroundImage: `url(${
-                  featured.background ?? featured.image
-                })`,
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-[#E6D7C3] via-[#C8A97E]/80 to-transparent" />
-              <div className="absolute inset-0 p-8 flex flex-col md:flex-row items-start md:items-center">
-                <div className="relative w-48 h-48 md:w-56 md:h-56 mb-4 md:mb-0 md:mr-8">
-                  <Image
-                    src={featured.image}
-                    alt={featured.title}
-                    fill
-                    className="rounded-md shadow-xl object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs uppercase font-semibold">
-                    Featured Album
-                  </p>
-                  <h2 className="text-4xl font-bold mb-1 max-w-xl leading-snug">
-                    {featured.title}
-                  </h2>
-                  <p className="text-xl opacity-80 mb-4">{featured.artist}</p>
-                  <p className="mb-6">
-                    {featured.releaseYear} • {featured.tracks} movements •{" "}
-                    {featured.duration}
-                  </p>
-                  <div className="flex space-x-4">
-                    <button className="bg-[#C8A97E] hover:bg-[#A67C52] text-white font-medium rounded-full px-8 py-3 shadow-lg">
-                      Play
-                    </button>
-                    <button className="border border-[#C8A97E] text-[#3A2A24] font-medium rounded-full px-8 py-3 hover:bg-[#C8A97E]/20">
-                      Save
-                    </button>
+          {featured && (
+            <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
+              <div
+                className="h-72 bg-cover bg-center relative"
+                style={{
+                  backgroundImage: `url(${featured.coverPhoto})`,
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#E6D7C3] via-[#C8A97E]/80 to-transparent" />
+                <div className="absolute inset-0 p-8 flex flex-col md:flex-row items-start md:items-center">
+                  <div className="relative w-48 h-48 md:w-56 md:h-56 mb-4 md:mb-0 md:mr-8">
+                    <Image
+                      src={featured.coverPhoto}
+                      alt={featured.name}
+                      fill
+                      className="rounded-md shadow-xl object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase font-semibold">
+                      Featured Album
+                    </p>
+                    <h2 className="text-4xl font-bold mb-1 max-w-xl leading-snug">
+                      {featured.name}
+                    </h2>
+                    <p className="text-xl opacity-80 mb-4">{featured.description}</p>
+                    <p className="mb-6">
+                      {new Date(featured.releaseDate).getFullYear()} • {featured.musics?.length || 0} tracks • {featured.albumType || 'Album'}
+                    </p>
+                    <div className="flex space-x-4">
+                      <button className="bg-[#C8A97E] hover:bg-[#A67C52] text-white font-medium rounded-full px-8 py-3 shadow-lg">
+                        Play
+                      </button>
+                      <button className="border border-[#C8A97E] text-[#3A2A24] font-medium rounded-full px-8 py-3 hover:bg-[#C8A97E]/20">
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Loading state */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C8A97E] mx-auto mb-4"></div>
+              <p className="text-[#6D4C41]">Đang tải albums...</p>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && (
+            <div className="text-center py-12 bg-red-50 border border-red-200 rounded-lg mb-6">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-[#C8A97E] hover:bg-[#A67C52] text-white px-6 py-2 rounded-full"
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+
+          {/* Search results info */}
+          {term.trim() && searchResults && (
+            <div className="mb-6 p-4 bg-[#E6D7C3] rounded-lg">
+              <p className="text-[#3A2A24]">
+                {isSearching 
+                  ? 'Đang tìm kiếm...' 
+                  : `Tìm thấy ${searchResults.total} kết quả cho "${term}"`
+                }
+              </p>
+            </div>
+          )}
 
           {/* Browse categories */}
           <h2 className="text-2xl font-bold mb-6">Browse Categories</h2>

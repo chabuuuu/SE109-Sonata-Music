@@ -1,14 +1,14 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import Image from "next/image";
-import { getCategories } from "@/services/categoryService";
+import { getCategories, searchCategories } from "@/services/categoryService";
 import { Category } from "@/interfaces/category";
 
 /*****************************************************************
  *  CLASSICAL CATEGORIES PAGE – Tích hợp API Categories từ Sonata
- *  Thiết kế ảnh categories đẹp và hiện đại
+ *  Thiết kế ảnh categories đẹp và hiện đại với API Search
  *****************************************************************/
 
 const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
@@ -20,9 +20,14 @@ const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
 /******************************
  *  SEARCH BAR COMPONENT      *
  ******************************/
-const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void }> = ({
+const SearchBar: React.FC<{ 
+  term: string; 
+  setTerm: (s: string) => void;
+  isSearching?: boolean;
+}> = ({
   term,
   setTerm,
+  isSearching = false
 }) => {
   const [focus, setFocus] = useState(false);
   return (
@@ -31,22 +36,32 @@ const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void }> = ({
         focus ? "shadow-lg" : "shadow"
       }`}
     >
-      <svg
-        className="w-5 h-5 ml-3 text-[#6D4C41]"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
+      {isSearching ? (
+        <div className="w-5 h-5 ml-3 animate-spin">
+          <svg className="w-5 h-5 text-[#6D4C41]" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      ) : (
+        <svg
+          className="w-5 h-5 ml-3 text-[#6D4C41]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      )}
       <input
         placeholder="Tìm kiếm chủ đề cổ điển..."
         className="flex-1 bg-transparent text-sm py-2 px-3 focus:outline-none placeholder-[#6D4C41]"
+        style={{ textTransform: 'capitalize' }}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         onFocus={() => setFocus(true)}
@@ -83,16 +98,31 @@ export default function CategoriesPage() {
   const [tab, setTab] = useState<"Categories" | "Artists" | "Albums">("Categories");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [term, setTerm] = useState("");
-  const [apiCategories, setApiCategories] = useState<Category[]>([]);
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [searchTotal, setSearchTotal] = useState(0);
 
-  // Lấy categories từ API khi component mount
+  // Debounce search term để tránh gọi API quá nhiều
   useEffect(() => {
-    const fetchCategories = async () => {
+    const handler = setTimeout(() => {
+      setDebouncedTerm(term);
+    }, 500); // Delay 500ms
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [term]);
+
+  // Load tất cả categories khi component mount
+  useEffect(() => {
+    const fetchAllCategories = async () => {
       try {
         setLoading(true);
         const data = await getCategories();
-        setApiCategories(data);
+        setCategories(data);
+        setSearchTotal(data.length);
       } catch (error) {
         console.error('Lỗi khi lấy categories:', error);
       } finally {
@@ -100,13 +130,59 @@ export default function CategoriesPage() {
       }
     };
 
-    fetchCategories();
+    fetchAllCategories();
   }, []);
 
-  // Lọc categories theo từ khóa tìm kiếm
-  const filteredCategories = apiCategories.filter(category =>
-    category.name.toLowerCase().includes(term.toLowerCase())
-  );
+  // Search categories khi có từ khóa
+  useEffect(() => {
+    const handleSearch = async () => {
+      if (!debouncedTerm.trim()) {
+        // Nếu không có từ khóa, hiển thị lại tất cả categories
+        try {
+          setSearching(true);
+          const data = await getCategories();
+          setCategories(data);
+          setSearchTotal(data.length);
+        } catch (error) {
+          console.error('Lỗi khi load lại categories:', error);
+        } finally {
+          setSearching(false);
+        }
+        return;
+      }
+
+      try {
+        setSearching(true);
+        console.log('🔍 Tìm kiếm categories với từ khóa:', debouncedTerm);
+        
+        const searchResult = await searchCategories(debouncedTerm, 50, 1);
+        
+        if (searchResult.success) {
+          setCategories(searchResult.data.items);
+          setSearchTotal(searchResult.data.total);
+          console.log(`✅ Tìm thấy ${searchResult.data.total} categories`);
+        } else {
+          console.warn('❌ Tìm kiếm không thành công:', searchResult.message);
+          setCategories([]);
+          setSearchTotal(0);
+        }
+      } catch (error) {
+        console.error('❌ Lỗi khi tìm kiếm categories:', error);
+        setCategories([]);
+        setSearchTotal(0);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    handleSearch();
+  }, [debouncedTerm]);
+
+  // Reset search khi clear
+  const handleClearSearch = useCallback(() => {
+    setTerm("");
+    setDebouncedTerm("");
+  }, []);
 
   return (
     <div className="flex h-screen bg-[#F8F0E3] text-[#3A2A24] font-['Playfair_Display',serif]">
@@ -119,7 +195,11 @@ export default function CategoriesPage() {
         <div className="sticky top-0 z-30 bg-[#D3B995] shadow-md px-8 py-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             {/* Search */}
-            <SearchBar term={term} setTerm={setTerm} />
+            <SearchBar 
+              term={term} 
+              setTerm={setTerm} 
+              isSearching={searching}
+            />
 
             {/* Nav + View */}
             <div className="flex flex-col md:flex-row md:items-center md:space-x-6 gap-3">
@@ -199,7 +279,23 @@ export default function CategoriesPage() {
 
         {/* BODY */}
         <div className="px-8 pt-6">
-          <h2 className="text-3xl font-bold mb-6 tracking-wide">Explore All</h2>
+          {/* Header với search stats */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold tracking-wide">Explore All</h2>
+            {!loading && searchTotal > 0 && (
+              <div className="text-sm text-[#6D4C41]">
+                {term ? (
+                  <>
+                    Tìm thấy <span className="font-semibold text-[#C8A97E]">{searchTotal}</span> kết quả cho "{term}"
+                  </>
+                ) : (
+                  <>
+                    Hiển thị <span className="font-semibold text-[#C8A97E]">{searchTotal}</span> categories
+                  </>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Loading state */}
           {loading && (
@@ -209,19 +305,40 @@ export default function CategoriesPage() {
             </div>
           )}
 
+          {/* Searching state */}
+          {searching && !loading && (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8A97E]"></div>
+              <span className="ml-3 text-[#6D4C41]">Đang tìm kiếm...</span>
+            </div>
+          )}
+
           {/* No categories found */}
-          {!loading && filteredCategories.length === 0 && (
+          {!loading && !searching && categories.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-[#6D4C41] text-lg">
+              <div className="mb-4">
+                <svg className="mx-auto h-16 w-16 text-[#D3B995]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-[#6D4C41] text-lg mb-2">
                 {term ? `Không tìm thấy category nào với từ khóa "${term}"` : 'Không có categories nào'}
               </p>
+              {term && (
+                <button
+                  onClick={handleClearSearch}
+                  className="text-[#C8A97E] hover:text-[#B8956E] underline text-sm"
+                >
+                  Xóa từ khóa tìm kiếm
+                </button>
+              )}
             </div>
           )}
 
           {/* GRID VIEW - Thiết kế ảnh đẹp */}
-          {!loading && view === "grid" && filteredCategories.length > 0 && (
+          {!loading && view === "grid" && categories.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
-              {filteredCategories.map((category: Category) => (
+              {categories.map((category: Category) => (
                 <Link
                   href={`/user-category/${category.id}`}
                   key={category.id}
@@ -290,9 +407,9 @@ export default function CategoriesPage() {
           )}
 
           {/* LIST VIEW - Thiết kế ảnh enhanced */}
-          {!loading && view === "list" && filteredCategories.length > 0 && (
+          {!loading && view === "list" && categories.length > 0 && (
             <div className="space-y-4 mb-12">
-              {filteredCategories.map((category: Category) => (
+              {categories.map((category: Category) => (
                 <Link
                   href={`/user-category/${category.id}`}
                   key={category.id}

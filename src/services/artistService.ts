@@ -233,4 +233,172 @@ export const testArtistSearchAPI = async () => {
     console.error('API Test Error:', error.response?.data || error.message);
     return null;
   }
+};
+
+// Function để lấy tất cả nghệ sĩ với phân trang
+export const getAllArtists = async (page: number = 1, rpp: number = 20): Promise<ArtistSearchResponse> => {
+  try {
+    console.log(`Getting all artists - page: ${page}, rpp: ${rpp}`);
+    
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `https://api.sonata.io.vn/api/v1/artist/search?page=${page}&rpp=${rpp}`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: {
+        filters: [], // Không có filter để lấy tất cả
+        sorts: [
+          {
+            key: "viewCount",
+            type: "DESC"
+          },
+          {
+            key: "followers", 
+            type: "DESC"
+          },
+          {
+            key: "name",
+            type: "ASC"
+          }
+        ]
+      }
+    };
+
+    console.log('Get all artists API config:', JSON.stringify(config, null, 2));
+
+    const response = await axios(config);
+    const data: ArtistSearchResponse = response.data;
+    
+    console.log('Get all artists API response:', JSON.stringify(data, null, 2));
+    
+    if (data.success) {
+      return data;
+    }
+    
+    return {
+      status: "OK",
+      code: 200,
+      success: true,
+      message: "No artists found",
+      data: { total: 0, items: [] },
+      errors: null
+    };
+  } catch (error: any) {
+    console.error('Lỗi khi lấy danh sách tất cả nghệ sĩ:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    }
+    return {
+      status: "ERROR",
+      code: 500,
+      success: false,
+      message: "Failed to get artists",
+      data: { total: 0, items: [] },
+      errors: error
+    };
+  }
+};
+
+// Function để lọc nghệ sĩ theo instrument
+export const getArtistsByInstrument = async (
+  instrumentName: string, 
+  page: number = 1, 
+  rpp: number = 20
+): Promise<ArtistSearchResponse> => {
+  try {
+    console.log(`Getting artists by instrument: ${instrumentName}`);
+    
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `https://api.sonata.io.vn/api/v1/artist/search?page=${page}&rpp=${rpp}`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: {
+        filters: [
+          {
+            operator: "like",
+            key: "instruments.name",
+            value: instrumentName
+          }
+        ],
+        sorts: [
+          {
+            key: "viewCount",
+            type: "DESC"
+          },
+          {
+            key: "followers", 
+            type: "DESC"
+          },
+          {
+            key: "name",
+            type: "ASC"
+          }
+        ]
+      }
+    };
+
+    const response = await axios(config);
+    const data: ArtistSearchResponse = response.data;
+    
+    if (data.success) {
+      return data;
+    }
+    
+    return {
+      status: "OK",
+      code: 200,
+      success: true,
+      message: "No artists found for this instrument",
+      data: { total: 0, items: [] },
+      errors: null
+    };
+  } catch (error: any) {
+    console.error('Lỗi khi lấy nghệ sĩ theo instrument:', error);
+    return {
+      status: "ERROR",
+      code: 500,
+      success: false,
+      message: "Failed to get artists by instrument",
+      data: { total: 0, items: [] },
+      errors: error
+    };
+  }
+};
+
+// Function để lấy thông tin chi tiết một nghệ sĩ theo ID
+export const getArtistById = async (id: number): Promise<Artist | null> => {
+  try {
+    console.log(`Getting artist details for ID: ${id}`);
+    
+    const config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `https://api.sonata.io.vn/api/v1/artist/${id}`,
+      headers: {
+        'Accept': 'application/json'
+      }
+    };
+
+    const response = await axios(config);
+    console.log('Artist detail API response:', JSON.stringify(response.data, null, 2));
+    
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    
+    return null;
+  } catch (error: any) {
+    console.error('Lỗi khi lấy thông tin chi tiết nghệ sĩ:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    }
+    return null;
+  }
 }; 

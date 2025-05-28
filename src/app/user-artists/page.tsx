@@ -7,6 +7,15 @@ import Image from "next/image";
 // BƯỚC 1: IMPORT HOOK TỪ CONTEXT
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 
+// Import API services
+import { 
+  getAllArtists, 
+  searchArtists, 
+  getArtistsByInstrument,
+  Artist as ApiArtist,
+  ArtistSearchResponse 
+} from "@/services/artistService";
+
 // Giả sử bạn có một file định nghĩa type chung
 // Nếu không, bạn có thể định nghĩa nó ở đây để TypeScript không báo lỗi
 interface Music {
@@ -20,9 +29,14 @@ interface Music {
 }
 
 /* ─────────── SearchBar (Không thay đổi) ─────────── */
-const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
+const SearchBar: React.FC<{ 
+  term?: string; 
+  setTerm?: (s: string) => void;
+  isSearching?: boolean;
+}> = ({
   term = "",
   setTerm = () => {},
+  isSearching = false,
 }) => {
   const [focus, setFocus] = useState(false);
   return (
@@ -32,7 +46,7 @@ const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
       }`}
     >
       <svg
-        className="w-5 h-5 ml-3 text-[#6D4C41]"
+        className={`w-5 h-5 ml-3 text-[#6D4C41] ${isSearching ? 'animate-spin' : ''}`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -45,7 +59,7 @@ const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
         />
       </svg>
       <input
-        placeholder="Tìm kiếm chủ đề cổ điển..."
+        placeholder="Tìm kiếm nghệ sĩ cổ điển..."
         className="flex-1 bg-transparent text-sm py-2 px-3 focus:outline-none placeholder-[#6D4C41]"
         value={term}
         onChange={(e) => setTerm(e.target.value)}
@@ -76,7 +90,7 @@ const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
   );
 };
 
-/* ─────────── Data (Không thay đổi) ─────────── */
+/* ─────────── Data (periods và instruments vẫn giữ nguyên) ─────────── */
 const musicEras = [
   { name: "All Periods", years: "All Time" },
   { name: "Medieval", years: "500‑1400" },
@@ -111,80 +125,36 @@ const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
 const sortOptions = [
   { label: "A → Z", value: "alphaAsc" },
   { label: "Z → A", value: "alphaDesc" },
-  { label: "Earliest", value: "yearAsc" },
-  { label: "Latest", value: "yearDesc" },
-  { label: "Country", value: "country" },
+  { label: "Popularity", value: "popularity" },
+  { label: "Followers", value: "followers" },
+  { label: "Views", value: "views" },
 ];
-
-const composers = [
-  {
-    name: "Ludwig van Beethoven",
-    image: "/images/composers/beethoven.jpg",
-    era: "Classical/Romantic",
-    years: "1770-1827",
-    country: "Germany",
-    instrument: "Piano",
-    notableWorks: ["Symphony No. 9", "Moonlight Sonata", "Für Elise"],
-    description:
-      "Bridged the Classical and Romantic periods with revolutionary compositions",
-    backgroundColor: "bg-[#48352F]",
-  },
-  {
-    name: "Wolfgang Amadeus Mozart",
-    image: "/images/composers/mozart.jpg",
-    era: "Classical",
-    years: "1756-1791",
-    country: "Austria",
-    instrument: "Piano",
-    notableWorks: ["The Magic Flute", "Symphony No. 40", "Requiem"],
-    description:
-      "Child prodigy and master of classical form with over 600 compositions",
-    backgroundColor: "bg-[#32435F]",
-  },
-  // ... (giữ nguyên các nhà soạn nhạc khác)
-  {
-    name: "Gustav Mahler",
-    image: "/images/composers/mahler.jpg",
-    era: "Romantic",
-    years: "1860-1911",
-    country: "Austria",
-    instrument: "Orchestra",
-    notableWorks: ["Symphony No. 5", "Das Lied von der Erde", "Symphony No. 2"],
-    description:
-      "Expanded orchestral music with monumental symphonies of intense emotion",
-    backgroundColor: "bg-[#435360]",
-  },
-];
-
-type Composer = (typeof composers)[0];
 
 export default function ClassicalMusicArtistsPage() {
   // BƯỚC 2: KẾT NỐI VỚI MUSIC PLAYER CONTEXT
-  // Chúng ta chỉ cần hàm `playMusic` từ context.
-  // Mọi state khác (isPlaying, currentMusic...) đều được quản lý toàn cục.
-  const { playMusic } = useMusicPlayer();
+  const { playSongById } = useMusicPlayer();
 
-  // State cục bộ của trang này (bộ lọc, sắp xếp, tìm kiếm...) -> Giữ nguyên
+  // State cục bộ của trang này
   const [selectedTopTab, setSelectedTopTab] = useState<
     "Categories" | "Artists" | "Albums"
   >("Artists");
   const [activeView, setActiveView] = useState<"grid" | "list">("grid");
   const [selectedEra, setSelectedEra] = useState("All Periods");
-  const [selectedInstrument, setSelectedInstrument] =
-    useState("All Instruments");
-  const [sortBy, setSortBy] =
-    useState<(typeof sortOptions)[0]["value"]>("alphaAsc");
+  const [selectedInstrument, setSelectedInstrument] = useState("All Instruments");
+  const [sortBy, setSortBy] = useState<(typeof sortOptions)[0]["value"]>("popularity");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // API state management
+  const [artists, setArtists] = useState<ApiArtist[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalArtists, setTotalArtists] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchResults, setSearchResults] = useState<ArtistSearchResponse | null>(null);
 
-  // BƯỚC 3: XOÁ STATE CỤC BỘ CỦA PLAYER CŨ
-  // Các dòng sau đây không còn cần thiết và đã được xoá:
-  // const [isPlaying, setIsPlaying] = useState(false);
-  // const [currentComposer, setCurrentComposer] = useState<...>(null);
-  // const [nowPlaying, setNowPlaying] = useState(...);
-  // const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  /* ────── Dropdown outside‑click helper (Không thay đổi) ────── */
+  /* ────── Dropdown outside‑click helper ────── */
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -199,67 +169,187 @@ export default function ClassicalMusicArtistsPage() {
     return () => window.removeEventListener("click", handleClickOutside);
   }, []);
 
-  /* ────── Logic lọc và sắp xếp (Không thay đổi) ────── */
-  const filteredComposers = composers.filter((c) => {
-    const eraOK = selectedEra === "All Periods" || c.era.includes(selectedEra);
-    const instOK =
-      selectedInstrument === "All Instruments" ||
-      c.instrument === selectedInstrument;
-    const searchOK =
-      !searchTerm ||
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.notableWorks.some((w) =>
-        w.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    return eraOK && instOK && searchOK;
-  });
-
-  const sortedComposers = [...filteredComposers].sort((a, b) => {
-    switch (sortBy) {
-      case "alphaAsc":
-        return a.name.localeCompare(b.name);
-      case "alphaDesc":
-        return b.name.localeCompare(a.name);
-      case "yearAsc":
-        return +a.years.split("-")[0] - +b.years.split("-")[0];
-      case "yearDesc":
-        return +b.years.split("-")[0] - +a.years.split("-")[0];
-      case "country":
-        return a.country.localeCompare(b.country);
-      default:
-        return 0;
-    }
-  });
-
-  // BƯỚC 4: TẠO HÀM MỚI ĐỂ GỌI GLOBAL PLAYER
-  const handlePlayComposer = (composer: Composer) => {
-    // Chuyển đổi dữ liệu từ `composer` sang định dạng `Music` mà context cần
-    const musicToPlay: Music = {
-      id: composer.name, // Dùng tên làm ID duy nhất cho đơn giản
-      name: composer.notableWorks[0], // Lấy tác phẩm nổi bật đầu tiên làm tên bài hát
-      artist: composer.name, // Tên nhà soạn nhạc là nghệ sĩ
-      coverPhoto: composer.image, // Ảnh bìa
-      // QUAN TRỌNG: Bạn cần cung cấp một đường dẫn thực tế đến file nhạc.
-      // Ở đây chúng ta tạo một đường dẫn API giả định.
-      resourceLink: `/api/music/${encodeURIComponent(composer.name)}`,
-      favoriteCount: Math.floor(Math.random() * 10000), // Dữ liệu giả
+  // Fetch all artists on component mount
+  useEffect(() => {
+    const fetchAllArtists = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await getAllArtists(1, 50); // Lấy 50 nghệ sĩ đầu tiên
+        
+        if (response.success && response.data.items) {
+          setArtists(response.data.items);
+          setTotalArtists(response.data.total);
+        } else {
+          setError("Không thể tải danh sách nghệ sĩ");
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải nghệ sĩ:', err);
+        setError('Có lỗi xảy ra khi tải danh sách nghệ sĩ');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Gọi hàm `playMusic` từ context toàn cục
-    playMusic(musicToPlay);
+    fetchAllArtists();
+  }, []);
+
+  // Search artists when search term changes
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (searchTerm.trim()) {
+        try {
+          setSearching(true);
+          const results = await searchArtists(searchTerm.trim(), 50, 1);
+          setSearchResults(results);
+        } catch (err) {
+          console.error('Lỗi khi tìm kiếm nghệ sĩ:', err);
+          setSearchResults({ 
+            status: "ERROR", 
+            code: 500, 
+            success: false, 
+            message: "Search failed", 
+            data: { total: 0, items: [] }, 
+            errors: err 
+          });
+        } finally {
+          setSearching(false);
+        }
+      } else {
+        setSearchResults(null);
+      }
+    }, 300); // Debounce 300ms
+
+    return () => clearTimeout(searchTimeout);
+  }, [searchTerm]);
+
+  // Filter artists by instrument when selectedInstrument changes
+  useEffect(() => {
+    const filterByInstrument = async () => {
+      if (selectedInstrument !== "All Instruments" && !searchTerm) {
+        try {
+          setLoading(true);
+          const results = await getArtistsByInstrument(selectedInstrument, 1, 50);
+          
+          if (results.success && results.data.items) {
+            setArtists(results.data.items);
+            setTotalArtists(results.data.total);
+          }
+        } catch (err) {
+          console.error('Lỗi khi lọc nghệ sĩ theo instrument:', err);
+        } finally {
+          setLoading(false);
+        }
+      } else if (selectedInstrument === "All Instruments" && !searchTerm) {
+        // Reload all artists
+        const fetchAllArtists = async () => {
+          try {
+            setLoading(true);
+            const response = await getAllArtists(1, 50);
+            
+            if (response.success && response.data.items) {
+              setArtists(response.data.items);
+              setTotalArtists(response.data.total);
+            }
+          } catch (err) {
+            console.error('Lỗi khi tải lại nghệ sĩ:', err);
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchAllArtists();
+      }
+    };
+
+    filterByInstrument();
+  }, [selectedInstrument, searchTerm]);
+
+  // Get display artists - either search results or filtered artists
+  const displayArtists = searchResults && searchTerm 
+    ? searchResults.data.items 
+    : artists;
+
+  // Helper function to get birth year from date string
+  const getBirthYear = (dateOfBirth: string | null): number => {
+    if (!dateOfBirth) return 0;
+    return new Date(dateOfBirth).getFullYear();
+  };
+
+  // Helper function to get death year from date string  
+  const getDeathYear = (dateOfDeath: string | null): number => {
+    if (!dateOfDeath) return new Date().getFullYear(); // Current year if still alive
+    return new Date(dateOfDeath).getFullYear();
+  };
+
+  // Filter by era and sort
+  const filteredAndSortedArtists = [...displayArtists]
+    .filter((artist) => {
+      if (selectedEra === "All Periods") return true;
+      
+      const birthYear = getBirthYear(artist.dateOfBirth);
+      
+      // Map era to year ranges
+      const eraRanges: Record<string, [number, number]> = {
+        "Medieval": [500, 1400],
+        "Renaissance": [1400, 1600], 
+        "Baroque": [1600, 1750],
+        "Classical": [1750, 1820],
+        "Romantic": [1820, 1900],
+        "Modern": [1900, 1945],
+        "Contemporary": [1945, 2024],
+      };
+      
+      const range = eraRanges[selectedEra];
+      if (!range) return true;
+      
+      return birthYear >= range[0] && birthYear <= range[1];
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "alphaAsc":
+          return a.name.localeCompare(b.name);
+        case "alphaDesc":
+          return b.name.localeCompare(a.name);
+        case "popularity":
+          return (b.viewCount || 0) - (a.viewCount || 0);
+        case "followers":
+          return (b.followers || 0) - (a.followers || 0);
+        case "views":
+          return (b.viewCount || 0) - (a.viewCount || 0);
+        default:
+          return 0;
+      }
+    });
+
+  // BƯỚC 4: TẠO HÀM MỚI ĐỂ GỌI GLOBAL PLAYER
+  const handlePlayArtist = async (artist: ApiArtist) => {
+    try {
+      // Sử dụng playSongById thay vì playMusic
+      // Giả sử chúng ta lấy bài hát đầu tiên của nghệ sĩ hoặc sử dụng ID nghệ sĩ
+      // Trong trường hợp thực tế, bạn cần API để lấy danh sách bài hát của nghệ sĩ
+      console.log(`Playing music from artist: ${artist.name} (ID: ${artist.id})`);
+      
+      // Tạm thời sử dụng ID nghệ sĩ - trong thực tế cần có API lấy bài hát của nghệ sĩ
+      await playSongById(artist.id);
+    } catch (error) {
+      console.error('Lỗi khi phát nhạc của nghệ sĩ:', error);
+    }
   };
 
   return (
     <div className="flex h-screen bg-[#F8F0E3] text-[#3A2A24] font-['Playfair_Display',serif]">
       <Navbar />
 
-      {/* Thay đổi nhỏ: Xoá `pb-24` vì layout gốc đã xử lý việc này */}
       <main className="flex-1 overflow-y-auto">
-        {/* TOP BAR (Không thay đổi) */}
+        {/* TOP BAR */}
         <div className="sticky top-0 z-30 bg-[#D3B995] shadow-md px-8 py-3">
-          {/* ... code top bar giữ nguyên ... */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <SearchBar term={searchTerm} setTerm={setSearchTerm} />
+            <SearchBar 
+              term={searchTerm} 
+              setTerm={setSearchTerm} 
+              isSearching={searching}
+            />
             <div className="flex flex-col md:flex-row md:items-center md:space-x-6 gap-3">
               <div className="flex space-x-3 order-2 md:order-1">
                 {navTabs.map((t) => (
@@ -332,9 +422,8 @@ export default function ClassicalMusicArtistsPage() {
           </div>
         </div>
 
-        {/* SECOND BAR – FILTERS + SORT (Không thay đổi) */}
+        {/* SECOND BAR – FILTERS + SORT */}
         <div className="sticky top-[64px] md:top-[60px] z-20 bg-[#E6D7C3] px-8 py-2 border-b border-[#D3B995] overflow-x-auto overflow-y-visible no-scrollbar">
-          {/* ... code filter bar giữ nguyên ... */}
           <div className="flex items-center gap-3 min-w-max relative">
             {instrumentCategories.map((inst) => (
               <button
@@ -359,7 +448,6 @@ export default function ClassicalMusicArtistsPage() {
                   setShowSortMenu((s) => !s);
                 }}
               >
-                {/* icon */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
@@ -401,9 +489,8 @@ export default function ClassicalMusicArtistsPage() {
           </div>
         </div>
 
-        {/* ERA TIMELINE (Không thay đổi) */}
+        {/* ERA TIMELINE */}
         <div className="px-8 pt-6 pb-2">
-          {/* ... code timeline giữ nguyên ... */}
           <h3 className="text-xs font-medium text-[#6D4C41] uppercase tracking-wider mb-3">
             Musical Periods
           </h3>
@@ -431,101 +518,190 @@ export default function ClassicalMusicArtistsPage() {
           </div>
         </div>
 
+        {/* ERROR STATE */}
+        {error && (
+          <div className="px-8 mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+              <p className="text-red-600 mb-2">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-[#C8A97E] hover:bg-[#A67C52] text-white px-4 py-2 rounded-full text-sm"
+              >
+                Thử lại
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SEARCH RESULTS INFO */}
+        {searchTerm && searchResults && !error && (
+          <div className="px-8 mb-6">
+            <div className="bg-[#E6D7C3] rounded-lg p-4">
+              <p className="text-[#3A2A24]">
+                {searching 
+                  ? 'Đang tìm kiếm...' 
+                  : `Tìm thấy ${searchResults.data.total} kết quả cho "${searchTerm}"`
+                }
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* LOADING STATE */}
+        {loading && (
+          <div className="px-8 py-12 text-center">
+            <div className="flex justify-center items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C8A97E]"></div>
+              <span className="ml-3 text-[#6D4C41]">Đang tải nghệ sĩ...</span>
+            </div>
+          </div>
+        )}
+
+        {/* NO RESULTS */}
+        {!loading && !error && filteredAndSortedArtists.length === 0 && (
+          <div className="px-8 py-12 text-center">
+            <div className="mb-4">
+              <svg className="mx-auto h-24 w-24 text-[#D3B995]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-[#3A2A24] mb-2">Không tìm thấy nghệ sĩ</h3>
+            <p className="text-[#6D4C41] mb-4">
+              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+            </p>
+            <button 
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedEra("All Periods");
+                setSelectedInstrument("All Instruments");
+              }}
+              className="bg-[#C8A97E] hover:bg-[#A67C52] text-white px-6 py-2 rounded-full"
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        )}
+
         {/* === MAIN CONTENT === */}
-        <div className="px-8 pt-6">
-          {activeView === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
-              {sortedComposers.map((c) => (
-                <div
-                  key={c.name}
-                  className="group flex flex-col items-center p-4 rounded-lg border border-transparent hover:border-[#B79E7A]/60 hover:bg-[#F0E6D6] transition"
-                >
-                  <div className="relative w-full max-w-[160px] aspect-square rounded-full overflow-hidden border-4 border-[#B79E7A]/70">
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={c.image}
-                        alt={c.name}
-                        fill
-                        className="object-cover grayscale-[30%] sepia-[10%]"
-                      />
-                    </div>
-
-                    {/* BƯỚC 5: CẬP NHẬT ONCLICK EVENT */}
-                    <button
-                      onClick={() => handlePlayComposer(c)}
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-[#3A2A24]/60 transition"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 text-[#F8F0E3]"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <h3 className="mt-3 text-sm font-medium group-hover:text-[#B79E7A] whitespace-nowrap">
-                    {c.name}
-                  </h3>
-                  <p className="text-xs text-[#6D4C41] whitespace-nowrap">
-                    {c.years}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {sortedComposers.map((c) => (
-                <div
-                  key={c.name}
-                  className="flex items-center p-4 rounded-lg border border-[#D3B995] hover:border-[#B79E7A] hover:bg-[#F0E6D6] transition"
-                >
-                  <div className="relative h-16 w-16 mr-4">
-                    <Image
-                      src={c.image}
-                      alt={c.name}
-                      fill
-                      className="rounded-full object-cover"
-                    />
-                  </div>
-
-                  <div className="flex-1">
-                    <h4 className="font-medium">{c.name}</h4>
-                    <p className="text-xs text-[#6D4C41]">{c.years}</p>
-                  </div>
-                  {/* BƯỚC 5: CẬP NHẬT ONCLICK EVENT */}
-                  <button
-                    onClick={() => handlePlayComposer(c)}
-                    className="p-2 rounded-full bg-[#3A2A24] text-[#F8F0E3] hover:bg-[#6D4C41]"
+        {!loading && !error && filteredAndSortedArtists.length > 0 && (
+          <div className="px-8 pt-6">
+            {activeView === "grid" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
+                {filteredAndSortedArtists.map((artist) => (
+                  <Link 
+                    key={`${artist.id}-${artist.name}`}
+                    href={`/artist/${artist.id}`}
+                    className="block"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    <div className="group flex flex-col items-center p-4 rounded-lg border border-transparent hover:border-[#B79E7A]/60 hover:bg-[#F0E6D6] transition cursor-pointer">
+                      <div className="relative w-full max-w-[160px] aspect-square rounded-full overflow-hidden border-4 border-[#B79E7A]/70">
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={artist.picture || '/images/default-artist.jpg'}
+                            alt={artist.name}
+                            fill
+                            className="object-cover grayscale-[30%] sepia-[10%]"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/images/default-artist.jpg';
+                            }}
+                          />
+                        </div>
 
-        {/* BƯỚC 6: XOÁ TOÀN BỘ PHẦN PLAYER BAR CŨ
-          Toàn bộ khối div.fixed.bottom-0... đã được xoá khỏi đây.
-          Nó sẽ được thay thế bằng <PersistentPlayerLayout /> trong file layout.tsx.
-        */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handlePlayArtist(artist);
+                          }}
+                          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-[#3A2A24]/60 transition"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-[#F8F0E3]"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                      <h3 className="mt-3 text-sm font-medium group-hover:text-[#B79E7A] text-center line-clamp-2">
+                        {artist.name}
+                      </h3>
+                      <p className="text-xs text-[#6D4C41] text-center">
+                        {artist.dateOfBirth ? getBirthYear(artist.dateOfBirth).toString() : 'Unknown'} - {artist.dateOfDeath ? getDeathYear(artist.dateOfDeath).toString() : 'Present'}
+                      </p>
+                      <p className="text-xs text-[#8D6E63] text-center mt-1">
+                        {artist.nationality || 'Unknown'}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredAndSortedArtists.map((artist) => (
+                  <Link
+                    key={`${artist.id}-${artist.name}`}
+                    href={`/artist/${artist.id}`}
+                    className="block"
+                  >
+                    <div className="flex items-center p-4 rounded-lg border border-[#D3B995] hover:border-[#B79E7A] hover:bg-[#F0E6D6] transition cursor-pointer">
+                      <div className="relative h-16 w-16 mr-4">
+                        <Image
+                          src={artist.picture || '/images/default-artist.jpg'}
+                          alt={artist.name}
+                          fill
+                          className="rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/images/default-artist.jpg';
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <h4 className="font-medium">{artist.name}</h4>
+                        <p className="text-xs text-[#6D4C41]">
+                          {artist.dateOfBirth ? getBirthYear(artist.dateOfBirth).toString() : 'Unknown'} - {artist.dateOfDeath ? getDeathYear(artist.dateOfDeath).toString() : 'Present'}
+                        </p>
+                        <p className="text-xs text-[#8D6E63]">
+                          {artist.nationality || 'Unknown'} • {artist.viewCount || 0} lượt xem
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handlePlayArtist(artist);
+                        }}
+                        className="p-2 rounded-full bg-[#3A2A24] text-[#F8F0E3] hover:bg-[#6D4C41] transition-colors"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
