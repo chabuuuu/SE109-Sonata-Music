@@ -152,6 +152,7 @@ export default function LoginPage() {
             >
               {isLoading ? 'LOGGING IN...' : 'LOGIN'}
             </button>
+            <a href="./contributor/login" className="hover:text-white" > A contributor? Click here.</a>
           </form>
           <div className="mt-8 text-center">
             <p className="text-sm text-[#6D4C41]">Don't have an account?</p>

@@ -6,10 +6,19 @@ const Button = ({data}:{data:string}) => {
   const router = useRouter();
   const handleLogOut = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('ADMIN_TOKEN');
-    }
 
-    router.push('/admin/login');
+      const admin = localStorage.getItem('ADMIN_TOKEN');
+      const contributor = localStorage.getItem('CONTRIBUTOR_TOKEN');
+
+      localStorage.removeItem('ADMIN_TOKEN');
+      localStorage.removeItem('CONTRIBUTOR_TOKEN');
+
+      if (admin) {
+        router.push('/admin/login');
+      } else if(contributor) {
+        router.push('contributor/login');
+      }
+    }
   }
 
   return (

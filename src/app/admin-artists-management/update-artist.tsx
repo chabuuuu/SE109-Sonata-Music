@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { ChevronDown, CloudUpload } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import SearchModal from "@/components/SearchModal";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
+import FileUploadSection from "@/components/upload-file";
 
 // API Response Types
 interface ApiResponse<T> {
@@ -95,7 +96,13 @@ interface Artist {
 
 // Type for items that can be selected
 type RoleItem = { id: number; name: string };
-type SelectableItem = Genre | Orchestra | Period | Instrument | Student | RoleItem;
+type SelectableItem =
+  | Genre
+  | Orchestra
+  | Period
+  | Instrument
+  | Student
+  | RoleItem;
 
 type UpdateArtistProp = {
   onClose: () => void;
@@ -107,12 +114,18 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
   const [showModal, setShowModal] = useState(false);
   const [currentFieldType, setCurrentFieldType] = useState("");
   const [artist, setArtist] = useState<Artist | null>(null);
+  const [coverArtUrl, setCoverArtUrl] = useState("");
   const BASE_URL = "https://api.sonata.io.vn/api/v1";
 
   // Function to open modal with specific field type
   const handleOpenModal = (fieldType: string) => {
     setCurrentFieldType(fieldType);
     setShowModal(true);
+  };
+
+  const handleUploadError = (error: string) => {
+    console.error("Upload failed:", error);
+    alert(`Upload failed: ${error}`);
   };
 
   // Function to close modal
@@ -122,7 +135,10 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
   };
 
   // Handle selected items from the modal
-  const handleSelectItems = (fieldType: string, selectedItems: SelectableItem[]) => {
+  const handleSelectItems = (
+    fieldType: string,
+    selectedItems: SelectableItem[]
+  ) => {
     if (!artist) return;
 
     // Update the artist state with the selected items based on fieldType
@@ -133,7 +149,10 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
         case "periods":
           return { ...prev, periods: selectedItems as Period[] };
         case "roles":
-          return { ...prev, roles: (selectedItems as RoleItem[]).map((item) => item.name) };
+          return {
+            ...prev,
+            roles: (selectedItems as RoleItem[]).map((item) => item.name),
+          };
         case "orchestras":
           return { ...prev, orchestras: selectedItems as Orchestra[] };
         case "instruments":
@@ -142,10 +161,12 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
           return { ...prev, genres: selectedItems as Genre[] };
         case "students":
           // Transform the selected students into artistStudents format
-          const artistStudents = (selectedItems as Student[]).map((student) => ({
-            id: Math.random(), // This would be handled properly on the backend
-            student,
-          }));
+          const artistStudents = (selectedItems as Student[]).map(
+            (student) => ({
+              id: Math.random(), // This would be handled properly on the backend
+              student,
+            })
+          );
           return { ...prev, artistStudents };
         default:
           return prev;
@@ -226,7 +247,7 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
       const updateData = {
         name: artist.name,
         description: artist.description,
-        picture: artist.picture,
+        picture: coverArtUrl,
         awardsAndHonors: artist.awardsAndHonors,
         nationality: artist.nationality,
         teachingAndAcademicContributions:
@@ -273,7 +294,7 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
         {items.length > 0 ? (
           items.map((item: SelectableItem) => (
             <span
-              key={typeof item.id === 'string' ? item.id : item.id.toString()}
+              key={typeof item.id === "string" ? item.id : item.id.toString()}
               className="bg-white text-blue-500 border border-blue-500 rounded-full px-3 py-1 text-xs"
             >
               {item.name}
@@ -296,7 +317,6 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
             <h2 className="font-bold text-black text-xl md:text-2xl mb-3 md:mb-4">
               Update Artist
             </h2>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {/* Left Column */}
               <div className="space-y-3 md:space-y-4">
@@ -480,21 +500,19 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
                 </div>
               </div>
             </div>
-
             {/* File Upload Area */}
             <div className="border border-dashed border-gray-300 rounded-lg p-4 md:p-8 mt-4 flex flex-col items-center justify-center">
-              <div className="p-2 mb-2">
-                <CloudUpload size={20} className="md:size-24 text-gray-400" />
+              <div>
+                <FileUploadSection
+                  title="Upload Cover Art"
+                  acceptedFormats="JPG, PNG files, max 10MB each"
+                  acceptTypes="image/*,.jpg,.jpeg,.png"
+                  fileType="cover"
+                  uploadedUrl={coverArtUrl}
+                  onUploadSuccess={(mediaUrl) => setCoverArtUrl(mediaUrl)}
+                  onUploadError={handleUploadError}
+                />
               </div>
-              <p className="text-xs md:text-sm text-gray-500 mb-1">
-                Select a file or drag and drop here
-              </p>
-              <p className="text-xs text-gray-400 mb-2 md:mb-4">
-                JPG, PNG or PDF file size no more than 10MB
-              </p>
-              <button className="border hover:bg-gray-200 border-blue-500 text-blue-500 rounded-md px-3 md:px-4 py-1 md:py-2 text-xs md:text-sm">
-                SELECT FILE
-              </button>
             </div>
           </div>
 
@@ -522,7 +540,10 @@ const UpdateArtist = ({ onClose, id }: UpdateArtistProp) => {
           onClose={handleCloseModal}
           fieldType={currentFieldType}
           onSelect={(selectedItems) =>
-            handleSelectItems(currentFieldType, selectedItems as SelectableItem[])
+            handleSelectItems(
+              currentFieldType,
+              selectedItems as SelectableItem[]
+            )
           }
           existingItems={getExistingItems(currentFieldType)}
         />

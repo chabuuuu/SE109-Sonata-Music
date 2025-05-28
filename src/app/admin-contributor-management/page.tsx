@@ -1,63 +1,43 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import AdminLayout from "@/components/AdminLayout";
 import * as XLSX from "xlsx";
 import {
-  FolderPlus,
-  Inbox,
   Download,
   Search,
   XCircle,
-  Info,
 } from "lucide-react";
 import axios from "axios";
-import DetailModal from "@/components/DetailModal";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-
-interface Category {
-  id: string;
-  name: string;
-  songsCount: string;
-  totalMusics: string;
-  viewCount: string;
-  views: string;
-  releaseDate: string;
-  createAt: string;
-  createdBy: string;
-  description: string;
-  picture: string;
-}
+import * as ContributorType from "./contributor.type";
 
 export default function AdminCategoriesAllPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [contributors, setContributors] = useState<ContributorType.Contributor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-  const [popup, setPopup] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
+  const [refreshKey, setRefreshKey] = useState(0);
 
+  setPageSize(8);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   // Fetch (or search) whenever searchTerm, currentPage or pageSize change
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchContributors = async () => {
       try {
         const filters = searchTerm
           ? [
               {
-                operator: "equal",
-                key: "name",
+                operator: "like",
+                key: "username",
                 value: searchTerm,
               },
             ]
           : [];
         const response = await axios.post(
-          `https://api.sonata.io.vn/api/v1/category/search?rpp=${pageSize}&page=${currentPage}`,
+          `https://api.sonata.io.vn/api/v1/contributor/search?rpp=${pageSize}&page=${currentPage}`,
           { filters, sorts: [{ key: "id", type: "DESC" }] },
           {
             headers: {
@@ -69,63 +49,43 @@ export default function AdminCategoriesAllPage() {
 
         const { items, total } = response.data.data;
 
-        // Map API items into our Category shape
-        const mapped: Category[] = items.map((item: Category) => ({
-          id: item.id,
-          name: item.name || "Untitled",
-          picture: item.picture || "default.jpg",
-          songsCount: String(item.totalMusics ?? 0),
-          views: String(item.viewCount ?? 0),
-          releaseDate: item.createAt
-            ? new Date(item.createAt).toLocaleDateString()
-            : "Unknown",
-          createAt: item.createAt || "",
-          createdBy: "System",
-          description: item.description || "Imported from API",
-        }));
-
-        setCategories(mapped);
+        setContributors(items);
         setTotalCount(total);
       } catch (err) {
         console.error("Failed to fetch/search categories:", err);
       }
     };
 
-    fetchCategories();
-  }, [searchTerm, currentPage, pageSize]);
+    fetchContributors();
+  }, [searchTerm, currentPage, pageSize, refreshKey]);
 
   // handle delete
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`https://api.sonata.io.vn/api/v1/category/${id}`, {
+      await axios.delete(`https://api.sonata.io.vn/api/v1/contributor/${id}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
         },
       });
       // Refetch current page so count & pages stay in sync
-      setCurrentPage(1);
+      setRefreshKey((prev) => (prev + 1));
+      alert("Delete successfully.")
     } catch (err) {
       console.error("Error deleting category:", err);
       alert("Failed to delete category. Please try again.");
     }
   };
 
-  const handleShowAll = () => {
-    setPageSize(totalCount || 1);
-    setCurrentPage(1);
-  };
-
   const handleExportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(
-      categories.map((c) => ({
+      contributors.map((c) => ({
         ID: c.id,
-        Name: c.name,
-        "Songs count": c.songsCount,
-        Views: c.views,
-        "Release date": c.releaseDate,
-        "Created by": c.createdBy,
-        Description: c.description,
+        Email: c.email,
+        Name: c.username,
+        FullName: c.fullname,
+        CreateAt: c.createAt,
+        UpdateAt: c.updateAt,
       }))
     );
     const wb = XLSX.utils.book_new();
@@ -136,28 +96,9 @@ export default function AdminCategoriesAllPage() {
   return (
     <AdminLayout>
       <div className="h-full bg-gray-100 p-6 relative">
-        {/* Left action buttons */}
-        <div className="absolute top-6 left-6 flex space-x-4">
-          <Link
-            href="/admin-categories-add"
-            className="w-36 h-20 bg-white text-gray-600 rounded-xl border border-gray-200 flex flex-col items-center justify-center"
-          >
-            <FolderPlus size={24} className="mb-1 text-black" />
-            <span className="text-sm font-medium text-black">
-              Add Categories
-            </span>
-          </Link>
-          <Link
-            href="/adminall"
-            className="w-36 h-20 bg-blue-600 text-white rounded-xl flex flex-col items-center justify-center"
-          >
-            <Inbox size={24} className="mb-1 text-white" />
-            <span className="text-sm font-medium text-white">All</span>
-          </Link>
-        </div>
 
         {/* Main content */}
-        <div className="h-full bg-white p-6 pt-32 flex flex-col overflow-hidden">
+        <div className="h-full bg-white p-6 pt-20 flex flex-col overflow-hidden">
           {/* Header: Found + Search + Export */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4 ">
@@ -172,7 +113,7 @@ export default function AdminCategoriesAllPage() {
                 />
                 <input
                   type="text"
-                  placeholder="Search by name..."
+                  placeholder="Search by username..."
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -212,12 +153,11 @@ export default function AdminCategoriesAllPage() {
                 <tr className="bg-gray-200">
                   {[
                     "ID",
-                    "Name",
-                    "Songs count",
-                    "Views",
-                    "Release date",
-                    "Created by",
-                    "Description",
+                    "Email",
+                    "User Name",
+                    "Full Name",
+                    "Create at",
+                    "Update at",
                     "Actions",
                   ].map((h) => (
                     <th
@@ -230,29 +170,20 @@ export default function AdminCategoriesAllPage() {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((c) => (
+                {contributors.map((c) => (
                   <tr
                     key={c.id}
                     className="odd:bg-gray-50 even:bg-white hover:bg-gray-100"
                   >
                     <td className="px-3 py-2 text-black">{c.id}</td>
-                    <td className="px-3 py-2 text-black">{c.name}</td>
-                    <td className="px-3 py-2 text-black">{c.songsCount}</td>
-                    <td className="px-3 py-2 text-black">{c.views}</td>
-                    <td className="px-3 py-2 text-black">{c.releaseDate}</td>
-                    <td className="px-3 py-2 text-black">{c.createdBy}</td>
-                    <td className="px-3 py-2 text-black">{c.description}</td>
-                    <td className="px-3 py-2 flex space-x-2">
+                    <td className="px-3 py-2 text-black">{c.email}</td>
+                    <td className="px-3 py-2 text-black">{c.username}</td>
+                    <td className="px-3 py-2 text-black">{c.fullname}</td>
+                    <td className="px-3 py-2 text-black">{new Date(c.createAt).toLocaleDateString("en-CA")}</td>
+                    <td className="px-3 py-2 text-black">{new Date(c.updateAt).toLocaleDateString("en-CA")}</td>
+                    <td className="px-3 py-2 flex justify-center">
                       <button onClick={() => handleDelete(c.id)}>
                         <XCircle size={20} className="text-red-500" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedCategory(c);
-                          setPopup(true);
-                        }}
-                      >
-                        <Info size={20} className="text-blue-600" />
                       </button>
                     </td>
                   </tr>
@@ -303,35 +234,9 @@ export default function AdminCategoriesAllPage() {
             >
               Next →
             </button>
-
-            <button
-              onClick={handleShowAll}
-              className="ml-4 text-black underline"
-            >
-              Show all
-            </button>
           </div>
         </div>
       </div>
-
-      {popup && selectedCategory && (
-        <DetailModal
-          data={{
-            id: selectedCategory.id,
-            title: selectedCategory.name,
-            createAt: selectedCategory.releaseDate,
-            description: selectedCategory.description,
-            songsCount: selectedCategory.songsCount,
-            views: selectedCategory.views,
-            createdBy: selectedCategory.createdBy,
-            picture: selectedCategory.picture,
-          }}
-          onClose={() => {
-            setPopup(false);
-            setSelectedCategory(null);
-          }}
-        />
-      )}
     </AdminLayout>
   );
 }
