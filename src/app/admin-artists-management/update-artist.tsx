@@ -101,7 +101,7 @@ export interface RolesResponse {
   success: boolean;
   message: string;
   data: string[]; // Array of role strings like "SINGER", "BAND", etc.
-  errors: any | null;
+  errors: unknown | null;
 }
 
 // Type for items that can be selected

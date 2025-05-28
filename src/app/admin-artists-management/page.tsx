@@ -3,10 +3,7 @@
 import React, { useState } from "react";
 import {
   Plus,
-  Users,
-  ChevronDown,
-  Download,
-  Settings,
+  Users
 } from "lucide-react";
 
 import AdminLayout from "@/components/AdminLayout";

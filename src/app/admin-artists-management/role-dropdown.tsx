@@ -10,7 +10,7 @@ export interface RolesResponse {
   success: boolean;
   message: string;
   data: string[]; // Array of role strings like "SINGER", "BAND", etc.
-  errors: any | null;
+  errors: unknown | null;
 }
 
 interface DropdownRolesProps {
