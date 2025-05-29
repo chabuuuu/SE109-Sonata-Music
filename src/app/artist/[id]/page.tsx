@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import CustomImage from "@/components/CustomImage";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
+import BottomBanner from "@/components/bottom_banner";
 import { getArtistById, Artist } from "@/services/artistService";
 import { searchMusicsByArtist, Music } from "@/services/musicService";
 import {
@@ -46,6 +47,7 @@ const ArtistDetailPage: React.FC = () => {
   const [musics, setMusics] = useState<Music[]>([]);
   const [musicsLoading, setMusicsLoading] = useState(false);
   const [musicsError, setMusicsError] = useState<string | null>(null);
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
   useEffect(() => {
     const fetchArtistDetails = async () => {
@@ -112,6 +114,35 @@ const ArtistDetailPage: React.FC = () => {
     fetchArtistMusics();
   }, [activeTab, artistId]);
 
+  // Close share modal when clicking outside or pressing ESC
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowShareMenu(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (showShareMenu && target.closest('.share-modal-content')) {
+        return; // Click inside modal, don't close
+      }
+      if (showShareMenu) {
+        setShowShareMenu(false);
+      }
+    };
+
+    if (showShareMenu) {
+      document.addEventListener('keydown', handleEscape);
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showShareMenu]);
+
   // Handle follow/unfollow
   const handleFollowToggle = async () => {
     try {
@@ -147,6 +178,83 @@ const ArtistDetailPage: React.FC = () => {
       }
     } finally {
       setFollowLoading(false);
+    }
+  };
+
+  // Handle share functionality
+  const handleShare = async (platform?: string) => {
+    if (!artist) return;
+
+    const shareUrl = window.location.href;
+    const shareTitle = `${artist.name} - Sonata Music`;
+    const shareText = `Khám phá thông tin về nghệ sĩ ${artist.name} trên Sonata Music`;
+
+    try {
+      if (platform === 'native' && navigator.share) {
+        // Native Web Share API
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        toast.success("Đã chia sẻ thành công!");
+        return;
+      }
+
+      // Platform specific sharing
+      let targetUrl = '';
+      
+      switch (platform) {
+        case 'facebook':
+          targetUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+          break;
+        case 'twitter':
+          targetUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+          break;
+        case 'telegram':
+          targetUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+          break;
+        case 'whatsapp':
+          targetUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+          break;
+        case 'copy':
+          // Copy to clipboard
+          await navigator.clipboard.writeText(shareUrl);
+          toast.success("Đã copy link vào clipboard!");
+          setShowShareMenu(false);
+          return;
+        default:
+          // Fallback to native share or copy
+          if (navigator.share) {
+            await navigator.share({
+              title: shareTitle,
+              text: shareText,
+              url: shareUrl,
+            });
+            toast.success("Đã chia sẻ thành công!");
+          } else {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success("Đã copy link vào clipboard!");
+          }
+          setShowShareMenu(false);
+          return;
+      }
+
+      if (targetUrl) {
+        window.open(targetUrl, '_blank', 'width=600,height=400,scrollbars=yes,resizable=yes');
+        toast.success("Đã mở cửa sổ chia sẻ!");
+        setShowShareMenu(false);
+      }
+    } catch (error) {
+      console.error('Lỗi khi chia sẻ:', error);
+      // Fallback to copy link
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Đã copy link vào clipboard!");
+      } catch (copyError) {
+        toast.error("Không thể chia sẻ hoặc copy link");
+      }
+      setShowShareMenu(false);
     }
   };
 
@@ -371,7 +479,9 @@ const ArtistDetailPage: React.FC = () => {
                       : "Theo dõi"}
                   </button>
 
-                  <button className="flex items-center gap-2 px-6 py-3 bg-white/80 text-[#3A2A24] rounded-xl font-semibold hover:bg-[#E6D7C3] transition-colors border border-[#D3B995]">
+                  <button
+                    onClick={() => setShowShareMenu(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-white/80 text-[#3A2A24] rounded-xl font-semibold hover:bg-[#E6D7C3] transition-colors border border-[#D3B995]">
                     <Share2 className="w-5 h-5" />
                     Chia sẻ
                   </button>
@@ -830,6 +940,126 @@ const ArtistDetailPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Bottom Banner */}
+      <BottomBanner />
+
+      {/* Share Modal */}
+      {showShareMenu && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl share-modal-content">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-[#3A2A24] font-['Playfair_Display',serif]">
+                Chia sẻ nghệ sĩ
+              </h3>
+              <button
+                onClick={() => setShowShareMenu(false)}
+                className="text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Artist info */}
+            <div className="flex items-center gap-4 mb-6 p-4 bg-[#F8F0E3] rounded-xl">
+              <CustomImage
+                src={artist?.picture || '/images/default-artist.jpg'}
+                alt={artist?.name || 'Artist'}
+                width={60}
+                height={60}
+                className="rounded-full object-cover"
+              />
+              <div>
+                <h4 className="font-semibold text-[#3A2A24]">{artist?.name}</h4>
+                <p className="text-sm text-[#6D4C41]">{artist?.nationality}</p>
+              </div>
+            </div>
+
+            {/* Share options */}
+            <div className="space-y-3">
+              {/* Native share (if supported) */}
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button
+                  onClick={() => handleShare('native')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-[#F8F0E3] rounded-xl transition-colors"
+                >
+                  <div className="w-10 h-10 bg-[#C8A97E] rounded-full flex items-center justify-center">
+                    <Share2 className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="font-medium text-[#3A2A24]">Chia sẻ</span>
+                </button>
+              )}
+
+              {/* Facebook */}
+              <button
+                onClick={() => handleShare('facebook')}
+                className="w-full flex items-center gap-4 p-4 hover:bg-[#F8F0E3] rounded-xl transition-colors"
+              >
+                <div className="w-10 h-10 bg-[#1877F2] rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </div>
+                <span className="font-medium text-[#3A2A24]">Facebook</span>
+              </button>
+
+              {/* Twitter */}
+              <button
+                onClick={() => handleShare('twitter')}
+                className="w-full flex items-center gap-4 p-4 hover:bg-[#F8F0E3] rounded-xl transition-colors"
+              >
+                <div className="w-10 h-10 bg-[#1DA1F2] rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                  </svg>
+                </div>
+                <span className="font-medium text-[#3A2A24]">Twitter</span>
+              </button>
+
+              {/* WhatsApp */}
+              <button
+                onClick={() => handleShare('whatsapp')}
+                className="w-full flex items-center gap-4 p-4 hover:bg-[#F8F0E3] rounded-xl transition-colors"
+              >
+                <div className="w-10 h-10 bg-[#25D366] rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.886 3.488"/>
+                  </svg>
+                </div>
+                <span className="font-medium text-[#3A2A24]">WhatsApp</span>
+              </button>
+
+              {/* Telegram */}
+              <button
+                onClick={() => handleShare('telegram')}
+                className="w-full flex items-center gap-4 p-4 hover:bg-[#F8F0E3] rounded-xl transition-colors"
+              >
+                <div className="w-10 h-10 bg-[#0088CC] rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                  </svg>
+                </div>
+                <span className="font-medium text-[#3A2A24]">Telegram</span>
+              </button>
+
+              {/* Copy link */}
+              <button
+                onClick={() => handleShare('copy')}
+                className="w-full flex items-center gap-4 p-4 hover:bg-[#F8F0E3] rounded-xl transition-colors"
+              >
+                <div className="w-10 h-10 bg-[#6D4C41] rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span className="font-medium text-[#3A2A24]">Copy Link</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

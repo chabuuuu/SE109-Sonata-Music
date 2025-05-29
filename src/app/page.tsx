@@ -827,6 +827,60 @@ const AlbumCard: React.FC<{
 const ArtistCard: React.FC<{
   artist: Artist;
 }> = ({ artist }) => {
+  // State cho follow functionality
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followStatusChecked, setFollowStatusChecked] = useState(false);
+
+  // Check follow status khi component mount
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (!artist?.id) return;
+      
+      try {
+        const status = await checkIsFollowingArtist(artist.id);
+        setIsFollowing(status);
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra follow status:", error);
+      } finally {
+        setFollowStatusChecked(true);
+      }
+    };
+
+    checkFollowStatus();
+  }, [artist?.id]);
+
+  // Handle follow/unfollow
+  const handleFollowToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!artist?.id) return;
+    
+    try {
+      setFollowLoading(true);
+
+      if (isFollowing) {
+        await unfollowArtist(artist.id);
+        setIsFollowing(false);
+        toast.success(`Đã hủy theo dõi ${artist.name}`);
+      } else {
+        await followArtist(artist.id);
+        setIsFollowing(true);
+        toast.success(`Đã theo dõi ${artist.name}`);
+      }
+    } catch (error) {
+      console.error("Lỗi khi follow/unfollow:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Không thể thực hiện thao tác này");
+      }
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   // Kiểm tra an toàn cho artist object
   if (!artist || !artist.id) {
     return (
@@ -884,6 +938,42 @@ const ArtistCard: React.FC<{
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
           </button>
+          
+          {/* Follow button */}
+          <button
+            onClick={handleFollowToggle}
+            disabled={followLoading || !followStatusChecked}
+            className={`absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+              isFollowing
+                ? "bg-[#C8A97E] text-white hover:bg-[#A67C52]"
+                : "bg-white/90 border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white"
+            } transform translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100`}
+          >
+            {followLoading ? (
+              <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-3 h-3"
+                viewBox="0 0 20 20"
+                fill={isFollowing ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+            {followLoading
+              ? "..."
+              : isFollowing
+              ? "Đã theo dõi"
+              : "Theo dõi"}
+          </button>
+          
           <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             Artist
           </div>
