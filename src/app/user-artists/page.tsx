@@ -28,7 +28,13 @@ interface Music {
   lyrics?: string;
 }
 
-/* ─────────── SearchBar (Không thay đổi) ─────────── */
+// Helper function để viết hoa chữ cái đầu tiên
+const capitalizeFirstLetter = (str: string): string => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/* ─────────── SearchBar đơn giản với viết hoa chữ cái đầu ─────────── */
 const SearchBar: React.FC<{ 
   term?: string; 
   setTerm?: (s: string) => void;
@@ -38,13 +44,16 @@ const SearchBar: React.FC<{
   setTerm = () => {},
   isSearching = false,
 }) => {
-  const [focus, setFocus] = useState(false);
+  // Xử lý thay đổi input với tự động viết hoa chữ cái đầu
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Tự động viết hoa chữ cái đầu tiên
+    const capitalizedValue = capitalizeFirstLetter(value);
+    setTerm(capitalizedValue);
+  };
+
   return (
-    <div
-      className={`flex items-center bg-[#E6D7C3] rounded-full overflow-hidden transition-shadow duration-200 ${
-        focus ? "shadow-lg" : "shadow"
-      }`}
-    >
+    <div className="flex items-center bg-[#E6D7C3] rounded-full overflow-hidden shadow">
       <svg
         className={`w-5 h-5 ml-3 text-[#6D4C41] ${isSearching ? 'animate-spin' : ''}`}
         fill="none"
@@ -62,9 +71,7 @@ const SearchBar: React.FC<{
         placeholder="Tìm kiếm nghệ sĩ cổ điển..."
         className="flex-1 bg-transparent text-sm py-2 px-3 focus:outline-none placeholder-[#6D4C41]"
         value={term}
-        onChange={(e) => setTerm(e.target.value)}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onChange={handleInputChange}
       />
       {term && (
         <button
@@ -536,15 +543,83 @@ export default function ClassicalMusicArtistsPage() {
         )}
 
         {/* SEARCH RESULTS INFO */}
-        {searchTerm && searchResults && !error && (
+        {searchTerm && !error && (
           <div className="px-8 mb-6">
-            <div className="bg-[#E6D7C3] rounded-lg p-4">
-              <p className="text-[#3A2A24]">
-                {searching 
-                  ? 'Đang tìm kiếm...' 
-                  : `Tìm thấy ${searchResults.data.total} kết quả cho "${searchTerm}"`
-                }
-              </p>
+            <div className="bg-gradient-to-r from-[#E6D7C3] to-[#F0E6D6] rounded-lg p-4 border border-[#D3B995]/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {searching ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#C8A97E]"></div>
+                      <p className="text-[#3A2A24] font-medium">Đang tìm kiếm...</p>
+                    </>
+                  ) : searchResults ? (
+                    <>
+                      <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <p className="text-[#3A2A24] font-medium">
+                        Tìm thấy <span className="text-[#C8A97E] font-bold">{searchResults.data.total}</span> kết quả cho 
+                        <span className="text-[#6D4C41] font-semibold ml-1">"{searchTerm}"</span>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 text-[#8D6E63]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <p className="text-[#6D4C41]">Không tìm thấy kết quả nào</p>
+                    </>
+                  )}
+                </div>
+                
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="flex items-center gap-1 text-[#6D4C41] hover:text-[#C8A97E] transition-colors text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Xóa
+                  </button>
+                )}
+              </div>
+              
+              {/* Hiển thị thông tin bộ lọc nếu có */}
+              {(selectedEra !== "All Periods" || selectedInstrument !== "All Instruments") && (
+                <div className="mt-3 pt-3 border-t border-[#D3B995]/30">
+                  <p className="text-sm text-[#6D4C41] mb-2">Bộ lọc đang áp dụng:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEra !== "All Periods" && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C8A97E] text-white text-xs rounded-full">
+                        Thời kỳ: {selectedEra}
+                        <button 
+                          onClick={() => setSelectedEra("All Periods")}
+                          className="hover:bg-white/20 rounded-full p-0.5"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    )}
+                    {selectedInstrument !== "All Instruments" && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#A67C52] text-white text-xs rounded-full">
+                        Nhạc cụ: {selectedInstrument}
+                        <button 
+                          onClick={() => setSelectedInstrument("All Instruments")}
+                          className="hover:bg-white/20 rounded-full p-0.5"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

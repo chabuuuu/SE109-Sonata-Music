@@ -175,16 +175,17 @@ const fallbackArtists = [
 const ContentSection: React.FC<{
   title: string;
   children: React.ReactNode;
-}> = ({ title, children }) => (
+  showAllLink?: string;
+}> = ({ title, children, showAllLink = "#" }) => (
   <section className="p-6 font-['Playfair_Display',serif] text-[#3A2A24]">
     <header className="flex justify-between items-center mb-6">
       <h2 className="text-2xl font-bold tracking-wide">{title}</h2>
-      <a
-        href="#"
+      <Link
+        href={showAllLink}
         className="text-sm text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
       >
         Show all &rsaquo;
-      </a>
+      </Link>
     </header>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
       {children}
@@ -364,76 +365,109 @@ const PlaylistCard: React.FC<{
 const AlbumCard: React.FC<{
   album: Album;
 }> = ({ album }) => (
-  <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
-    <figure className="relative mb-4 rounded-md overflow-hidden">
-      <Image
-        src={album.coverPhoto}
-        alt={album.name}
-        width={500}
-        height={500}
-        className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      {/* Play button */}
-      <button className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
+  <Link href={`/album/${album.id}`} className="block h-full">
+    <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer">
+      <figure className="relative mb-4 rounded-md overflow-hidden">
+        <Image
+          src={album.coverPhoto}
+          alt={album.name}
+          width={500}
+          height={500}
+          className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        {/* Play button */}
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Thêm logic phát nhạc album ở đây
+          }}
+          className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
         >
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-      </button>
-      {/* Album type label */}
-      <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        {album.albumType || "Album"}
-      </div>
-
-      {/* View count */}
-      {album.viewCount && (
-        <div className="absolute top-3 right-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center">
           <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-3 w-3 mr-1"
-            fill="none"
+            width="24"
+            height="24"
             viewBox="0 0 24 24"
+            fill="none"
             stroke="currentColor"
+            strokeWidth="2"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            />
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
           </svg>
-          {album.viewCount}
+        </button>
+        {/* Album type label */}
+        <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {album.albumType || "Album"}
         </div>
-      )}
-    </figure>
-    <div className="flex-1 flex flex-col">
-      <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
-        {album.name}
-      </h3>
-      <p className="text-sm text-[#6D4C41] line-clamp-2">{album.description}</p>
-      <div className="mt-auto pt-3 flex justify-between items-center">
-        <div className="flex items-center">
-          <span className="text-xs text-[#8D6C61]">
-            {new Date(album.releaseDate).getFullYear() || "Năm phát hành"}
-          </span>
-          {album.likeCount !== undefined && (
-            <span className="text-xs text-[#8D6C61] ml-2 flex items-center">
+
+        {/* View count */}
+        {album.viewCount && (
+          <div className="absolute top-3 right-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-3 w-3 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+            {album.viewCount}
+          </div>
+        )}
+      </figure>
+      <div className="flex-1 flex flex-col">
+        <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
+          {album.name}
+        </h3>
+        <p className="text-sm text-[#6D4C41] line-clamp-2">{album.description}</p>
+        <div className="mt-auto pt-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <span className="text-xs text-[#8D6C61]">
+              {new Date(album.releaseDate).getFullYear() || "Năm phát hành"}
+            </span>
+            {album.likeCount !== undefined && (
+              <span className="text-xs text-[#8D6C61] ml-2 flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3 w-3 mr-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {album.likeCount}
+              </span>
+            )}
+          </div>
+          <div className="flex space-x-2">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Thêm logic thích album ở đây
+              }}
+              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3 mr-1"
+                className="h-5 w-5"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -443,39 +477,29 @@ const AlbumCard: React.FC<{
                   clipRule="evenodd"
                 />
               </svg>
-              {album.likeCount}
-            </span>
-          )}
-        </div>
-        <div className="flex space-x-2">
-          <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+            </button>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Thêm logic thêm vào playlist ở đây
+              }}
+              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
             >
-              <path
-                fillRule="evenodd"
-                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-          <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </article>
+    </article>
+  </Link>
 );
 
 // Artist card component
@@ -873,12 +897,12 @@ const InstrumentSpotlightSection: React.FC<{
           <h2 className="text-2xl font-bold tracking-wide">
             Instrument Spotlight
           </h2>
-          <a
+          <Link
             href="#"
             className="text-sm text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
           >
             Show all &rsaquo;
-          </a>
+          </Link>
         </header>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="bg-[#F0E6D6] border border-[#D3B995] p-5 rounded-lg animate-pulse shadow-sm">
@@ -917,12 +941,12 @@ const InstrumentSpotlightSection: React.FC<{
           <h2 className="text-2xl font-bold tracking-wide">
             Instrument Spotlight
           </h2>
-          <a
+          <Link
             href="#"
             className="text-sm text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
           >
             Show all &rsaquo;
-          </a>
+          </Link>
         </header>
         <div className="text-center py-12 text-[#6D4C41] bg-[#F0E6D6] border border-[#D3B995] rounded-lg">
           <p>No instruments available at the moment.</p>
@@ -946,12 +970,12 @@ const InstrumentSpotlightSection: React.FC<{
         <h2 className="text-2xl font-bold tracking-wide">
           Instrument Spotlight
         </h2>
-        <a
+        <Link
           href="#"
           className="text-sm text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
         >
           Show all &rsaquo;
-        </a>
+        </Link>
       </header>
 
       {/* Featured instrument header - similar to featured album */}
@@ -1167,7 +1191,7 @@ const EraStyleSection: React.FC<{
 }> = ({ eraStyles, loading }) => {
   if (loading) {
     return (
-      <ContentSection title="Eras and Styles">
+      <ContentSection title="Eras and Styles" showAllLink="#">
         {[...Array(5)].map((_, index) => (
           <div key={index} className="animate-pulse">
             <div className="bg-gray-200 rounded-lg h-48 mb-2"></div>
@@ -1180,75 +1204,100 @@ const EraStyleSection: React.FC<{
   }
 
   return (
-    <ContentSection title="Eras and Styles">
+    <ContentSection title="Eras and Styles" showAllLink="/user-categories">
       {eraStyles.map((eraStyle) => (
-        <article
+        <Link
           key={eraStyle.period.id}
-          className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col"
+          href={`/period/${eraStyle.period.id}`}
+          className="block"
         >
-          <figure className="relative mb-4 rounded-md overflow-hidden">
-            <Image
-              src={eraStyle.period.picture || "/default-era.jpg"}
-              alt={eraStyle.period.name}
-              width={500}
-              height={500}
-              className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <button className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+          <article
+            className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer hover:scale-105"
+          >
+            <figure className="relative mb-4 rounded-md overflow-hidden">
+              <Image
+                src={eraStyle.period.picture || "/default-era.jpg"}
+                alt={eraStyle.period.name}
+                width={500}
+                height={500}
+                className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <button 
+                className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Handle play functionality if needed
+                }}
               >
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-            </button>
-            <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              Era
-            </div>
-          </figure>
-          <div className="flex-1 flex flex-col">
-            <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
-              {eraStyle.period.name}
-            </h3>
-            <p className="text-sm text-[#6D4C41] line-clamp-2">
-              {eraStyle.period.musics.length} songs
-            </p>
-            <div className="mt-auto pt-3 flex justify-between items-center">
-              <span className="text-xs text-[#8D6C61]">Classical</span>
-              <div className="flex space-x-2">
-                <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </button>
+              <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Era
+              </div>
+            </figure>
+            <div className="flex-1 flex flex-col">
+              <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate group-hover:text-[#C8A97E] transition-colors">
+                {eraStyle.period.name}
+              </h3>
+              <p className="text-sm text-[#6D4C41] line-clamp-2">
+                {eraStyle.period.musics.length} songs
+              </p>
+              <div className="mt-auto pt-3 flex justify-between items-center">
+                <span className="text-xs text-[#8D6C61]">Classical</span>
+                <div className="flex space-x-2">
+                  <button 
+                    className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // Handle favorite functionality
+                    }}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-                <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                  <button 
+                    className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // Handle add to playlist functionality
+                    }}
                   >
-                    <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-                  </svg>
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </article>
+          </article>
+        </Link>
       ))}
     </ContentSection>
   );
@@ -1592,7 +1641,7 @@ const HomePage: React.FC = () => {
         {/* Sections */}
         <div>
           {/* Recommended Songs */}
-          <ContentSection title="Recommended Songs">
+          <ContentSection title="Recommended Songs" showAllLink="#">
             {loading
               ? // Loading state
                 Array(5)
@@ -1623,7 +1672,7 @@ const HomePage: React.FC = () => {
           </ContentSection>
 
           {/* Popular Albums */}
-          <ContentSection title="Popular Albums">
+          <ContentSection title="Popular Albums" showAllLink="/user-albums">
             {albumsLoading ? (
               // Loading state
               Array(5)
@@ -1674,7 +1723,7 @@ const HomePage: React.FC = () => {
           </ContentSection>
 
           {/* Timeless Pieces */}
-          <ContentSection title="Timeless Pieces">
+          <ContentSection title="Timeless Pieces" showAllLink="#">
             {timelessLoading ? (
               // Loading state
               Array(5)
@@ -1710,7 +1759,7 @@ const HomePage: React.FC = () => {
           </ContentSection>
 
           {/* Top Artists */}
-          <ContentSection title="Top Artists">
+          <ContentSection title="Top Artists" showAllLink="#">
             {artistsLoading ? (
               // Loading state
               Array(5)

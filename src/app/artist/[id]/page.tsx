@@ -6,20 +6,23 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { getArtistById, Artist } from "@/services/artistService";
+import { searchMusicsByArtist, Music } from "@/services/musicService";
 import { 
   Calendar, 
   MapPin, 
   Users, 
   Eye, 
   Award, 
-  Music, 
+  Music as MusicIcon, 
   BookOpen, 
   Heart,
   Share2,
   Play,
   ArrowLeft,
   Clock,
-  User
+  User,
+  Headphones,
+  Download
 } from "lucide-react";
 
 const ArtistDetailPage: React.FC = () => {
@@ -32,6 +35,9 @@ const ArtistDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'biography' | 'works' | 'timeline'>('overview');
+  const [musics, setMusics] = useState<Music[]>([]);
+  const [musicsLoading, setMusicsLoading] = useState(false);
+  const [musicsError, setMusicsError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchArtistDetails = async () => {
@@ -60,6 +66,38 @@ const ArtistDetailPage: React.FC = () => {
 
     fetchArtistDetails();
   }, [artistId]);
+
+  // Fetch tác phẩm khi activeTab là 'works' và có artistId
+  useEffect(() => {
+    const fetchArtistMusics = async () => {
+      if (activeTab !== 'works' || !artistId || isNaN(artistId)) {
+        return;
+      }
+
+      try {
+        setMusicsLoading(true);
+        setMusicsError(null);
+        console.log(`🎼 Fetching musics for artist ${artistId}...`);
+        
+        const response = await searchMusicsByArtist(artistId, 20, 1); // Lấy 20 tác phẩm đầu tiên
+        
+        if (response.success && response.data.items) {
+          setMusics(response.data.items);
+          console.log(`✅ Loaded ${response.data.items.length} musics for artist ${artistId}`);
+        } else {
+          setMusicsError("Không thể tải danh sách tác phẩm");
+          console.warn('⚠️ API không trả về dữ liệu hợp lệ:', response);
+        }
+      } catch (err) {
+        console.error('❌ Lỗi khi tải tác phẩm của nghệ sĩ:', err);
+        setMusicsError("Có lỗi xảy ra khi tải danh sách tác phẩm");
+      } finally {
+        setMusicsLoading(false);
+      }
+    };
+
+    fetchArtistMusics();
+  }, [activeTab, artistId]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Không rõ";
@@ -269,7 +307,7 @@ const ArtistDetailPage: React.FC = () => {
             {[
               { id: 'overview', label: 'Tổng quan', icon: BookOpen },
               { id: 'biography', label: 'Tiểu sử', icon: User },
-              { id: 'works', label: 'Tác phẩm', icon: Music },
+              { id: 'works', label: 'Tác phẩm', icon: MusicIcon },
               { id: 'timeline', label: 'Thời gian', icon: Clock }
             ].map((tab) => (
               <button
@@ -411,7 +449,7 @@ const ArtistDetailPage: React.FC = () => {
                   {artist.significantPerformences && (
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                       <h3 className="text-2xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif] flex items-center gap-3">
-                        <Music className="w-6 h-6 text-[#C8A97E]" />
+                        <MusicIcon className="w-6 h-6 text-[#C8A97E]" />
                         Các buổi biểu diễn quan trọng
                       </h3>
                       <p className="text-[#6D4C41] leading-relaxed">{artist.significantPerformences}</p>
@@ -425,9 +463,127 @@ const ArtistDetailPage: React.FC = () => {
                   <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
                     Tác phẩm nổi bật
                   </h3>
-                  <p className="text-[#6D4C41] text-center py-12">
-                    Chức năng này đang được phát triển. Sẽ hiển thị danh sách các tác phẩm của nghệ sĩ.
-                  </p>
+                  
+                  {musicsLoading && (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#C8A97E] border-t-transparent mx-auto mb-4"></div>
+                      <p className="text-[#6D4C41]">Đang tải danh sách tác phẩm...</p>
+                    </div>
+                  )}
+                  
+                  {musicsError && (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MusicIcon className="w-8 h-8 text-red-500" />
+                      </div>
+                      <p className="text-[#6D4C41] mb-4">{musicsError}</p>
+                      <button
+                        onClick={() => {
+                          setMusicsError(null);
+                          // Trigger refetch by updating activeTab
+                          const currentTab = activeTab;
+                          setActiveTab('overview');
+                          setTimeout(() => setActiveTab(currentTab), 100);
+                        }}
+                        className="px-4 py-2 bg-[#C8A97E] text-white rounded-lg hover:bg-[#A67C52] transition-colors"
+                      >
+                        Thử lại
+                      </button>
+                    </div>
+                  )}
+                  
+                  {!musicsLoading && !musicsError && musics.length === 0 && (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MusicIcon className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-[#6D4C41]">Chưa có tác phẩm nào của nghệ sĩ này.</p>
+                    </div>
+                  )}
+                  
+                  {!musicsLoading && !musicsError && musics.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between mb-6">
+                        <p className="text-[#6D4C41]">
+                          Tìm thấy <span className="font-semibold text-[#3A2A24]">{musics.length}</span> tác phẩm
+                        </p>
+                      </div>
+                      
+                      <div className="grid gap-4">
+                        {musics.map((music) => (
+                          <div
+                            key={music.id}
+                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#F8F0E3] to-[#E6D7C3] rounded-xl hover:shadow-lg transition-all duration-300 group"
+                          >
+                            {/* Cover Photo */}
+                            <div className="relative w-16 h-16 flex-shrink-0">
+                              <Image
+                                src={music.coverPhoto}
+                                alt={music.name}
+                                fill
+                                className="object-cover rounded-lg"
+                              />
+                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                <Play className="w-6 h-6 text-white" fill="currentColor" />
+                              </div>
+                            </div>
+                            
+                            {/* Music Info */}
+                            <div className="flex-grow min-w-0">
+                              <h4 className="font-semibold text-[#3A2A24] text-lg truncate group-hover:text-[#C8A97E] transition-colors">
+                                {music.name}
+                              </h4>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-[#6D4C41]">
+                                {music.albums?.length > 0 && (
+                                  <span className="truncate">
+                                    Album: {music.albums[0].name}
+                                  </span>
+                                )}
+                                {music.genres?.length > 0 && (
+                                  <span className="truncate">
+                                    {music.genres.map(g => g.name).join(", ")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Stats */}
+                            <div className="flex items-center gap-6 text-sm text-[#6D4C41]">
+                              <div className="flex items-center gap-1">
+                                <Headphones className="w-4 h-4" />
+                                <span>{music.listenCount.toLocaleString()}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Heart className="w-4 h-4" />
+                                <span>{music.favoriteCount.toLocaleString()}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Actions */}
+                            <div className="flex items-center gap-2">
+                              <button className="w-10 h-10 bg-[#C8A97E] rounded-full flex items-center justify-center text-white hover:bg-[#A67C52] transition-colors opacity-0 group-hover:opacity-100">
+                                <Play className="w-4 h-4 ml-0.5" fill="currentColor" />
+                              </button>
+                              <Link
+                                href={`/music/${music.id}`}
+                                className="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-[#3A2A24] hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Link>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {musics.length >= 20 && (
+                        <div className="text-center pt-6">
+                          <p className="text-[#6D4C41] text-sm">
+                            Hiển thị 20 tác phẩm đầu tiên. Có thể có nhiều tác phẩm khác của nghệ sĩ.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

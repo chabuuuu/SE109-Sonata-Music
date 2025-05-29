@@ -346,4 +346,148 @@ export async function getTotalMusicsByCategory(categoryId: string | number): Pro
     console.error('❌ Lỗi khi đếm musics trong category:', error);
     return 0;
   }
+}
+
+/**
+ * Tìm kiếm tác phẩm theo nghệ sĩ ID - Theo API documentation
+ * @param artistId ID của nghệ sĩ cần tìm tác phẩm
+ * @param rpp Số kết quả trên trang (records per page)
+ * @param page Trang hiện tại
+ * @returns Kết quả tìm kiếm tác phẩm theo nghệ sĩ
+ */
+export async function searchMusicsByArtist(
+  artistId: string | number, 
+  rpp: number = 10, 
+  page: number = 1
+): Promise<MusicSearchResponse> {
+  try {
+    const url = `https://api.sonata.io.vn/api/v1/music/search?rpp=${rpp}&page=${page}`;
+    
+    // Request data theo đúng API documentation để filter theo artist ID
+    const requestData = {
+      filters: [
+        {
+          operator: "in",
+          key: "artists.id",
+          value: [parseInt(artistId.toString())]
+        }
+      ],
+      sorts: [
+        {
+          key: "listenCount",
+          type: "DESC"
+        },
+        {
+          key: "favoriteCount", 
+          type: "DESC"
+        },
+        {
+          key: "name",
+          type: "ASC"
+        }
+      ]
+    };
+    
+    console.log('🎼 Music Search by Artist Request:', {
+      url,
+      data: requestData,
+      artistId
+    });
+    
+    const response = await axios.post(url, requestData, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 8000
+    });
+    
+    console.log('🎼 Music Search by Artist Response:', response.data);
+    
+    // Parse response theo API documentation format
+    if (response.data && response.data.success && response.data.data) {
+      const { total, items } = response.data.data;
+      
+      const mappedItems = (items || []).map((music: RawMusicData) => ({
+        id: music.id || 0,
+        name: music.name || 'Unknown Music',
+        approved: music.approved || false,
+        coverPhoto: music.coverPhoto || '/default-music.jpg',
+        resourceLink: music.resourceLink || '',
+        listenCount: music.listenCount || 0,
+        favoriteCount: music.favoriteCount || 0,
+        createAt: music.createAt || '',
+        updateAt: music.updateAt || '',
+        albums: music.albums || [],
+        genres: music.genres || [],
+        artists: music.artists || [],
+        composers: music.composers || [],
+        categories: music.categories || []
+      }));
+      
+      console.log('🎼 Mapped Musics by Artist:', mappedItems);
+      console.log(`📊 Artist ${artistId}: Total ${total} musics found`);
+      
+      return {
+        status: response.data.status,
+        code: response.data.code,
+        success: response.data.success,
+        message: response.data.message,
+        data: {
+          total: total || 0,
+          items: mappedItems
+        },
+        errors: response.data.errors
+      };
+    } else {
+      console.warn('🎼 API search musics by artist trả về dữ liệu không như mong đợi:', response.data);
+      return {
+        status: "ERROR",
+        code: 404,
+        success: false,
+        message: "No data found",
+        data: { total: 0, items: [] },
+        errors: null
+      };
+    }
+  } catch (error) {
+    console.error('❌ Lỗi khi tìm kiếm musics by artist:', error);
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
+        console.error('⏰ Timeout khi tìm kiếm musics by artist:', error.message);
+      } else if (error.response) {
+        console.error('🚫 Lỗi API search musics by artist:', {
+          status: error.response.status,
+          data: error.response.data,
+          url: error.config?.url
+        });
+      } else if (error.request) {
+        console.error('📡 Không nhận được response từ API search musics by artist:', error.message);
+      }
+    } else {
+      console.error('💥 Lỗi không xác định khi tìm kiếm musics by artist:', error);
+    }
+    return {
+      status: "ERROR",
+      code: 500,
+      success: false,
+      message: "Search failed",
+      data: { total: 0, items: [] },
+      errors: error
+    };
+  }
+}
+
+/**
+ * Lấy tổng số tác phẩm của nghệ sĩ - không phân trang
+ * @param artistId ID của nghệ sĩ cần đếm tác phẩm
+ * @returns Tổng số tác phẩm của nghệ sĩ
+ */
+export async function getTotalMusicsByArtist(artistId: string | number): Promise<number> {
+  try {
+    const response = await searchMusicsByArtist(artistId, 1, 1); // Chỉ lấy 1 item để đếm total
+    return response.data.total;
+  } catch (error) {
+    console.error('❌ Lỗi khi đếm tác phẩm của nghệ sĩ:', error);
+    return 0;
+  }
 } 

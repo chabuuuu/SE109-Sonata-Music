@@ -106,6 +106,13 @@ export async function searchAlbums(
   page: number = 1
 ): Promise<AlbumSearchResponse> {
   try {
+    // Chuẩn hóa search term - trim và đảm bảo có ít nhất 1 ký tự
+    const normalizedSearchTerm = searchTerm.trim();
+    
+    if (!normalizedSearchTerm) {
+      return { total: 0, items: [] };
+    }
+
     const url = `https://api.sonata.io.vn/api/v1/album/search?rpp=${rpp}&page=${page}`;
     
     // Request data theo đúng API documentation
@@ -114,7 +121,7 @@ export async function searchAlbums(
         {
           operator: "like",
           key: "name",
-          value: searchTerm
+          value: normalizedSearchTerm
         }
       ],
       sorts: [
@@ -131,8 +138,9 @@ export async function searchAlbums(
     
     console.log('📀 Album Search Request:', {
       url,
-      data: requestData,
-      searchTerm
+      searchTerm: normalizedSearchTerm,
+      page,
+      rpp
     });
     
     const response = await axios.post(url, requestData, {
@@ -142,7 +150,7 @@ export async function searchAlbums(
       timeout: 8000
     });
     
-    console.log('📀 Album Search Response:', response.data);
+    console.log(`📀 API Response: Found ${response.data?.data?.total || 0} albums for "${normalizedSearchTerm}"`);
     
     // Parse response theo API documentation format
     if (response.data && response.data.success && response.data.data) {
@@ -163,8 +171,6 @@ export async function searchAlbums(
         musics: album.musics || []
       }));
       
-      console.log('📀 Mapped Albums:', mappedItems);
-      
       return {
         total: total || 0,
         items: mappedItems
@@ -177,19 +183,84 @@ export async function searchAlbums(
     console.error('❌ Lỗi khi tìm kiếm albums:', error);
     if (axios.isAxiosError(error)) {
       if (error.code === 'ECONNABORTED') {
-        console.error('⏰ Timeout khi tìm kiếm albums:', error.message);
+        console.error('⏰ Timeout khi tìm kiếm albums');
       } else if (error.response) {
         console.error('🚫 Lỗi API search albums:', {
           status: error.response.status,
-          data: error.response.data,
-          url: error.config?.url
+          data: error.response.data
         });
       } else if (error.request) {
-        console.error('📡 Không nhận được response từ API search albums:', error.message);
+        console.error('📡 Không nhận được response từ API search albums');
       }
     } else {
       console.error('💥 Lỗi không xác định khi tìm kiếm albums:', error);
     }
     return { total: 0, items: [] };
+  }
+}
+
+/**
+ * Lấy thông tin chi tiết album theo ID
+ * @param id ID của album
+ * @returns Thông tin chi tiết album
+ */
+export async function getAlbumById(id: string | number): Promise<Album | null> {
+  try {
+    const url = `https://api.sonata.io.vn/api/v1/album/${id}`;
+    
+    console.log('📀 Getting album by ID:', { id, url });
+    
+    const response = await axios.get(url, {
+      timeout: 8000
+    });
+    
+    console.log('📀 Album Detail Response:', response.data);
+    
+    if (response.data && response.data.success && response.data.data) {
+      const album = response.data.data;
+      
+      return {
+        id: album.id || 0,
+        name: album.name || 'Unknown Album',
+        description: album.description || '',
+        coverPhoto: album.coverPhoto || '/default-album.jpg',
+        releaseDate: album.releaseDate || new Date().toISOString(),
+        albumType: album.albumType,
+        viewCount: album.viewCount,
+        likeCount: album.likeCount,
+        createAt: album.createAt,
+        updateAt: album.updateAt,
+        deleteAt: album.deleteAt,
+        musics: (album.musics || []).map((music: any) => ({
+          id: music.id || 0,
+          name: music.name || 'Unknown Track',
+          description: music.description || '',
+          coverPhoto: music.coverPhoto || album.coverPhoto || '/default-music.jpg',
+          lyric: music.lyric,
+          audioFile: music.audioFile
+        }))
+      };
+    } else {
+      console.warn('📀 API album detail trả về dữ liệu không như mong đợi:', response.data);
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Lỗi khi lấy thông tin album:', error);
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
+        console.error('⏰ Timeout khi lấy album:', error.message);
+      } else if (error.response) {
+        console.error('🚫 Lỗi API album detail:', {
+          status: error.response.status,
+          data: error.response.data,
+          url: error.config?.url
+        });
+      } else if (error.request) {
+        console.error('📡 Không nhận được response từ API album detail:', error.message);
+      }
+    } else {
+      console.error('💥 Lỗi không xác định khi lấy album:', error);
+    }
+    return null;
   }
 }
