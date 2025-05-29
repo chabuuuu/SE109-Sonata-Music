@@ -7,20 +7,20 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { getArtistById, Artist } from "@/services/artistService";
 import { searchMusicsByArtist, Music } from "@/services/musicService";
-import { 
-  followArtist, 
-  unfollowArtist, 
-  checkIsFollowingArtist 
+import {
+  followArtist,
+  unfollowArtist,
+  checkIsFollowingArtist,
 } from "@/services/favoriteService";
-import { toast } from 'react-hot-toast';
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Eye, 
-  Award, 
-  Music as MusicIcon, 
-  BookOpen, 
+import { toast } from "react-hot-toast";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Eye,
+  Award,
+  Music as MusicIcon,
+  BookOpen,
   Heart,
   Share2,
   Play,
@@ -28,20 +28,21 @@ import {
   Clock,
   User,
   Headphones,
-  Download
 } from "lucide-react";
 
 const ArtistDetailPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
   const artistId = parseInt(params.id as string);
-  
+
   const [artist, setArtist] = useState<Artist | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'biography' | 'works' | 'timeline'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "biography" | "works" | "timeline"
+  >("overview");
   const [musics, setMusics] = useState<Music[]>([]);
   const [musicsLoading, setMusicsLoading] = useState(false);
   const [musicsError, setMusicsError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ const ArtistDetailPage: React.FC = () => {
       try {
         setLoading(true);
         const artistData = await getArtistById(artistId);
-        
+
         if (artistData) {
           setArtist(artistData);
           // Kiểm tra follow status
@@ -67,7 +68,7 @@ const ArtistDetailPage: React.FC = () => {
           setError("Không tìm thấy thông tin nghệ sĩ");
         }
       } catch (err) {
-        console.error('Lỗi khi tải thông tin nghệ sĩ:', err);
+        console.error("Lỗi khi tải thông tin nghệ sĩ:", err);
         setError("Có lỗi xảy ra khi tải thông tin nghệ sĩ");
       } finally {
         setLoading(false);
@@ -80,7 +81,7 @@ const ArtistDetailPage: React.FC = () => {
   // Fetch tác phẩm khi activeTab là 'works' và có artistId
   useEffect(() => {
     const fetchArtistMusics = async () => {
-      if (activeTab !== 'works' || !artistId || isNaN(artistId)) {
+      if (activeTab !== "works" || !artistId || isNaN(artistId)) {
         return;
       }
 
@@ -88,18 +89,20 @@ const ArtistDetailPage: React.FC = () => {
         setMusicsLoading(true);
         setMusicsError(null);
         console.log(`🎼 Fetching musics for artist ${artistId}...`);
-        
+
         const response = await searchMusicsByArtist(artistId, 20, 1); // Lấy 20 tác phẩm đầu tiên
-        
+
         if (response.success && response.data.items) {
           setMusics(response.data.items);
-          console.log(`✅ Loaded ${response.data.items.length} musics for artist ${artistId}`);
+          console.log(
+            `✅ Loaded ${response.data.items.length} musics for artist ${artistId}`
+          );
         } else {
           setMusicsError("Không thể tải danh sách tác phẩm");
-          console.warn('⚠️ API không trả về dữ liệu hợp lệ:', response);
+          console.warn("⚠️ API không trả về dữ liệu hợp lệ:", response);
         }
       } catch (err) {
-        console.error('❌ Lỗi khi tải tác phẩm của nghệ sĩ:', err);
+        console.error("❌ Lỗi khi tải tác phẩm của nghệ sĩ:", err);
         setMusicsError("Có lỗi xảy ra khi tải danh sách tác phẩm");
       } finally {
         setMusicsLoading(false);
@@ -113,30 +116,34 @@ const ArtistDetailPage: React.FC = () => {
   const handleFollowToggle = async () => {
     try {
       setFollowLoading(true);
-      
+
       if (isFollowing) {
         await unfollowArtist(artistId);
         setIsFollowing(false);
-        toast.success('Đã hủy theo dõi nghệ sĩ');
+        toast.success("Đã hủy theo dõi nghệ sĩ");
         // Cập nhật số followers
         if (artist) {
-          setArtist(prev => prev ? { ...prev, followers: prev.followers - 1 } : prev);
+          setArtist((prev) =>
+            prev ? { ...prev, followers: prev.followers - 1 } : prev
+          );
         }
       } else {
         await followArtist(artistId);
         setIsFollowing(true);
-        toast.success('Đã theo dõi nghệ sĩ');
+        toast.success("Đã theo dõi nghệ sĩ");
         // Cập nhật số followers
         if (artist) {
-          setArtist(prev => prev ? { ...prev, followers: prev.followers + 1 } : prev);
+          setArtist((prev) =>
+            prev ? { ...prev, followers: prev.followers + 1 } : prev
+          );
         }
       }
     } catch (error) {
-      console.error('Lỗi khi follow/unfollow:', error);
+      console.error("Lỗi khi follow/unfollow:", error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error('Không thể thực hiện thao tác này');
+        toast.error("Không thể thực hiện thao tác này");
       }
     } finally {
       setFollowLoading(false);
@@ -146,10 +153,10 @@ const ArtistDetailPage: React.FC = () => {
   const formatDate = (dateString: string) => {
     if (!dateString) return "Không rõ";
     try {
-      return new Date(dateString).toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     } catch {
       return dateString;
@@ -158,7 +165,7 @@ const ArtistDetailPage: React.FC = () => {
 
   const calculateAge = (birthDate: string, deathDate?: string | null) => {
     if (!birthDate) return null;
-    
+
     try {
       const birth = new Date(birthDate);
       const end = deathDate ? new Date(deathDate) : new Date();
@@ -176,7 +183,9 @@ const ArtistDetailPage: React.FC = () => {
         <div className="pt-20 flex items-center justify-center h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#C8A97E] border-t-transparent mx-auto mb-4"></div>
-            <p className="text-lg text-[#3A2A24]">Đang tải thông tin nghệ sĩ...</p>
+            <p className="text-lg text-[#3A2A24]">
+              Đang tải thông tin nghệ sĩ...
+            </p>
           </div>
         </div>
       </div>
@@ -190,11 +199,23 @@ const ArtistDetailPage: React.FC = () => {
         <div className="pt-20 flex items-center justify-center h-screen">
           <div className="text-center max-w-md p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="w-8 h-8 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-[#3A2A24] mb-2">Có lỗi xảy ra</h2>
+            <h2 className="text-xl font-bold text-[#3A2A24] mb-2">
+              Có lỗi xảy ra
+            </h2>
             <p className="text-[#6D4C41] mb-4">{error}</p>
             <button
               onClick={() => router.back()}
@@ -214,7 +235,7 @@ const ArtistDetailPage: React.FC = () => {
     <div className="flex relative font-['Playfair_Display',serif] text-[#3A2A24] bg-gradient-to-br from-[#F8F0E3] to-[#E6D7C3]">
       {/* Sidebar */}
       <Navbar />
-      
+
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto h-screen pb-8">
         {/* Hero Section */}
@@ -255,7 +276,10 @@ const ArtistDetailPage: React.FC = () => {
                   </div>
                   {/* Play Button Overlay */}
                   <button className="absolute bottom-6 right-6 w-16 h-16 bg-[#C8A97E] rounded-full flex items-center justify-center shadow-lg hover:bg-[#A67C52] transition-all duration-300 hover:scale-110">
-                    <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
+                    <Play
+                      className="w-6 h-6 text-white ml-1"
+                      fill="currentColor"
+                    />
                   </button>
                 </div>
               </div>
@@ -286,7 +310,7 @@ const ArtistDetailPage: React.FC = () => {
                     </div>
                     <div className="text-sm text-[#6D4C41]">Người theo dõi</div>
                   </div>
-                  
+
                   <div className="text-center">
                     <div className="flex items-center justify-center w-12 h-12 bg-[#C8A97E] rounded-xl mb-2 mx-auto">
                       <Eye className="w-6 h-6 text-white" />
@@ -326,24 +350,27 @@ const ArtistDetailPage: React.FC = () => {
                     onClick={handleFollowToggle}
                     disabled={followLoading}
                     className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isFollowing 
-                        ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
-                        : 'bg-white/80 text-[#3A2A24] hover:bg-[#C8A97E] hover:text-white border border-[#C8A97E]'
+                      isFollowing
+                        ? "bg-[#C8A97E] text-white hover:bg-[#A67C52]"
+                        : "bg-white/80 text-[#3A2A24] hover:bg-[#C8A97E] hover:text-white border border-[#C8A97E]"
                     }`}
                   >
                     {followLoading ? (
                       <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                     ) : (
-                      <Heart className={`w-5 h-5 ${isFollowing ? 'fill-current' : ''}`} />
+                      <Heart
+                        className={`w-5 h-5 ${
+                          isFollowing ? "fill-current" : ""
+                        }`}
+                      />
                     )}
-                    {followLoading 
-                      ? 'Đang xử lý...' 
-                      : isFollowing 
-                        ? 'Đang theo dõi' 
-                        : 'Theo dõi'
-                    }
+                    {followLoading
+                      ? "Đang xử lý..."
+                      : isFollowing
+                      ? "Đang theo dõi"
+                      : "Theo dõi"}
                   </button>
-                  
+
                   <button className="flex items-center gap-2 px-6 py-3 bg-white/80 text-[#3A2A24] rounded-xl font-semibold hover:bg-[#E6D7C3] transition-colors border border-[#D3B995]">
                     <Share2 className="w-5 h-5" />
                     Chia sẻ
@@ -359,18 +386,18 @@ const ArtistDetailPage: React.FC = () => {
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-2 mb-8 bg-white/80 p-2 rounded-2xl backdrop-blur-sm">
             {[
-              { id: 'overview', label: 'Tổng quan', icon: BookOpen },
-              { id: 'biography', label: 'Tiểu sử', icon: User },
-              { id: 'works', label: 'Tác phẩm', icon: MusicIcon },
-              { id: 'timeline', label: 'Thời gian', icon: Clock }
+              { id: "overview", label: "Tổng quan", icon: BookOpen },
+              { id: "biography", label: "Tiểu sử", icon: User },
+              { id: "works", label: "Tác phẩm", icon: MusicIcon },
+              { id: "timeline", label: "Thời gian", icon: Clock },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                   activeTab === tab.id
-                    ? 'bg-[#C8A97E] text-white shadow-lg'
-                    : 'text-[#6D4C41] hover:bg-[#E6D7C3]'
+                    ? "bg-[#C8A97E] text-white shadow-lg"
+                    : "text-[#6D4C41] hover:bg-[#E6D7C3]"
                 }`}
               >
                 <tab.icon className="w-5 h-5" />
@@ -383,7 +410,7 @@ const ArtistDetailPage: React.FC = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              {activeTab === 'overview' && (
+              {activeTab === "overview" && (
                 <div className="space-y-8">
                   {/* Description */}
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
@@ -391,7 +418,8 @@ const ArtistDetailPage: React.FC = () => {
                       Giới thiệu
                     </h3>
                     <p className="text-[#6D4C41] leading-relaxed text-lg">
-                      {artist.description || "Chưa có thông tin mô tả cho nghệ sĩ này."}
+                      {artist.description ||
+                        "Chưa có thông tin mô tả cho nghệ sĩ này."}
                     </p>
                   </div>
 
@@ -415,8 +443,12 @@ const ArtistDetailPage: React.FC = () => {
                               className="rounded-lg object-cover"
                             />
                             <div>
-                              <h4 className="font-semibold text-[#3A2A24]">{genre.name}</h4>
-                              <p className="text-sm text-[#6D4C41] line-clamp-2">{genre.description}</p>
+                              <h4 className="font-semibold text-[#3A2A24]">
+                                {genre.name}
+                              </h4>
+                              <p className="text-sm text-[#6D4C41] line-clamp-2">
+                                {genre.description}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -443,7 +475,9 @@ const ArtistDetailPage: React.FC = () => {
                               height={80}
                               className="rounded-full mx-auto mb-3 object-cover"
                             />
-                            <h4 className="font-semibold text-[#3A2A24]">{instrument.name}</h4>
+                            <h4 className="font-semibold text-[#3A2A24]">
+                              {instrument.name}
+                            </h4>
                           </div>
                         ))}
                       </div>
@@ -452,7 +486,7 @@ const ArtistDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {activeTab === 'biography' && (
+              {activeTab === "biography" && (
                 <div className="space-y-8">
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                     <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
@@ -460,22 +494,38 @@ const ArtistDetailPage: React.FC = () => {
                     </h3>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <h4 className="font-semibold text-[#3A2A24] mb-2">Ngày sinh</h4>
-                        <p className="text-[#6D4C41]">{formatDate(artist.dateOfBirth)}</p>
+                        <h4 className="font-semibold text-[#3A2A24] mb-2">
+                          Ngày sinh
+                        </h4>
+                        <p className="text-[#6D4C41]">
+                          {formatDate(artist.dateOfBirth)}
+                        </p>
                       </div>
                       {artist.dateOfDeath && (
                         <div>
-                          <h4 className="font-semibold text-[#3A2A24] mb-2">Ngày mất</h4>
-                          <p className="text-[#6D4C41]">{formatDate(artist.dateOfDeath)}</p>
+                          <h4 className="font-semibold text-[#3A2A24] mb-2">
+                            Ngày mất
+                          </h4>
+                          <p className="text-[#6D4C41]">
+                            {formatDate(artist.dateOfDeath)}
+                          </p>
                         </div>
                       )}
                       <div>
-                        <h4 className="font-semibold text-[#3A2A24] mb-2">Quốc tịch</h4>
-                        <p className="text-[#6D4C41]">{artist.nationality || "Không rõ"}</p>
+                        <h4 className="font-semibold text-[#3A2A24] mb-2">
+                          Quốc tịch
+                        </h4>
+                        <p className="text-[#6D4C41]">
+                          {artist.nationality || "Không rõ"}
+                        </p>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-[#3A2A24] mb-2">Vai trò</h4>
-                        <p className="text-[#6D4C41]">{artist.roles?.join(", ") || "Không rõ"}</p>
+                        <h4 className="font-semibold text-[#3A2A24] mb-2">
+                          Vai trò
+                        </h4>
+                        <p className="text-[#6D4C41]">
+                          {artist.roles?.join(", ") || "Không rõ"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -486,7 +536,9 @@ const ArtistDetailPage: React.FC = () => {
                         <Award className="w-6 h-6 text-[#C8A97E]" />
                         Giải thưởng & Danh hiệu
                       </h3>
-                      <p className="text-[#6D4C41] leading-relaxed">{artist.awardsAndHonors}</p>
+                      <p className="text-[#6D4C41] leading-relaxed">
+                        {artist.awardsAndHonors}
+                      </p>
                     </div>
                   )}
 
@@ -496,7 +548,9 @@ const ArtistDetailPage: React.FC = () => {
                         <BookOpen className="w-6 h-6 text-[#C8A97E]" />
                         Giảng dạy & Đóng góp học thuật
                       </h3>
-                      <p className="text-[#6D4C41] leading-relaxed">{artist.teachingAndAcademicContributions}</p>
+                      <p className="text-[#6D4C41] leading-relaxed">
+                        {artist.teachingAndAcademicContributions}
+                      </p>
                     </div>
                   )}
 
@@ -506,25 +560,29 @@ const ArtistDetailPage: React.FC = () => {
                         <MusicIcon className="w-6 h-6 text-[#C8A97E]" />
                         Các buổi biểu diễn quan trọng
                       </h3>
-                      <p className="text-[#6D4C41] leading-relaxed">{artist.significantPerformences}</p>
+                      <p className="text-[#6D4C41] leading-relaxed">
+                        {artist.significantPerformences}
+                      </p>
                     </div>
                   )}
                 </div>
               )}
 
-              {activeTab === 'works' && (
+              {activeTab === "works" && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                   <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
                     Tác phẩm nổi bật
                   </h3>
-                  
+
                   {musicsLoading && (
                     <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#C8A97E] border-t-transparent mx-auto mb-4"></div>
-                      <p className="text-[#6D4C41]">Đang tải danh sách tác phẩm...</p>
+                      <p className="text-[#6D4C41]">
+                        Đang tải danh sách tác phẩm...
+                      </p>
                     </div>
                   )}
-                  
+
                   {musicsError && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -536,7 +594,7 @@ const ArtistDetailPage: React.FC = () => {
                           setMusicsError(null);
                           // Trigger refetch by updating activeTab
                           const currentTab = activeTab;
-                          setActiveTab('overview');
+                          setActiveTab("overview");
                           setTimeout(() => setActiveTab(currentTab), 100);
                         }}
                         className="px-4 py-2 bg-[#C8A97E] text-white rounded-lg hover:bg-[#A67C52] transition-colors"
@@ -545,24 +603,30 @@ const ArtistDetailPage: React.FC = () => {
                       </button>
                     </div>
                   )}
-                  
+
                   {!musicsLoading && !musicsError && musics.length === 0 && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <MusicIcon className="w-8 h-8 text-gray-400" />
                       </div>
-                      <p className="text-[#6D4C41]">Chưa có tác phẩm nào của nghệ sĩ này.</p>
+                      <p className="text-[#6D4C41]">
+                        Chưa có tác phẩm nào của nghệ sĩ này.
+                      </p>
                     </div>
                   )}
-                  
+
                   {!musicsLoading && !musicsError && musics.length > 0 && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between mb-6">
                         <p className="text-[#6D4C41]">
-                          Tìm thấy <span className="font-semibold text-[#3A2A24]">{musics.length}</span> tác phẩm
+                          Tìm thấy{" "}
+                          <span className="font-semibold text-[#3A2A24]">
+                            {musics.length}
+                          </span>{" "}
+                          tác phẩm
                         </p>
                       </div>
-                      
+
                       <div className="grid gap-4">
                         {musics.map((music) => (
                           <div
@@ -578,10 +642,13 @@ const ArtistDetailPage: React.FC = () => {
                                 className="object-cover rounded-lg"
                               />
                               <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                <Play className="w-6 h-6 text-white" fill="currentColor" />
+                                <Play
+                                  className="w-6 h-6 text-white"
+                                  fill="currentColor"
+                                />
                               </div>
                             </div>
-                            
+
                             {/* Music Info */}
                             <div className="flex-grow min-w-0">
                               <h4 className="font-semibold text-[#3A2A24] text-lg truncate group-hover:text-[#C8A97E] transition-colors">
@@ -595,28 +662,35 @@ const ArtistDetailPage: React.FC = () => {
                                 )}
                                 {music.genres?.length > 0 && (
                                   <span className="truncate">
-                                    {music.genres.map(g => g.name).join(", ")}
+                                    {music.genres.map((g) => g.name).join(", ")}
                                   </span>
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Stats */}
                             <div className="flex items-center gap-6 text-sm text-[#6D4C41]">
                               <div className="flex items-center gap-1">
                                 <Headphones className="w-4 h-4" />
-                                <span>{music.listenCount.toLocaleString()}</span>
+                                <span>
+                                  {music.listenCount.toLocaleString()}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Heart className="w-4 h-4" />
-                                <span>{music.favoriteCount.toLocaleString()}</span>
+                                <span>
+                                  {music.favoriteCount.toLocaleString()}
+                                </span>
                               </div>
                             </div>
-                            
+
                             {/* Actions */}
                             <div className="flex items-center gap-2">
                               <button className="w-10 h-10 bg-[#C8A97E] rounded-full flex items-center justify-center text-white hover:bg-[#A67C52] transition-colors opacity-0 group-hover:opacity-100">
-                                <Play className="w-4 h-4 ml-0.5" fill="currentColor" />
+                                <Play
+                                  className="w-4 h-4 ml-0.5"
+                                  fill="currentColor"
+                                />
                               </button>
                               <Link
                                 href={`/music/${music.id}`}
@@ -628,11 +702,12 @@ const ArtistDetailPage: React.FC = () => {
                           </div>
                         ))}
                       </div>
-                      
+
                       {musics.length >= 20 && (
                         <div className="text-center pt-6">
                           <p className="text-[#6D4C41] text-sm">
-                            Hiển thị 20 tác phẩm đầu tiên. Có thể có nhiều tác phẩm khác của nghệ sĩ.
+                            Hiển thị 20 tác phẩm đầu tiên. Có thể có nhiều tác
+                            phẩm khác của nghệ sĩ.
                           </p>
                         </div>
                       )}
@@ -641,7 +716,7 @@ const ArtistDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {activeTab === 'timeline' && (
+              {activeTab === "timeline" && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                   <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
                     Dòng thời gian
@@ -650,16 +725,24 @@ const ArtistDetailPage: React.FC = () => {
                     <div className="flex items-start gap-4">
                       <div className="w-4 h-4 bg-[#C8A97E] rounded-full mt-2"></div>
                       <div>
-                        <h4 className="font-semibold text-[#3A2A24]">Sinh ra</h4>
-                        <p className="text-[#6D4C41]">{formatDate(artist.dateOfBirth)}</p>
+                        <h4 className="font-semibold text-[#3A2A24]">
+                          Sinh ra
+                        </h4>
+                        <p className="text-[#6D4C41]">
+                          {formatDate(artist.dateOfBirth)}
+                        </p>
                       </div>
                     </div>
                     {artist.dateOfDeath && (
                       <div className="flex items-start gap-4">
                         <div className="w-4 h-4 bg-gray-400 rounded-full mt-2"></div>
                         <div>
-                          <h4 className="font-semibold text-[#3A2A24]">Qua đời</h4>
-                          <p className="text-[#6D4C41]">{formatDate(artist.dateOfDeath)}</p>
+                          <h4 className="font-semibold text-[#3A2A24]">
+                            Qua đời
+                          </h4>
+                          <p className="text-[#6D4C41]">
+                            {formatDate(artist.dateOfDeath)}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -686,7 +769,9 @@ const ArtistDetailPage: React.FC = () => {
                           height={40}
                           className="rounded-lg object-cover"
                         />
-                        <span className="font-medium text-[#3A2A24]">{period.name}</span>
+                        <span className="font-medium text-[#3A2A24]">
+                          {period.name}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -701,7 +786,10 @@ const ArtistDetailPage: React.FC = () => {
                   </h3>
                   <div className="space-y-3">
                     {artist.orchestras.map((orchestra) => (
-                      <div key={orchestra.id} className="flex items-center gap-3">
+                      <div
+                        key={orchestra.id}
+                        className="flex items-center gap-3"
+                      >
                         <Image
                           src={orchestra.picture}
                           alt={orchestra.name}
@@ -709,7 +797,9 @@ const ArtistDetailPage: React.FC = () => {
                           height={40}
                           className="rounded-lg object-cover"
                         />
-                        <span className="font-medium text-[#3A2A24]">{orchestra.name}</span>
+                        <span className="font-medium text-[#3A2A24]">
+                          {orchestra.name}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -744,4 +834,4 @@ const ArtistDetailPage: React.FC = () => {
   );
 };
 
-export default ArtistDetailPage; 
+export default ArtistDetailPage;
