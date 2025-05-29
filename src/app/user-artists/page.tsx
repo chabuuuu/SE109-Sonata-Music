@@ -3,21 +3,67 @@ import React, { useState, useRef, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from 'react-hot-toast';
 
-/* ─────────── SearchBar ─────────── */
-const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
+// BƯỚC 1: IMPORT HOOK TỪ CONTEXT
+import { useMusicPlayer } from "@/context/MusicPlayerContext";
+
+// Import API services
+import { 
+  getAllArtists, 
+  searchArtists, 
+  getArtistsByInstrument,
+  Artist as ApiArtist,
+  ArtistSearchResponse 
+} from "@/services/artistService";
+
+import { 
+  followArtist, 
+  unfollowArtist, 
+  getMyFollowedArtists,
+  checkIsFollowingArtist 
+} from "@/services/favoriteService";
+
+// Giả sử bạn có một file định nghĩa type chung
+// Nếu không, bạn có thể định nghĩa nó ở đây để TypeScript không báo lỗi
+interface Music {
+  id: string;
+  name: string;
+  artist: string;
+  coverPhoto: string;
+  resourceLink: string;
+  favoriteCount: number;
+  lyrics?: string;
+}
+
+// Helper function để viết hoa chữ cái đầu tiên
+const capitalizeFirstLetter = (str: string): string => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/* ─────────── SearchBar đơn giản với viết hoa chữ cái đầu ─────────── */
+const SearchBar: React.FC<{ 
+  term?: string; 
+  setTerm?: (s: string) => void;
+  isSearching?: boolean;
+}> = ({
   term = "",
   setTerm = () => {},
+  isSearching = false,
 }) => {
-  const [focus, setFocus] = useState(false);
+  // Xử lý thay đổi input với tự động viết hoa chữ cái đầu
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Tự động viết hoa chữ cái đầu tiên
+    const capitalizedValue = capitalizeFirstLetter(value);
+    setTerm(capitalizedValue);
+  };
+
   return (
-    <div
-      className={`flex items-center bg-[#E6D7C3] rounded-full overflow-hidden transition-shadow duration-200 ${
-        focus ? "shadow-lg" : "shadow"
-      }`}
-    >
+    <div className="flex items-center bg-[#E6D7C3] rounded-full overflow-hidden shadow">
       <svg
-        className="w-5 h-5 ml-3 text-[#6D4C41]"
+        className={`w-5 h-5 ml-3 text-[#6D4C41] ${isSearching ? 'animate-spin' : ''}`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -30,12 +76,10 @@ const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
         />
       </svg>
       <input
-        placeholder="Tìm kiếm chủ đề cổ điển..."
+        placeholder="Tìm kiếm nghệ sĩ cổ điển..."
         className="flex-1 bg-transparent text-sm py-2 px-3 focus:outline-none placeholder-[#6D4C41]"
         value={term}
-        onChange={(e) => setTerm(e.target.value)}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onChange={handleInputChange}
       />
       {term && (
         <button
@@ -61,7 +105,7 @@ const SearchBar: React.FC<{ term?: string; setTerm?: (s: string) => void }> = ({
   );
 };
 
-/* ─────────── Data ─────────── */
+/* ─────────── Data (periods và instruments vẫn giữ nguyên) ─────────── */
 const musicEras = [
   { name: "All Periods", years: "All Time" },
   { name: "Medieval", years: "500‑1400" },
@@ -96,195 +140,38 @@ const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
 const sortOptions = [
   { label: "A → Z", value: "alphaAsc" },
   { label: "Z → A", value: "alphaDesc" },
-  { label: "Earliest", value: "yearAsc" },
-  { label: "Latest", value: "yearDesc" },
-  { label: "Country", value: "country" },
-];
-
-const composers = [
-  {
-    name: "Ludwig van Beethoven",
-    image: "/images/composers/beethoven.jpg",
-    era: "Classical/Romantic",
-    years: "1770-1827",
-    country: "Germany",
-    instrument: "Piano",
-    notableWorks: ["Symphony No. 9", "Moonlight Sonata", "Für Elise"],
-    description:
-      "Bridged the Classical and Romantic periods with revolutionary compositions",
-    backgroundColor: "bg-[#48352F]",
-  },
-  {
-    name: "Wolfgang Amadeus Mozart",
-    image: "/images/composers/mozart.jpg",
-    era: "Classical",
-    years: "1756-1791",
-    country: "Austria",
-    instrument: "Piano",
-    notableWorks: ["The Magic Flute", "Symphony No. 40", "Requiem"],
-    description:
-      "Child prodigy and master of classical form with over 600 compositions",
-    backgroundColor: "bg-[#32435F]",
-  },
-  {
-    name: "Johann Sebastian Bach",
-    image: "/images/composers/bach.jpg",
-    era: "Baroque",
-    years: "1685-1750",
-    country: "Germany",
-    instrument: "Organ",
-    notableWorks: [
-      "Brandenburg Concertos",
-      "The Well-Tempered Clavier",
-      "Mass in B minor",
-    ],
-    description:
-      "Baroque master known for contrapuntal innovation and mathematical precision",
-    backgroundColor: "bg-[#5E3A2F]",
-  },
-  {
-    name: "Frédéric Chopin",
-    image: "/images/composers/chopin.jpg",
-    era: "Romantic",
-    years: "1810-1849",
-    country: "Poland",
-    instrument: "Piano",
-    notableWorks: ["Nocturnes", "Polonaises", "Preludes"],
-    description:
-      "Poet of the piano whose lyrical compositions revolutionized piano technique",
-    backgroundColor: "bg-[#2F4858]",
-  },
-  {
-    name: "Pyotr Ilyich Tchaikovsky",
-    image: "/images/composers/tchaikovsky.jpg",
-    era: "Romantic",
-    years: "1840-1893",
-    country: "Russia",
-    instrument: "Orchestra",
-    notableWorks: ["Swan Lake", "The Nutcracker", "1812 Overture"],
-    description:
-      "Master of melody with richly emotional orchestral compositions",
-    backgroundColor: "bg-[#4F3A58]",
-  },
-  {
-    name: "Johannes Brahms",
-    image: "/images/composers/brahms.jpg",
-    era: "Romantic",
-    years: "1833-1897",
-    country: "Germany",
-    instrument: "Piano",
-    notableWorks: [
-      "Symphony No. 4",
-      "Hungarian Dances",
-      "Ein Deutsches Requiem",
-    ],
-    description:
-      "Traditionalist who innovated within classical forms and structures",
-    backgroundColor: "bg-[#584e42]",
-  },
-  {
-    name: "Claude Debussy",
-    image: "/images/composers/debussy.jpg",
-    era: "Modern",
-    years: "1862-1918",
-    country: "France",
-    instrument: "Piano",
-    notableWorks: [
-      "Clair de Lune",
-      "La Mer",
-      "Prélude à l'après-midi d'un faune",
-    ],
-    description:
-      "Impressionist composer who created dreamlike atmospheric soundscapes",
-    backgroundColor: "bg-[#3A6B7E]",
-  },
-  {
-    name: "Antonio Vivaldi",
-    image: "/images/composers/vivaldi.jpg",
-    era: "Baroque",
-    years: "1678-1741",
-    country: "Italy",
-    instrument: "Violin",
-    notableWorks: ["The Four Seasons", "Gloria", "L'Olimpiade"],
-    description:
-      "Innovator of concerto form known for expressive and programmatic music",
-    backgroundColor: "bg-[#7D4427]",
-  },
-  {
-    name: "Franz Schubert",
-    image: "/images/composers/schubert.jpg",
-    era: "Romantic",
-    years: "1797-1828",
-    country: "Austria",
-    instrument: "Piano",
-    notableWorks: ["Ave Maria", "Symphony No. 8 (Unfinished)", "Winterreise"],
-    description:
-      "Master of melody and song who bridged Classical and Romantic styles",
-    backgroundColor: "bg-[#3B614A]",
-  },
-  {
-    name: "George Frideric Handel",
-    image: "/images/composers/handel.jpg",
-    era: "Baroque",
-    years: "1685-1759",
-    country: "Germany/England",
-    instrument: "Organ",
-    notableWorks: ["Messiah", "Water Music", "Music for the Royal Fireworks"],
-    description:
-      "Baroque master of oratorio and opera with dramatic, expressive style",
-    backgroundColor: "bg-[#695648]",
-  },
-  {
-    name: "Franz Liszt",
-    image: "/images/composers/liszt.jpg",
-    era: "Romantic",
-    years: "1811-1886",
-    country: "Hungary",
-    instrument: "Piano",
-    notableWorks: [
-      "Hungarian Rhapsodies",
-      "Piano Sonata in B minor",
-      "Liebesträume",
-    ],
-    description:
-      "Virtuoso pianist and composer who expanded piano technique boundaries",
-    backgroundColor: "bg-[#614B3B]",
-  },
-  {
-    name: "Gustav Mahler",
-    image: "/images/composers/mahler.jpg",
-    era: "Romantic",
-    years: "1860-1911",
-    country: "Austria",
-    instrument: "Orchestra",
-    notableWorks: ["Symphony No. 5", "Das Lied von der Erde", "Symphony No. 2"],
-    description:
-      "Expanded orchestral music with monumental symphonies of intense emotion",
-    backgroundColor: "bg-[#435360]",
-  },
+  { label: "Popularity", value: "popularity" },
+  { label: "Followers", value: "followers" },
+  { label: "Views", value: "views" },
 ];
 
 export default function ClassicalMusicArtistsPage() {
+
+  const { playSongById } = useMusicPlayer();
+
+  // State cục bộ của trang này
   const [selectedTopTab, setSelectedTopTab] = useState<
     "Categories" | "Artists" | "Albums"
   >("Artists");
   const [activeView, setActiveView] = useState<"grid" | "list">("grid");
   const [selectedEra, setSelectedEra] = useState("All Periods");
-  const [selectedInstrument, setSelectedInstrument] =
-    useState("All Instruments");
-  const [sortBy, setSortBy] =
-    useState<(typeof sortOptions)[0]["value"]>("alphaAsc");
+  const [selectedInstrument, setSelectedInstrument] = useState("All Instruments");
+  const [sortBy, setSortBy] = useState<(typeof sortOptions)[0]["value"]>("popularity");
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentComposer, setCurrentComposer] = useState<
-    (typeof composers)[0] | null
-  >(null);
-  const [nowPlaying, setNowPlaying] = useState({
-    title: 'Piano Sonata No.14 "Moonlight"',
-    composer: "Ludwig van Beethoven",
-  });
   const [searchTerm, setSearchTerm] = useState("");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // API state management
+  const [artists, setArtists] = useState<ApiArtist[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalArtists, setTotalArtists] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchResults, setSearchResults] = useState<ArtistSearchResponse | null>(null);
+  
+  // Follow state management
+  const [followedArtists, setFollowedArtists] = useState<Set<number>>(new Set());
+  const [followLoading, setFollowLoading] = useState<Set<number>>(new Set());
 
   /* ────── Dropdown outside‑click helper ────── */
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -301,55 +188,243 @@ export default function ClassicalMusicArtistsPage() {
     return () => window.removeEventListener("click", handleClickOutside);
   }, []);
 
-  /* ────── Helpers ────── */
-  const togglePlay = () => setIsPlaying((p) => !p);
+  // Load followed artists on mount
+  useEffect(() => {
+    const loadFollowedArtists = async () => {
+      try {
+        const response = await getMyFollowedArtists(100, 1); // Load first 100 followed artists
+        const followedIds = new Set(response.data.items.map(item => item.artistId));
+        setFollowedArtists(followedIds);
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách nghệ sĩ đã follow:', error);
+      }
+    };
 
-  const filteredComposers = composers.filter((c) => {
-    const eraOK = selectedEra === "All Periods" || c.era.includes(selectedEra);
-    const instOK =
-      selectedInstrument === "All Instruments" ||
-      c.instrument === selectedInstrument;
-    const searchOK =
-      !searchTerm ||
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.notableWorks.some((w) =>
-        w.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    return eraOK && instOK && searchOK;
-  });
+    loadFollowedArtists();
+  }, []);
 
-  const sortedComposers = [...filteredComposers].sort((a, b) => {
-    switch (sortBy) {
-      case "alphaAsc":
-        return a.name.localeCompare(b.name);
-      case "alphaDesc":
-        return b.name.localeCompare(a.name);
-      case "yearAsc":
-        return +a.years.split("-")[0] - +b.years.split("-")[0];
-      case "yearDesc":
-        return +b.years.split("-")[0] - +a.years.split("-")[0];
-      case "country":
-        return a.country.localeCompare(b.country);
-      default:
-        return 0;
+  // Fetch all artists on component mount
+  useEffect(() => {
+    const fetchAllArtists = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await getAllArtists(1, 50); // Lấy 50 nghệ sĩ đầu tiên
+        
+        if (response.success && response.data.items) {
+          setArtists(response.data.items);
+          setTotalArtists(response.data.total);
+        } else {
+          setError("Không thể tải danh sách nghệ sĩ");
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải nghệ sĩ:', err);
+        setError('Có lỗi xảy ra khi tải danh sách nghệ sĩ');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllArtists();
+  }, []);
+
+  // Search artists when search term changes
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (searchTerm.trim()) {
+        try {
+          setSearching(true);
+          const results = await searchArtists(searchTerm.trim(), 50, 1);
+          setSearchResults(results);
+        } catch (err) {
+          console.error('Lỗi khi tìm kiếm nghệ sĩ:', err);
+          setSearchResults({ 
+            status: "ERROR", 
+            code: 500, 
+            success: false, 
+            message: "Search failed", 
+            data: { total: 0, items: [] }, 
+            errors: err 
+          });
+        } finally {
+          setSearching(false);
+        }
+      } else {
+        setSearchResults(null);
+      }
+    }, 300); // Debounce 300ms
+
+    return () => clearTimeout(searchTimeout);
+  }, [searchTerm]);
+
+  // Filter artists by instrument when selectedInstrument changes
+  useEffect(() => {
+    const filterByInstrument = async () => {
+      if (selectedInstrument !== "All Instruments" && !searchTerm) {
+        try {
+          setLoading(true);
+          const results = await getArtistsByInstrument(selectedInstrument, 1, 50);
+          
+          if (results.success && results.data.items) {
+            setArtists(results.data.items);
+            setTotalArtists(results.data.total);
+          }
+        } catch (err) {
+          console.error('Lỗi khi lọc nghệ sĩ theo instrument:', err);
+        } finally {
+          setLoading(false);
+        }
+      } else if (selectedInstrument === "All Instruments" && !searchTerm) {
+        // Reload all artists
+        const fetchAllArtists = async () => {
+          try {
+            setLoading(true);
+            const response = await getAllArtists(1, 50);
+            
+            if (response.success && response.data.items) {
+              setArtists(response.data.items);
+              setTotalArtists(response.data.total);
+            }
+          } catch (err) {
+            console.error('Lỗi khi tải lại nghệ sĩ:', err);
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchAllArtists();
+      }
+    };
+
+
+    filterByInstrument();
+  }, [selectedInstrument, searchTerm]);
+
+  // Get display artists - either search results or filtered artists
+  const displayArtists = searchResults && searchTerm 
+    ? searchResults.data.items 
+    : artists;
+
+  // Helper function to get birth year from date string
+  const getBirthYear = (dateOfBirth: string | null): number => {
+    if (!dateOfBirth) return 0;
+    return new Date(dateOfBirth).getFullYear();
+  };
+
+  // Helper function to get death year from date string  
+  const getDeathYear = (dateOfDeath: string | null): number => {
+    if (!dateOfDeath) return new Date().getFullYear(); // Current year if still alive
+    return new Date(dateOfDeath).getFullYear();
+  };
+
+  // Filter by era and sort
+  const filteredAndSortedArtists = [...displayArtists]
+    .filter((artist) => {
+      if (selectedEra === "All Periods") return true;
+      
+      const birthYear = getBirthYear(artist.dateOfBirth);
+      
+      // Map era to year ranges
+      const eraRanges: Record<string, [number, number]> = {
+        "Medieval": [500, 1400],
+        "Renaissance": [1400, 1600], 
+        "Baroque": [1600, 1750],
+        "Classical": [1750, 1820],
+        "Romantic": [1820, 1900],
+        "Modern": [1900, 1945],
+        "Contemporary": [1945, 2024],
+      };
+      
+      const range = eraRanges[selectedEra];
+      if (!range) return true;
+      
+      return birthYear >= range[0] && birthYear <= range[1];
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "alphaAsc":
+          return a.name.localeCompare(b.name);
+        case "alphaDesc":
+          return b.name.localeCompare(a.name);
+        case "popularity":
+          return (b.viewCount || 0) - (a.viewCount || 0);
+        case "followers":
+          return (b.followers || 0) - (a.followers || 0);
+        case "views":
+          return (b.viewCount || 0) - (a.viewCount || 0);
+        default:
+          return 0;
+      }
+    });
+
+  // BƯỚC 4: TẠO HÀM MỚI ĐỂ GỌI GLOBAL PLAYER
+  const handlePlayArtist = async (artist: ApiArtist) => {
+    try {
+      // Sử dụng playSongById thay vì playMusic
+      // Giả sử chúng ta lấy bài hát đầu tiên của nghệ sĩ hoặc sử dụng ID nghệ sĩ
+      // Trong trường hợp thực tế, bạn cần API để lấy danh sách bài hát của nghệ sĩ
+      console.log(`Playing music from artist: ${artist.name} (ID: ${artist.id})`);
+      
+      // Tạm thời sử dụng ID nghệ sĩ - trong thực tế cần có API lấy bài hát của nghệ sĩ
+      await playSongById(artist.id);
+    } catch (error) {
+      console.error('Lỗi khi phát nhạc của nghệ sĩ:', error);
     }
-  });
 
-  const playSample = (c: (typeof composers)[0]) => {
-    setCurrentComposer(c);
-    setIsPlaying(true);
-    setNowPlaying({ title: c.notableWorks[0], composer: c.name });
+  };
+
+  // Handle follow/unfollow artist
+  const handleFollowToggle = async (artistId: number, artistName: string) => {
+    // Prevent event bubbling
+    const isCurrentlyFollowing = followedArtists.has(artistId);
+    
+    // Add to loading set
+    setFollowLoading(prev => new Set(prev).add(artistId));
+    
+    try {
+      if (isCurrentlyFollowing) {
+        await unfollowArtist(artistId);
+        setFollowedArtists(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(artistId);
+          return newSet;
+        });
+        toast.success(`Đã hủy theo dõi ${artistName}`);
+      } else {
+        await followArtist(artistId);
+        setFollowedArtists(prev => new Set(prev).add(artistId));
+        toast.success(`Đã theo dõi ${artistName}`);
+      }
+    } catch (error) {
+      console.error('Lỗi khi follow/unfollow:', error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Không thể thực hiện thao tác này');
+      }
+    } finally {
+      // Remove from loading set
+      setFollowLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(artistId);
+        return newSet;
+      });
+    }
   };
 
   return (
     <div className="flex h-screen bg-[#F8F0E3] text-[#3A2A24] font-['Playfair_Display',serif]">
       <Navbar />
 
-      <main className="flex-1 overflow-y-auto pb-24">
+      <main className="flex-1 overflow-y-auto">
         {/* TOP BAR */}
         <div className="sticky top-0 z-30 bg-[#D3B995] shadow-md px-8 py-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <SearchBar term={searchTerm} setTerm={setSearchTerm} />
+            <SearchBar 
+              term={searchTerm} 
+              setTerm={setSearchTerm} 
+              isSearching={searching}
+            />
             <div className="flex flex-col md:flex-row md:items-center md:space-x-6 gap-3">
               <div className="flex space-x-3 order-2 md:order-1">
                 {navTabs.map((t) => (
@@ -422,7 +497,7 @@ export default function ClassicalMusicArtistsPage() {
           </div>
         </div>
 
-        {/* SECOND BAR – INSTRUMENT FILTERS + SORT DROPDOWN */}
+        {/* SECOND BAR – FILTERS + SORT */}
         <div className="sticky top-[64px] md:top-[60px] z-20 bg-[#E6D7C3] px-8 py-2 border-b border-[#D3B995] overflow-x-auto overflow-y-visible no-scrollbar">
           <div className="flex items-center gap-3 min-w-max relative">
             {instrumentCategories.map((inst) => (
@@ -448,7 +523,6 @@ export default function ClassicalMusicArtistsPage() {
                   setShowSortMenu((s) => !s);
                 }}
               >
-                {/* icon */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
@@ -519,270 +593,338 @@ export default function ClassicalMusicArtistsPage() {
           </div>
         </div>
 
-        {/* === MAIN CONTENT === */}
-        <div className="px-8 pt-6">
-          {activeView === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
-              {sortedComposers.map((c) => (
-                <div
-                  key={c.name}
-                  className="group flex flex-col items-center p-4 rounded-lg border border-transparent hover:border-[#B79E7A]/60 hover:bg-[#F0E6D6] transition"
-                >
-                  <div className="relative w-full max-w-[160px] aspect-square rounded-full overflow-hidden border-4 border-[#B79E7A]/70">
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={c.image}
-                        alt={c.name}
-                        fill
-                        className="object-cover grayscale-[30%] sepia-[10%]"
-                      />
-                    </div>
+        {/* ERROR STATE */}
+        {error && (
+          <div className="px-8 mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+              <p className="text-red-600 mb-2">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-[#C8A97E] hover:bg-[#A67C52] text-white px-4 py-2 rounded-full text-sm"
+              >
+                Thử lại
+              </button>
+            </div>
+          </div>
+        )}
 
-                    <button
-                      onClick={() => playSample(c)}
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-[#3A2A24]/60 transition"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 text-[#F8F0E3]"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
-                          clipRule="evenodd"
-                        />
+        {/* SEARCH RESULTS INFO */}
+        {searchTerm && !error && (
+          <div className="px-8 mb-6">
+            <div className="bg-gradient-to-r from-[#E6D7C3] to-[#F0E6D6] rounded-lg p-4 border border-[#D3B995]/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {searching ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#C8A97E]"></div>
+                      <p className="text-[#3A2A24] font-medium">Đang tìm kiếm...</p>
+                    </>
+                  ) : searchResults ? (
+                    <>
+                      <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
-                    </button>
-                  </div>
-                  <h3 className="mt-3 text-sm font-medium group-hover:text-[#B79E7A] whitespace-nowrap">
-                    {c.name}
-                  </h3>
-                  <p className="text-xs text-[#6D4C41] whitespace-nowrap">
-                    {c.years}
-                  </p>
+                      <p className="text-[#3A2A24] font-medium">
+                        Tìm thấy <span className="text-[#C8A97E] font-bold">{searchResults.data.total}</span> kết quả cho 
+                        <span className="text-[#6D4C41] font-semibold ml-1">"{searchTerm}"</span>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 text-[#8D6E63]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <p className="text-[#6D4C41]">Không tìm thấy kết quả nào</p>
+                    </>
+                  )}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {sortedComposers.map((c) => (
-                <div
-                  key={c.name}
-                  className="flex items-center p-4 rounded-lg border border-[#D3B995] hover:border-[#B79E7A] hover:bg-[#F0E6D6] transition"
-                >
-                  <div className="relative h-16 w-16 mr-4">
-                    <Image
-                      src={c.image}
-                      alt={c.name}
-                      fill
-                      className="rounded-full object-cover"
-                    />
-                  </div>
-
-                  <div className="flex-1">
-                    <h4 className="font-medium">{c.name}</h4>
-                    <p className="text-xs text-[#6D4C41]">{c.years}</p>
-                  </div>
+                
+                {searchTerm && (
                   <button
-                    onClick={() => playSample(c)}
-                    className="p-2 rounded-full bg-[#3A2A24] text-[#F8F0E3] hover:bg-[#6D4C41]"
+                    onClick={() => setSearchTerm("")}
+                    className="flex items-center gap-1 text-[#6D4C41] hover:text-[#C8A97E] transition-colors text-sm"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
-                        clipRule="evenodd"
-                      />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
+                    Xóa
                   </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* === PLAYER BAR === */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#3A2A24] border-t border-[#48352F] h-20 z-40 flex items-center px-6">
-          <div className="flex items-center w-1/4 min-w-[220px]">
-            {currentComposer ? (
-              <>
-                <div className="relative h-14 w-14 mr-4 rounded-full overflow-hidden border-4 border-[#C8A97E]">
-                  <div className="relative h-full w-full">
-                    <Image
-                      src={currentComposer.image}
-                      alt={currentComposer.name}
-                      fill
-                      className="object-cover grayscale-[30%] sepia-[10%]"
-                    />
+                )}
+              </div>
+              
+              {/* Hiển thị thông tin bộ lọc nếu có */}
+              {(selectedEra !== "All Periods" || selectedInstrument !== "All Instruments") && (
+                <div className="mt-3 pt-3 border-t border-[#D3B995]/30">
+                  <p className="text-sm text-[#6D4C41] mb-2">Bộ lọc đang áp dụng:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEra !== "All Periods" && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C8A97E] text-white text-xs rounded-full">
+                        Thời kỳ: {selectedEra}
+                        <button 
+                          onClick={() => setSelectedEra("All Periods")}
+                          className="hover:bg-white/20 rounded-full p-0.5"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    )}
+                    {selectedInstrument !== "All Instruments" && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#A67C52] text-white text-xs rounded-full">
+                        Nhạc cụ: {selectedInstrument}
+                        <button 
+                          onClick={() => setSelectedInstrument("All Instruments")}
+                          className="hover:bg-white/20 rounded-full p-0.5"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    )}
                   </div>
-                  <div className="absolute inset-0 bg-[#3A2A24] mix-blend-multiply opacity-30" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-[#F8F0E3] truncate max-w-[150px]">
-                    {nowPlaying.title}
-                  </p>
-                  <p className="text-xs text-[#C8A97E] truncate max-w-[150px]">
-                    {nowPlaying.composer}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="h-14 w-14 mr-4 rounded-full bg-[#48352F] flex items-center justify-center border-4 border-[#C8A97E]">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-[#C8A97E]/60"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.3}
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* LOADING STATE */}
+        {loading && (
+          <div className="px-8 py-12 text-center">
+            <div className="flex justify-center items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C8A97E]"></div>
+              <span className="ml-3 text-[#6D4C41]">Đang tải nghệ sĩ...</span>
+            </div>
+          </div>
+        )}
+
+        {/* NO RESULTS */}
+        {!loading && !error && filteredAndSortedArtists.length === 0 && (
+          <div className="px-8 py-12 text-center">
+            <div className="mb-4">
+              <svg className="mx-auto h-24 w-24 text-[#D3B995]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-[#3A2A24] mb-2">Không tìm thấy nghệ sĩ</h3>
+            <p className="text-[#6D4C41] mb-4">
+              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+            </p>
+            <button 
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedEra("All Periods");
+                setSelectedInstrument("All Instruments");
+              }}
+              className="bg-[#C8A97E] hover:bg-[#A67C52] text-white px-6 py-2 rounded-full"
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        )}
+
+        {/* === MAIN CONTENT === */}
+        {!loading && !error && filteredAndSortedArtists.length > 0 && (
+          <div className="px-8 pt-6">
+            {activeView === "grid" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
+                {filteredAndSortedArtists.map((artist) => (
+                  <Link 
+                    key={`${artist.id}-${artist.name}`}
+                    href={`/artist/${artist.id}`}
+                    className="block"
                   >
-                    <path d="M9 19V6l12-3v13" />
-                    <circle cx="6" cy="19" r="2.5" />
-                    <circle cx="18" cy="16" r="2.5" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#F8F0E3] truncate max-w-[150px]">
-                    {nowPlaying.title}
-                  </p>
-                  <p className="text-xs text-[#C8A97E] truncate max-w-[150px]">
-                    {nowPlaying.composer}
-                  </p>
-                </div>
-              </>
+                    <div className="group flex flex-col items-center p-4 rounded-lg border border-transparent hover:border-[#B79E7A]/60 hover:bg-[#F0E6D6] transition cursor-pointer">
+                      <div className="relative w-full max-w-[160px] aspect-square rounded-full overflow-hidden border-4 border-[#B79E7A]/70">
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={artist.picture || '/images/default-artist.jpg'}
+                            alt={artist.name}
+                            fill
+                            className="object-cover grayscale-[30%] sepia-[10%]"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/images/default-artist.jpg';
+                            }}
+                          />
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handlePlayArtist(artist);
+                          }}
+                          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-[#3A2A24]/60 transition"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-[#F8F0E3]"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                      <h3 className="mt-3 text-sm font-medium group-hover:text-[#B79E7A] text-center line-clamp-2">
+                        {artist.name}
+                      </h3>
+                      <p className="text-xs text-[#6D4C41] text-center">
+                        {artist.dateOfBirth ? getBirthYear(artist.dateOfBirth).toString() : 'Unknown'} - {artist.dateOfDeath ? getDeathYear(artist.dateOfDeath).toString() : 'Present'}
+                      </p>
+                      <p className="text-xs text-[#8D6E63] text-center mt-1">
+                        {artist.nationality || 'Unknown'}
+                      </p>
+                      
+                      {/* Follow Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleFollowToggle(artist.id, artist.name);
+                        }}
+                        disabled={followLoading.has(artist.id)}
+                        className={`mt-3 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          followedArtists.has(artist.id)
+                            ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
+                            : 'bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white'
+                        }`}
+                      >
+                        {followLoading.has(artist.id) ? (
+                          <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-3 h-3"
+                            viewBox="0 0 20 20"
+                            fill={followedArtists.has(artist.id) ? "currentColor" : "none"}
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                        {followLoading.has(artist.id) 
+                          ? 'Đang xử lý...' 
+                          : followedArtists.has(artist.id) 
+                            ? 'Đã theo dõi' 
+                            : 'Theo dõi'
+                        }
+                      </button>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredAndSortedArtists.map((artist) => (
+                  <Link
+                    key={`${artist.id}-${artist.name}`}
+                    href={`/artist/${artist.id}`}
+                    className="block"
+                  >
+                    <div className="flex items-center p-4 rounded-lg border border-[#D3B995] hover:border-[#B79E7A] hover:bg-[#F0E6D6] transition cursor-pointer">
+                      <div className="relative h-16 w-16 mr-4">
+                        <Image
+                          src={artist.picture || '/images/default-artist.jpg'}
+                          alt={artist.name}
+                          fill
+                          className="rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/images/default-artist.jpg';
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <h4 className="font-medium">{artist.name}</h4>
+                        <p className="text-xs text-[#6D4C41]">
+                          {artist.dateOfBirth ? getBirthYear(artist.dateOfBirth).toString() : 'Unknown'} - {artist.dateOfDeath ? getDeathYear(artist.dateOfDeath).toString() : 'Present'}
+                        </p>
+                        <p className="text-xs text-[#8D6E63]">
+                          {artist.nationality || 'Unknown'} • {artist.viewCount || 0} lượt xem
+                        </p>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2">
+                        {/* Follow Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFollowToggle(artist.id, artist.name);
+                          }}
+                          disabled={followLoading.has(artist.id)}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            followedArtists.has(artist.id)
+                              ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
+                              : 'bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white'
+                          }`}
+                        >
+                          {followLoading.has(artist.id) ? (
+                            <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-3 h-3"
+                              viewBox="0 0 20 20"
+                              fill={followedArtists.has(artist.id) ? "currentColor" : "none"}
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          )}
+                          {followedArtists.has(artist.id) ? 'Đã theo dõi' : 'Theo dõi'}
+                        </button>
+                        
+                        {/* Play Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handlePlayArtist(artist);
+                          }}
+                          className="p-2 rounded-full bg-[#3A2A24] text-[#F8F0E3] hover:bg-[#6D4C41] transition-colors"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
-
-          {/* transport controls */}
-          <div className="w-2/4 flex flex-col items-center">
-            <div className="flex items-center gap-6 mb-1">
-              <button className="text-[#C8A97E] hover:text-[#F8F0E3] transition-colors">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z" />
-                </svg>
-              </button>
-              <button className="text-[#C8A97E] hover:text-[#F8F0E3] transition-colors">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={togglePlay}
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition ${
-                  isPlaying
-                    ? "border-[#C8A97E] bg-[#C8A97E] text-[#3A2A24]"
-                    : "border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E]/20"
-                }`}
-              >
-                {isPlaying ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M6 5h3v10H6V5zm5 0h3v10h-3V5z" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.wGeo 0 0 20 20"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M6 4l10 6-10 6V4z" />
-                  </svg>
-                )}
-              </button>
-              <button className="text-[#C8A97E] hover:text-[#F8F0E3] transition-colors">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-              <button className="text-[#C8A97E] hover:text-[#F8F0E3] transition-colors">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 중-HQ_SAVE" />
-                </svg>
-              </button>
-            </div>
-
-            {/* progress */}
-            <div className="flex items-center w-full">
-              <span className="text-xs text-[#C8A97E] mr-2">2:14</span>
-              <div className="flex-1 h-0.5 bg-[#48352F] rounded-full relative overflow-hidden">
-                <div className="h-full bg-[#C8A97E]" style={{ width: "30%" }}>
-                  <div className="absolute right-0 -top-1 w-2 h-2 bg-[#F8F0E3] border border-[#C8A97E] rounded-full" />
-                </div>
-              </div>
-              <span className="text-xs text-[#C8A97E] ml-2">7:42</span>
-            </div>
-          </div>
-
-          {/* volume */}
-          <div className="w-1/4 flex justify-end min-w-[180px]">
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-[#C8A97E]"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m2.828-4.242a1 1 0 010 1.414m2.828-9.9a9 9 0 010 12.728" />
-              </svg>
-              <div className="h-0.5 w-24 bg-[#48352F] rounded-full relative">
-                <div
-                  className="h-full bg-[#C8A97E] rounded-full"
-                  style={{ width: "70%" }}
-                >
-                  <div className="absolute right-0 -top-1 w-2 h-2 bg-[#F8F0E3] border border-[#C8A97E] rounded-full" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* hidden audio */}
-        <audio ref={audioRef} className="hidden" />
+        )}
       </main>
     </div>
   );

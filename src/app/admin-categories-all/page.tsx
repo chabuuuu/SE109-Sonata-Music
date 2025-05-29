@@ -7,8 +7,6 @@ import * as XLSX from "xlsx";
 import {
   FolderPlus,
   Inbox,
-  Cog,
-  ChevronDown,
   Download,
   Search,
   XCircle,
@@ -118,37 +116,6 @@ export default function AdminCategoriesAllPage() {
     setCurrentPage(1);
   };
 
-  const handleDownloadCSV = () => {
-    const headers = [
-      "ID",
-      "Name",
-      "Songs count",
-      "Views",
-      "Release date",
-      "Created by",
-      "Description",
-    ];
-    const rows = categories.map((c) => [
-      c.id,
-      c.name,
-      c.songsCount,
-      c.views,
-      c.releaseDate,
-      c.createdBy,
-      c.description,
-    ]);
-    const csv = [headers, ...rows]
-      .map((r) => r.map((v) => `"${v}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "categories.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const handleExportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(
       categories.map((c) => ({
@@ -187,24 +154,6 @@ export default function AdminCategoriesAllPage() {
             <Inbox size={24} className="mb-1 text-white" />
             <span className="text-sm font-medium text-white">All</span>
           </Link>
-        </div>
-
-        {/* Top-right controls */}
-        <div className="absolute top-6 right-6 flex items-center space-x-3">
-          <button className="w-10 h-10 bg-white rounded-lg shadow border border-gray-200 flex items-center justify-center">
-            <Cog size={20} className="text-black" />
-          </button>
-          <button className="inline-flex items-center bg-white rounded-lg shadow border border-gray-200 px-3 h-10">
-            <span className="text-sm text-black">Last 7 days</span>
-            <ChevronDown size={16} className="ml-1 text-black" />
-          </button>
-          <button
-            onClick={handleDownloadCSV}
-            className="inline-flex items-center bg-white rounded-lg shadow border border-gray-200 px-3 h-10"
-          >
-            <span className="text-sm text-black">Download CSV</span>
-            <Download size={16} className="ml-1 text-black" />
-          </button>
         </div>
 
         {/* Main content */}

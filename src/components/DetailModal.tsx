@@ -5,6 +5,7 @@ import { X, Clock, Eye, User, Music, Edit } from "lucide-react";
 import Image from "next/image";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import axios from "axios";
+import FileUploadSection from "@/components/upload-file";
 
 type DetailModalProps = {
   onClose: () => void;
@@ -28,13 +29,24 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
     picture: data.picture,
     description: data.description,
   });
+  const [coverArtUrl, setCoverArtUrl] = useState(data.picture);
+
+  // update Edit data when coverArtUrl change
+
+  useEffect(() => {
+    setEditData((prev) => ({
+      ...prev,
+      picture: coverArtUrl || data.picture, // Use coverArtUrl if available, else data.picture
+    }));
+  }, [coverArtUrl, data.picture]);
 
   useEffect(() => {
     setEditData({
       name: data.title,
-      picture: data.picture,
+      picture: coverArtUrl,
       description: data.description,
     });
+    setCoverArtUrl(data.picture);
   }, [data]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -44,11 +56,6 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
   };
 
   const handleSave = async () => {
-    // Input validation
-    if (!editData.name || !editData.picture) {
-      alert("Name and Picture URL are required.");
-      return;
-    }
     const token = localStorage.getItem(ADMIN_TOKEN);
 
     try {
@@ -58,7 +65,7 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
         {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -68,8 +75,17 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
       alert("Category updated successfully!");
     } catch (err) {
       console.error("Error updating category:", err);
-      alert(`Failed to update category: ${err || "Unknown error"}. Please try again.`);
+      alert(
+        `Failed to update category: ${
+          err || "Unknown error"
+        }. Please try again.`
+      );
     }
+  };
+
+  const handleUploadError = (error: string) => {
+    console.error("Upload failed:", error);
+    alert(`Upload failed: ${error}`);
   };
 
   return (
@@ -83,14 +99,14 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
       >
         {/* Image Header Section */}
         <div className="relative h-56 w-full overflow-hidden">
-          <Image 
-            src={data.picture} 
-            alt={data.title} 
-            fill 
-            className="object-cover" 
+          <Image
+            src={data.picture}
+            alt={data.title}
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-          
+
           {/* Buttons */}
           <div className="absolute top-4 right-4 flex space-x-2">
             <button
@@ -106,7 +122,7 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
               <X size={18} />
             </button>
           </div>
-          
+
           {/* Title on image */}
           <div className="absolute bottom-4 left-6 right-6">
             <h2 className="text-2xl font-bold text-white drop-shadow-md">
@@ -114,7 +130,7 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
             </h2>
           </div>
         </div>
-        
+
         {/* Content Section */}
         <div className="p-6">
           {/* Stats Row */}
@@ -123,61 +139,77 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
               <Clock size={16} className="text-indigo-500" />
               <span className="text-sm">{data.createAt || "Recent"}</span>
             </div>
-            
+
             <div className="flex items-center space-x-1 text-gray-700">
               <Eye size={16} className="text-indigo-500" />
               <span className="text-sm">{data.views} views</span>
             </div>
-            
+
             <div className="flex items-center space-x-1 text-gray-700">
               <User size={16} className="text-indigo-500" />
               <span className="text-sm">{data.createdBy}</span>
             </div>
-            
+
             <div className="flex items-center space-x-1 text-gray-700">
               <Music size={16} className="text-indigo-500" />
               <span className="text-sm">{data.songsCount} songs</span>
             </div>
           </div>
-          
+
           {/* Description */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Description</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Description
+            </h3>
             <p className="text-gray-600 whitespace-pre-line leading-relaxed bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500">
               {data.description}
             </p>
           </div>
-          
+
           {/* Edit Section */}
           {isEditing && (
             <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4 text-black">Edit Category Information</h3>
+              <h3 className="text-lg font-semibold mb-4 text-black">
+                Edit Category Information
+              </h3>
               <form onSubmit={handleSave}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Name
+                  </label>
                   <input
                     type="text"
                     value={editData.name}
-                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, name: e.target.value })
+                    }
                     className="mt-1 text-black block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Picture URL</label>
-                  <input
-                    type="text"
-                    value={editData.picture}
-                    onChange={(e) => setEditData({ ...editData, picture: e.target.value })}
-                    className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
+                  <div>
+                    <FileUploadSection
+                      title="Upload Cover Art"
+                      acceptedFormats="JPG, PNG files, max 10MB each"
+                      acceptTypes="image/*,.jpg,.jpeg,.png"
+                      fileType="cover"
+                      uploadedUrl={coverArtUrl}
+                      onUploadSuccess={(mediaUrl) => setCoverArtUrl(mediaUrl)}
+                      onUploadError={handleUploadError}
+                    />
+                  </div>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description
+                  </label>
                   <input
                     type="text"
                     value={editData.description}
-                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, description: e.target.value })
+                    }
                     className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>

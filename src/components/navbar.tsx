@@ -1,7 +1,31 @@
-import React from "react";
+'use client';
+
+// import React, { useState } from "react";
 import Link from "next/link";
+// import { useAuth } from "@/context/AuthContext";
+// import { useRouter } from "next/navigation";
 
 const ClassicalNavbar = () => {
+  // const { logout } = useAuth();
+  // const router = useRouter();
+  // const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // const handleLogout = () => {
+  //   logout();
+  //   router.push('/user-login');
+  // };
+
+  // Tạo avatar từ fullname
+  // const getInitials = (name: string) => {
+  //   if (!name) return 'U';
+  //   return name
+  //     .split(' ')
+  //     .map(part => part[0])
+  //     .join('')
+  //     .toUpperCase()
+  //     .substring(0, 2);
+  // };
+
   return (
     <aside className="w-48 h-screen pb-24 bg-gradient-to-b from-[#3A2A24] to-[#1A0F0D] flex flex-col justify-between border-r border-[#D3B995] shadow-lg">
       {/* TOP: Logo and Navigation */}
@@ -40,22 +64,10 @@ const ClassicalNavbar = () => {
                 <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Explore</span>
               </Link>
             </li>
+            
             <li className="overflow-hidden rounded-md">
               <Link 
-                href="/user-createplaylist" 
-                className="flex items-center gap-4 text-[#C8A97E] w-full p-3 transition-all duration-300 hover:bg-[#48352F] rounded-md group"
-              >
-                <div className="w-6 h-6 flex items-center justify-center text-[#C8A97E] group-hover:text-[#F8F0E3]">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Create Playlist</span>
-              </Link>
-            </li>
-            <li className="overflow-hidden rounded-md">
-              <Link 
-                href="/user-likedsongs" 
+                href="/my-favorites" 
                 className="flex items-center gap-4 text-[#C8A97E] w-full p-3 transition-all duration-300 hover:bg-[#48352F] rounded-md group"
               >
                 <div className="w-6 h-6 flex items-center justify-center text-[#C8A97E] group-hover:text-[#F8F0E3]">
@@ -63,9 +75,10 @@ const ClassicalNavbar = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 </div>
-                <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Liked Songs</span>
+                <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">My Favorite</span>
               </Link>
             </li>
+
           </ul>
         </nav>
       </div>
