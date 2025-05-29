@@ -16,11 +16,10 @@ export default function AdminCategoriesAllPage() {
   const [contributors, setContributors] = useState<ContributorType.Contributor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  setPageSize(8);
+  const pageSize = 8;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   // Fetch (or search) whenever searchTerm, currentPage or pageSize change
@@ -148,7 +147,7 @@ export default function AdminCategoriesAllPage() {
 
           {/* Table */}
           <div className="flex-1 overflow-auto">
-            <table className="min-w-full text-sm">
+            <table className="w-5/5 text-sm">
               <thead>
                 <tr className="bg-gray-200">
                   {[
