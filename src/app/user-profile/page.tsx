@@ -347,7 +347,7 @@ export default function UserProfilePage() {
                 </button>
 
                 <button
-                  onClick={() => router.push("/user-likedsongs")}
+                  onClick={() => router.push("/my-favorites")}
                   className="bg-white backdrop-blur-sm border border-amber-200 rounded-xl p-4 hover:shadow-lg transition-all duration-200 text-center group"
                 >
                   <Music className="w-6 h-6 text-amber-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
@@ -363,11 +363,11 @@ export default function UserProfilePage() {
                 </button>
 
                 <button
-                  onClick={() => router.push("/user-createplaylist")}
+                  onClick={() => router.push("/my-favorites")}
                   className="bg-white backdrop-blur-sm border border-amber-200 rounded-xl p-4 hover:shadow-lg transition-all duration-200 text-center group"
                 >
                   <User className="w-6 h-6 text-amber-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                  <p className="text-sm font-medium text-amber-800">Playlist</p>
+                  <p className="text-sm font-medium text-amber-800">Album</p>
                 </button>
               </div>
             </div>
