@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 
 export default function LoginPage() {
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
       <div className="hidden md:block">
         <div className="relative h-full w-full">
-          <Image
+          <CustomImage
             src="/violin-sheet.jpeg"
             alt="Violin with sheet music"
             fill
@@ -75,7 +75,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md p-8">
           <div className="flex justify-center mb-6">
-            <Image
+            <CustomImage
               src="/sonata-logo.png"
               alt="Sonata Logo"
               height={80}

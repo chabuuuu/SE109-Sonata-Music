@@ -1,7 +1,7 @@
 "use client";
 
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import { useState } from "react";
 
 const FullScreenPlayer = () => {
@@ -66,7 +66,7 @@ const FullScreenPlayer = () => {
 
       <div className="flex-grow flex flex-col items-center justify-center text-center pt-16">
         <div className="w-64 h-64 md:w-80 md:h-80 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-[#C8A97E]/30 mb-8">
-          <Image
+          <CustomImage
             src={currentMusic.coverPhoto}
             alt={currentMusic.name}
             width={320}
@@ -347,7 +347,7 @@ const FullScreenPlayer = () => {
                 }
               `}
                   >
-                    <Image
+                    <CustomImage
                       src={song.coverPhoto || "/default-cover.png"} // Thêm fallback
                       alt={song.name}
                       width={40}

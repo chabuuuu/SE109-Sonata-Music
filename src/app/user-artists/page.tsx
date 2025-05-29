@@ -2,26 +2,26 @@
 import React, { useState, useRef, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
-import Image from "next/image";
-import { toast } from 'react-hot-toast';
+import CustomImage from "@/components/CustomImage";
+import { toast } from "react-hot-toast";
 
 // BƯỚC 1: IMPORT HOOK TỪ CONTEXT
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 
 // Import API services
-import { 
-  getAllArtists, 
-  searchArtists, 
+import {
+  getAllArtists,
+  searchArtists,
   getArtistsByInstrument,
   Artist as ApiArtist,
-  ArtistSearchResponse 
+  ArtistSearchResponse,
 } from "@/services/artistService";
 
-import { 
-  followArtist, 
-  unfollowArtist, 
+import {
+  followArtist,
+  unfollowArtist,
   getMyFollowedArtists,
-  checkIsFollowingArtist 
+  checkIsFollowingArtist,
 } from "@/services/favoriteService";
 
 // Giả sử bạn có một file định nghĩa type chung
@@ -43,15 +43,11 @@ const capitalizeFirstLetter = (str: string): string => {
 };
 
 /* ─────────── SearchBar đơn giản với viết hoa chữ cái đầu ─────────── */
-const SearchBar: React.FC<{ 
-  term?: string; 
+const SearchBar: React.FC<{
+  term?: string;
   setTerm?: (s: string) => void;
   isSearching?: boolean;
-}> = ({
-  term = "",
-  setTerm = () => {},
-  isSearching = false,
-}) => {
+}> = ({ term = "", setTerm = () => {}, isSearching = false }) => {
   // Xử lý thay đổi input với tự động viết hoa chữ cái đầu
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -63,7 +59,9 @@ const SearchBar: React.FC<{
   return (
     <div className="flex items-center bg-[#E6D7C3] rounded-full overflow-hidden shadow">
       <svg
-        className={`w-5 h-5 ml-3 text-[#6D4C41] ${isSearching ? 'animate-spin' : ''}`}
+        className={`w-5 h-5 ml-3 text-[#6D4C41] ${
+          isSearching ? "animate-spin" : ""
+        }`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -146,7 +144,6 @@ const sortOptions = [
 ];
 
 export default function ClassicalMusicArtistsPage() {
-
   const { playSongById } = useMusicPlayer();
 
   // State cục bộ của trang này
@@ -155,11 +152,13 @@ export default function ClassicalMusicArtistsPage() {
   >("Artists");
   const [activeView, setActiveView] = useState<"grid" | "list">("grid");
   const [selectedEra, setSelectedEra] = useState("All Periods");
-  const [selectedInstrument, setSelectedInstrument] = useState("All Instruments");
-  const [sortBy, setSortBy] = useState<(typeof sortOptions)[0]["value"]>("popularity");
+  const [selectedInstrument, setSelectedInstrument] =
+    useState("All Instruments");
+  const [sortBy, setSortBy] =
+    useState<(typeof sortOptions)[0]["value"]>("popularity");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // API state management
   const [artists, setArtists] = useState<ApiArtist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -167,10 +166,13 @@ export default function ClassicalMusicArtistsPage() {
   const [error, setError] = useState<string | null>(null);
   const [totalArtists, setTotalArtists] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchResults, setSearchResults] = useState<ArtistSearchResponse | null>(null);
-  
+  const [searchResults, setSearchResults] =
+    useState<ArtistSearchResponse | null>(null);
+
   // Follow state management
-  const [followedArtists, setFollowedArtists] = useState<Set<number>>(new Set());
+  const [followedArtists, setFollowedArtists] = useState<Set<number>>(
+    new Set()
+  );
   const [followLoading, setFollowLoading] = useState<Set<number>>(new Set());
 
   /* ────── Dropdown outside‑click helper ────── */
@@ -193,10 +195,12 @@ export default function ClassicalMusicArtistsPage() {
     const loadFollowedArtists = async () => {
       try {
         const response = await getMyFollowedArtists(100, 1); // Load first 100 followed artists
-        const followedIds = new Set(response.data.items.map(item => item.artistId));
+        const followedIds = new Set(
+          response.data.items.map((item) => item.artistId)
+        );
         setFollowedArtists(followedIds);
       } catch (error) {
-        console.error('Lỗi khi tải danh sách nghệ sĩ đã follow:', error);
+        console.error("Lỗi khi tải danh sách nghệ sĩ đã follow:", error);
       }
     };
 
@@ -209,9 +213,9 @@ export default function ClassicalMusicArtistsPage() {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await getAllArtists(1, 50); // Lấy 50 nghệ sĩ đầu tiên
-        
+
         if (response.success && response.data.items) {
           setArtists(response.data.items);
           setTotalArtists(response.data.total);
@@ -219,8 +223,8 @@ export default function ClassicalMusicArtistsPage() {
           setError("Không thể tải danh sách nghệ sĩ");
         }
       } catch (err) {
-        console.error('Lỗi khi tải nghệ sĩ:', err);
-        setError('Có lỗi xảy ra khi tải danh sách nghệ sĩ');
+        console.error("Lỗi khi tải nghệ sĩ:", err);
+        setError("Có lỗi xảy ra khi tải danh sách nghệ sĩ");
       } finally {
         setLoading(false);
       }
@@ -238,14 +242,14 @@ export default function ClassicalMusicArtistsPage() {
           const results = await searchArtists(searchTerm.trim(), 50, 1);
           setSearchResults(results);
         } catch (err) {
-          console.error('Lỗi khi tìm kiếm nghệ sĩ:', err);
-          setSearchResults({ 
-            status: "ERROR", 
-            code: 500, 
-            success: false, 
-            message: "Search failed", 
-            data: { total: 0, items: [] }, 
-            errors: err 
+          console.error("Lỗi khi tìm kiếm nghệ sĩ:", err);
+          setSearchResults({
+            status: "ERROR",
+            code: 500,
+            success: false,
+            message: "Search failed",
+            data: { total: 0, items: [] },
+            errors: err,
           });
         } finally {
           setSearching(false);
@@ -264,14 +268,18 @@ export default function ClassicalMusicArtistsPage() {
       if (selectedInstrument !== "All Instruments" && !searchTerm) {
         try {
           setLoading(true);
-          const results = await getArtistsByInstrument(selectedInstrument, 1, 50);
-          
+          const results = await getArtistsByInstrument(
+            selectedInstrument,
+            1,
+            50
+          );
+
           if (results.success && results.data.items) {
             setArtists(results.data.items);
             setTotalArtists(results.data.total);
           }
         } catch (err) {
-          console.error('Lỗi khi lọc nghệ sĩ theo instrument:', err);
+          console.error("Lỗi khi lọc nghệ sĩ theo instrument:", err);
         } finally {
           setLoading(false);
         }
@@ -281,13 +289,13 @@ export default function ClassicalMusicArtistsPage() {
           try {
             setLoading(true);
             const response = await getAllArtists(1, 50);
-            
+
             if (response.success && response.data.items) {
               setArtists(response.data.items);
               setTotalArtists(response.data.total);
             }
           } catch (err) {
-            console.error('Lỗi khi tải lại nghệ sĩ:', err);
+            console.error("Lỗi khi tải lại nghệ sĩ:", err);
           } finally {
             setLoading(false);
           }
@@ -296,14 +304,12 @@ export default function ClassicalMusicArtistsPage() {
       }
     };
 
-
     filterByInstrument();
   }, [selectedInstrument, searchTerm]);
 
   // Get display artists - either search results or filtered artists
-  const displayArtists = searchResults && searchTerm 
-    ? searchResults.data.items 
-    : artists;
+  const displayArtists =
+    searchResults && searchTerm ? searchResults.data.items : artists;
 
   // Helper function to get birth year from date string
   const getBirthYear = (dateOfBirth: string | null): number => {
@@ -311,7 +317,7 @@ export default function ClassicalMusicArtistsPage() {
     return new Date(dateOfBirth).getFullYear();
   };
 
-  // Helper function to get death year from date string  
+  // Helper function to get death year from date string
   const getDeathYear = (dateOfDeath: string | null): number => {
     if (!dateOfDeath) return new Date().getFullYear(); // Current year if still alive
     return new Date(dateOfDeath).getFullYear();
@@ -321,23 +327,23 @@ export default function ClassicalMusicArtistsPage() {
   const filteredAndSortedArtists = [...displayArtists]
     .filter((artist) => {
       if (selectedEra === "All Periods") return true;
-      
+
       const birthYear = getBirthYear(artist.dateOfBirth);
-      
+
       // Map era to year ranges
       const eraRanges: Record<string, [number, number]> = {
-        "Medieval": [500, 1400],
-        "Renaissance": [1400, 1600], 
-        "Baroque": [1600, 1750],
-        "Classical": [1750, 1820],
-        "Romantic": [1820, 1900],
-        "Modern": [1900, 1945],
-        "Contemporary": [1945, 2024],
+        Medieval: [500, 1400],
+        Renaissance: [1400, 1600],
+        Baroque: [1600, 1750],
+        Classical: [1750, 1820],
+        Romantic: [1820, 1900],
+        Modern: [1900, 1945],
+        Contemporary: [1945, 2024],
       };
-      
+
       const range = eraRanges[selectedEra];
       if (!range) return true;
-      
+
       return birthYear >= range[0] && birthYear <= range[1];
     })
     .sort((a, b) => {
@@ -363,28 +369,29 @@ export default function ClassicalMusicArtistsPage() {
       // Sử dụng playSongById thay vì playMusic
       // Giả sử chúng ta lấy bài hát đầu tiên của nghệ sĩ hoặc sử dụng ID nghệ sĩ
       // Trong trường hợp thực tế, bạn cần API để lấy danh sách bài hát của nghệ sĩ
-      console.log(`Playing music from artist: ${artist.name} (ID: ${artist.id})`);
-      
+      console.log(
+        `Playing music from artist: ${artist.name} (ID: ${artist.id})`
+      );
+
       // Tạm thời sử dụng ID nghệ sĩ - trong thực tế cần có API lấy bài hát của nghệ sĩ
       await playSongById(artist.id);
     } catch (error) {
-      console.error('Lỗi khi phát nhạc của nghệ sĩ:', error);
+      console.error("Lỗi khi phát nhạc của nghệ sĩ:", error);
     }
-
   };
 
   // Handle follow/unfollow artist
   const handleFollowToggle = async (artistId: number, artistName: string) => {
     // Prevent event bubbling
     const isCurrentlyFollowing = followedArtists.has(artistId);
-    
+
     // Add to loading set
-    setFollowLoading(prev => new Set(prev).add(artistId));
-    
+    setFollowLoading((prev) => new Set(prev).add(artistId));
+
     try {
       if (isCurrentlyFollowing) {
         await unfollowArtist(artistId);
-        setFollowedArtists(prev => {
+        setFollowedArtists((prev) => {
           const newSet = new Set(prev);
           newSet.delete(artistId);
           return newSet;
@@ -392,19 +399,19 @@ export default function ClassicalMusicArtistsPage() {
         toast.success(`Đã hủy theo dõi ${artistName}`);
       } else {
         await followArtist(artistId);
-        setFollowedArtists(prev => new Set(prev).add(artistId));
+        setFollowedArtists((prev) => new Set(prev).add(artistId));
         toast.success(`Đã theo dõi ${artistName}`);
       }
     } catch (error) {
-      console.error('Lỗi khi follow/unfollow:', error);
+      console.error("Lỗi khi follow/unfollow:", error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error('Không thể thực hiện thao tác này');
+        toast.error("Không thể thực hiện thao tác này");
       }
     } finally {
       // Remove from loading set
-      setFollowLoading(prev => {
+      setFollowLoading((prev) => {
         const newSet = new Set(prev);
         newSet.delete(artistId);
         return newSet;
@@ -420,9 +427,9 @@ export default function ClassicalMusicArtistsPage() {
         {/* TOP BAR */}
         <div className="sticky top-0 z-30 bg-[#D3B995] shadow-md px-8 py-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <SearchBar 
-              term={searchTerm} 
-              setTerm={setSearchTerm} 
+            <SearchBar
+              term={searchTerm}
+              setTerm={setSearchTerm}
               isSearching={searching}
             />
             <div className="flex flex-col md:flex-row md:items-center md:space-x-6 gap-3">
@@ -598,7 +605,7 @@ export default function ClassicalMusicArtistsPage() {
           <div className="px-8 mb-6">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
               <p className="text-red-600 mb-2">{error}</p>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="bg-[#C8A97E] hover:bg-[#A67C52] text-white px-4 py-2 rounded-full text-sm"
               >
@@ -617,55 +624,108 @@ export default function ClassicalMusicArtistsPage() {
                   {searching ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#C8A97E]"></div>
-                      <p className="text-[#3A2A24] font-medium">Đang tìm kiếm...</p>
+                      <p className="text-[#3A2A24] font-medium">
+                        Đang tìm kiếm...
+                      </p>
                     </>
                   ) : searchResults ? (
                     <>
-                      <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      <svg
+                        className="w-5 h-5 text-[#C8A97E]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
                       </svg>
                       <p className="text-[#3A2A24] font-medium">
-                        Tìm thấy <span className="text-[#C8A97E] font-bold">{searchResults.data.total}</span> kết quả cho 
-                        <span className="text-[#6D4C41] font-semibold ml-1">"{searchTerm}"</span>
+                        Tìm thấy{" "}
+                        <span className="text-[#C8A97E] font-bold">
+                          {searchResults.data.total}
+                        </span>{" "}
+                        kết quả cho
+                        <span className="text-[#6D4C41] font-semibold ml-1">
+                          "{searchTerm}"
+                        </span>
                       </p>
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5 text-[#8D6E63]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      <svg
+                        className="w-5 h-5 text-[#8D6E63]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                        />
                       </svg>
-                      <p className="text-[#6D4C41]">Không tìm thấy kết quả nào</p>
+                      <p className="text-[#6D4C41]">
+                        Không tìm thấy kết quả nào
+                      </p>
                     </>
                   )}
                 </div>
-                
+
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm("")}
                     className="flex items-center gap-1 text-[#6D4C41] hover:text-[#C8A97E] transition-colors text-sm"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                     Xóa
                   </button>
                 )}
               </div>
-              
+
               {/* Hiển thị thông tin bộ lọc nếu có */}
-              {(selectedEra !== "All Periods" || selectedInstrument !== "All Instruments") && (
+              {(selectedEra !== "All Periods" ||
+                selectedInstrument !== "All Instruments") && (
                 <div className="mt-3 pt-3 border-t border-[#D3B995]/30">
-                  <p className="text-sm text-[#6D4C41] mb-2">Bộ lọc đang áp dụng:</p>
+                  <p className="text-sm text-[#6D4C41] mb-2">
+                    Bộ lọc đang áp dụng:
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {selectedEra !== "All Periods" && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C8A97E] text-white text-xs rounded-full">
                         Thời kỳ: {selectedEra}
-                        <button 
+                        <button
                           onClick={() => setSelectedEra("All Periods")}
                           className="hover:bg-white/20 rounded-full p-0.5"
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       </span>
@@ -673,12 +733,24 @@ export default function ClassicalMusicArtistsPage() {
                     {selectedInstrument !== "All Instruments" && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#A67C52] text-white text-xs rounded-full">
                         Nhạc cụ: {selectedInstrument}
-                        <button 
-                          onClick={() => setSelectedInstrument("All Instruments")}
+                        <button
+                          onClick={() =>
+                            setSelectedInstrument("All Instruments")
+                          }
                           className="hover:bg-white/20 rounded-full p-0.5"
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       </span>
@@ -704,15 +776,27 @@ export default function ClassicalMusicArtistsPage() {
         {!loading && !error && filteredAndSortedArtists.length === 0 && (
           <div className="px-8 py-12 text-center">
             <div className="mb-4">
-              <svg className="mx-auto h-24 w-24 text-[#D3B995]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              <svg
+                className="mx-auto h-24 w-24 text-[#D3B995]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-[#3A2A24] mb-2">Không tìm thấy nghệ sĩ</h3>
+            <h3 className="text-xl font-semibold text-[#3A2A24] mb-2">
+              Không tìm thấy nghệ sĩ
+            </h3>
             <p className="text-[#6D4C41] mb-4">
               Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
             </p>
-            <button 
+            <button
               onClick={() => {
                 setSearchTerm("");
                 setSelectedEra("All Periods");
@@ -731,7 +815,7 @@ export default function ClassicalMusicArtistsPage() {
             {activeView === "grid" ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
                 {filteredAndSortedArtists.map((artist) => (
-                  <Link 
+                  <Link
                     key={`${artist.id}-${artist.name}`}
                     href={`/artist/${artist.id}`}
                     className="block"
@@ -739,14 +823,14 @@ export default function ClassicalMusicArtistsPage() {
                     <div className="group flex flex-col items-center p-4 rounded-lg border border-transparent hover:border-[#B79E7A]/60 hover:bg-[#F0E6D6] transition cursor-pointer">
                       <div className="relative w-full max-w-[160px] aspect-square rounded-full overflow-hidden border-4 border-[#B79E7A]/70">
                         <div className="relative w-full h-full">
-                          <Image
-                            src={artist.picture || '/images/default-artist.jpg'}
+                          <CustomImage
+                            src={artist.picture || "/images/default-artist.jpg"}
                             alt={artist.name}
                             fill
                             className="object-cover grayscale-[30%] sepia-[10%]"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.src = '/images/default-artist.jpg';
+                              target.src = "/images/default-artist.jpg";
                             }}
                           />
                         </div>
@@ -777,12 +861,18 @@ export default function ClassicalMusicArtistsPage() {
                         {artist.name}
                       </h3>
                       <p className="text-xs text-[#6D4C41] text-center">
-                        {artist.dateOfBirth ? getBirthYear(artist.dateOfBirth).toString() : 'Unknown'} - {artist.dateOfDeath ? getDeathYear(artist.dateOfDeath).toString() : 'Present'}
+                        {artist.dateOfBirth
+                          ? getBirthYear(artist.dateOfBirth).toString()
+                          : "Unknown"}{" "}
+                        -{" "}
+                        {artist.dateOfDeath
+                          ? getDeathYear(artist.dateOfDeath).toString()
+                          : "Present"}
                       </p>
                       <p className="text-xs text-[#8D6E63] text-center mt-1">
-                        {artist.nationality || 'Unknown'}
+                        {artist.nationality || "Unknown"}
                       </p>
-                      
+
                       {/* Follow Button */}
                       <button
                         onClick={(e) => {
@@ -793,8 +883,8 @@ export default function ClassicalMusicArtistsPage() {
                         disabled={followLoading.has(artist.id)}
                         className={`mt-3 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                           followedArtists.has(artist.id)
-                            ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
-                            : 'bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white'
+                            ? "bg-[#C8A97E] text-white hover:bg-[#A67C52]"
+                            : "bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white"
                         }`}
                       >
                         {followLoading.has(artist.id) ? (
@@ -804,7 +894,11 @@ export default function ClassicalMusicArtistsPage() {
                             xmlns="http://www.w3.org/2000/svg"
                             className="w-3 h-3"
                             viewBox="0 0 20 20"
-                            fill={followedArtists.has(artist.id) ? "currentColor" : "none"}
+                            fill={
+                              followedArtists.has(artist.id)
+                                ? "currentColor"
+                                : "none"
+                            }
                             stroke="currentColor"
                             strokeWidth="2"
                           >
@@ -815,12 +909,11 @@ export default function ClassicalMusicArtistsPage() {
                             />
                           </svg>
                         )}
-                        {followLoading.has(artist.id) 
-                          ? 'Đang xử lý...' 
-                          : followedArtists.has(artist.id) 
-                            ? 'Đã theo dõi' 
-                            : 'Theo dõi'
-                        }
+                        {followLoading.has(artist.id)
+                          ? "Đang xử lý..."
+                          : followedArtists.has(artist.id)
+                          ? "Đã theo dõi"
+                          : "Theo dõi"}
                       </button>
                     </div>
                   </Link>
@@ -836,14 +929,14 @@ export default function ClassicalMusicArtistsPage() {
                   >
                     <div className="flex items-center p-4 rounded-lg border border-[#D3B995] hover:border-[#B79E7A] hover:bg-[#F0E6D6] transition cursor-pointer">
                       <div className="relative h-16 w-16 mr-4">
-                        <Image
-                          src={artist.picture || '/images/default-artist.jpg'}
+                        <CustomImage
+                          src={artist.picture || "/images/default-artist.jpg"}
                           alt={artist.name}
                           fill
                           className="rounded-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/images/default-artist.jpg';
+                            target.src = "/images/default-artist.jpg";
                           }}
                         />
                       </div>
@@ -851,13 +944,20 @@ export default function ClassicalMusicArtistsPage() {
                       <div className="flex-1">
                         <h4 className="font-medium">{artist.name}</h4>
                         <p className="text-xs text-[#6D4C41]">
-                          {artist.dateOfBirth ? getBirthYear(artist.dateOfBirth).toString() : 'Unknown'} - {artist.dateOfDeath ? getDeathYear(artist.dateOfDeath).toString() : 'Present'}
+                          {artist.dateOfBirth
+                            ? getBirthYear(artist.dateOfBirth).toString()
+                            : "Unknown"}{" "}
+                          -{" "}
+                          {artist.dateOfDeath
+                            ? getDeathYear(artist.dateOfDeath).toString()
+                            : "Present"}
                         </p>
                         <p className="text-xs text-[#8D6E63]">
-                          {artist.nationality || 'Unknown'} • {artist.viewCount || 0} lượt xem
+                          {artist.nationality || "Unknown"} •{" "}
+                          {artist.viewCount || 0} lượt xem
                         </p>
                       </div>
-                      
+
                       {/* Action Buttons */}
                       <div className="flex items-center gap-2">
                         {/* Follow Button */}
@@ -870,8 +970,8 @@ export default function ClassicalMusicArtistsPage() {
                           disabled={followLoading.has(artist.id)}
                           className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                             followedArtists.has(artist.id)
-                              ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
-                              : 'bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white'
+                              ? "bg-[#C8A97E] text-white hover:bg-[#A67C52]"
+                              : "bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white"
                           }`}
                         >
                           {followLoading.has(artist.id) ? (
@@ -881,7 +981,11 @@ export default function ClassicalMusicArtistsPage() {
                               xmlns="http://www.w3.org/2000/svg"
                               className="w-3 h-3"
                               viewBox="0 0 20 20"
-                              fill={followedArtists.has(artist.id) ? "currentColor" : "none"}
+                              fill={
+                                followedArtists.has(artist.id)
+                                  ? "currentColor"
+                                  : "none"
+                              }
                               stroke="currentColor"
                               strokeWidth="2"
                             >
@@ -892,9 +996,11 @@ export default function ClassicalMusicArtistsPage() {
                               />
                             </svg>
                           )}
-                          {followedArtists.has(artist.id) ? 'Đã theo dõi' : 'Theo dõi'}
+                          {followedArtists.has(artist.id)
+                            ? "Đã theo dõi"
+                            : "Theo dõi"}
                         </button>
-                        
+
                         {/* Play Button */}
                         <button
                           onClick={(e) => {

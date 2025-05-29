@@ -6,7 +6,7 @@ import FileUploadSection from "@/components/upload-file";
 import * as AlbumType from "./album-api-type";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 
 interface SearchModalProps {
   onClose: () => void;
@@ -278,7 +278,7 @@ const AddAlbumsModal = ({ onClose, albumId }: SearchModalProps) => {
                   </h4>
                   {coverArtUrl && (
                     <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 overflow-hidden relative">
-                      <Image
+                      <CustomImage
                         src={coverArtUrl}
                         alt="Cover preview"
                         width={200}

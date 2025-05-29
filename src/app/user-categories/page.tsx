@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import { getCategories, searchCategories } from "@/services/categoryService";
 import { Category } from "@/interfaces/category";
 
@@ -13,22 +13,18 @@ import { Category } from "@/interfaces/category";
 
 const navTabs: Array<"Categories" | "Artists" | "Albums"> = [
   "Categories",
-  "Artists", 
+  "Artists",
   "Albums",
 ];
 
 /******************************
  *  SEARCH BAR COMPONENT      *
  ******************************/
-const SearchBar: React.FC<{ 
-  term: string; 
+const SearchBar: React.FC<{
+  term: string;
   setTerm: (s: string) => void;
   isSearching?: boolean;
-}> = ({
-  term,
-  setTerm,
-  isSearching = false
-}) => {
+}> = ({ term, setTerm, isSearching = false }) => {
   const [focus, setFocus] = useState(false);
   return (
     <div
@@ -38,9 +34,24 @@ const SearchBar: React.FC<{
     >
       {isSearching ? (
         <div className="w-5 h-5 ml-3 animate-spin">
-          <svg className="w-5 h-5 text-[#6D4C41]" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <svg
+            className="w-5 h-5 text-[#6D4C41]"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
         </div>
       ) : (
@@ -61,7 +72,7 @@ const SearchBar: React.FC<{
       <input
         placeholder="Tìm kiếm chủ đề cổ điển..."
         className="flex-1 bg-transparent text-sm py-2 px-3 focus:outline-none placeholder-[#6D4C41]"
-        style={{ textTransform: 'capitalize' }}
+        style={{ textTransform: "capitalize" }}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         onFocus={() => setFocus(true)}
@@ -95,7 +106,9 @@ const SearchBar: React.FC<{
  *    MAIN PAGE COMPONENT     *
  ******************************/
 export default function CategoriesPage() {
-  const [tab, setTab] = useState<"Categories" | "Artists" | "Albums">("Categories");
+  const [tab, setTab] = useState<"Categories" | "Artists" | "Albums">(
+    "Categories"
+  );
   const [view, setView] = useState<"grid" | "list">("grid");
   const [term, setTerm] = useState("");
   const [debouncedTerm, setDebouncedTerm] = useState("");
@@ -124,7 +137,7 @@ export default function CategoriesPage() {
         setCategories(data);
         setSearchTotal(data.length);
       } catch (error) {
-        console.error('Lỗi khi lấy categories:', error);
+        console.error("Lỗi khi lấy categories:", error);
       } finally {
         setLoading(false);
       }
@@ -144,7 +157,7 @@ export default function CategoriesPage() {
           setCategories(data);
           setSearchTotal(data.length);
         } catch (error) {
-          console.error('Lỗi khi load lại categories:', error);
+          console.error("Lỗi khi load lại categories:", error);
         } finally {
           setSearching(false);
         }
@@ -153,21 +166,21 @@ export default function CategoriesPage() {
 
       try {
         setSearching(true);
-        console.log('🔍 Tìm kiếm categories với từ khóa:', debouncedTerm);
-        
+        console.log("🔍 Tìm kiếm categories với từ khóa:", debouncedTerm);
+
         const searchResult = await searchCategories(debouncedTerm, 50, 1);
-        
+
         if (searchResult.success) {
           setCategories(searchResult.data.items);
           setSearchTotal(searchResult.data.total);
           console.log(`✅ Tìm thấy ${searchResult.data.total} categories`);
         } else {
-          console.warn('❌ Tìm kiếm không thành công:', searchResult.message);
+          console.warn("❌ Tìm kiếm không thành công:", searchResult.message);
           setCategories([]);
           setSearchTotal(0);
         }
       } catch (error) {
-        console.error('❌ Lỗi khi tìm kiếm categories:', error);
+        console.error("❌ Lỗi khi tìm kiếm categories:", error);
         setCategories([]);
         setSearchTotal(0);
       } finally {
@@ -195,11 +208,7 @@ export default function CategoriesPage() {
         <div className="sticky top-0 z-30 bg-[#D3B995] shadow-md px-8 py-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             {/* Search */}
-            <SearchBar 
-              term={term} 
-              setTerm={setTerm} 
-              isSearching={searching}
-            />
+            <SearchBar term={term} setTerm={setTerm} isSearching={searching} />
 
             {/* Nav + View */}
             <div className="flex flex-col md:flex-row md:items-center md:space-x-6 gap-3">
@@ -286,11 +295,19 @@ export default function CategoriesPage() {
               <div className="text-sm text-[#6D4C41]">
                 {term ? (
                   <>
-                    Tìm thấy <span className="font-semibold text-[#C8A97E]">{searchTotal}</span> kết quả cho "{term}"
+                    Tìm thấy{" "}
+                    <span className="font-semibold text-[#C8A97E]">
+                      {searchTotal}
+                    </span>{" "}
+                    kết quả cho "{term}"
                   </>
                 ) : (
                   <>
-                    Hiển thị <span className="font-semibold text-[#C8A97E]">{searchTotal}</span> categories
+                    Hiển thị{" "}
+                    <span className="font-semibold text-[#C8A97E]">
+                      {searchTotal}
+                    </span>{" "}
+                    categories
                   </>
                 )}
               </div>
@@ -301,7 +318,9 @@ export default function CategoriesPage() {
           {loading && (
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C8A97E]"></div>
-              <span className="ml-3 text-[#6D4C41]">Đang tải categories...</span>
+              <span className="ml-3 text-[#6D4C41]">
+                Đang tải categories...
+              </span>
             </div>
           )}
 
@@ -317,12 +336,24 @@ export default function CategoriesPage() {
           {!loading && !searching && categories.length === 0 && (
             <div className="text-center py-12">
               <div className="mb-4">
-                <svg className="mx-auto h-16 w-16 text-[#D3B995]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="mx-auto h-16 w-16 text-[#D3B995]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
               <p className="text-[#6D4C41] text-lg mb-2">
-                {term ? `Không tìm thấy category nào với từ khóa "${term}"` : 'Không có categories nào'}
+                {term
+                  ? `Không tìm thấy category nào với từ khóa "${term}"`
+                  : "Không có categories nào"}
               </p>
               {term && (
                 <button
@@ -347,14 +378,14 @@ export default function CategoriesPage() {
                   <div className="relative aspect-square rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 group-hover:scale-[1.02]">
                     {/* Background image với zoom effect */}
                     <div className="absolute inset-0 z-0">
-                      <Image
-                        src={category.picture || '/images/default-category.jpg'}
+                      <CustomImage
+                        src={category.picture || "/images/default-category.jpg"}
                         alt={category.name}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = '/images/default-category.jpg';
+                          target.src = "/images/default-category.jpg";
                         }}
                       />
                     </div>
@@ -365,20 +396,22 @@ export default function CategoriesPage() {
                     {/* Floating decorative image ở góc với shadow và border */}
                     <div className="absolute top-4 right-4 w-16 h-16 z-20 group-hover:rotate-6 transition-transform duration-500">
                       <div className="relative w-full h-full rounded-xl overflow-hidden shadow-xl ring-2 ring-white/30 backdrop-blur-sm">
-                        <Image
-                          src={category.picture || '/images/default-category.jpg'}
+                        <CustomImage
+                          src={
+                            category.picture || "/images/default-category.jpg"
+                          }
                           alt={category.name}
                           fill
                           className="object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/images/default-category.jpg';
+                            target.src = "/images/default-category.jpg";
                           }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                       </div>
                     </div>
-                    
+
                     {/* Content overlay với typography đẹp */}
                     <div className="absolute inset-0 p-5 flex flex-col justify-between z-20">
                       <div></div>
@@ -388,7 +421,8 @@ export default function CategoriesPage() {
                         </h3>
                         <div className="bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5 inline-block">
                           <span className="text-sm text-white/90 font-medium">
-                            {category.totalMusics} bài • {category.viewCount} views
+                            {category.totalMusics} bài • {category.viewCount}{" "}
+                            views
                           </span>
                         </div>
                       </div>
@@ -419,30 +453,32 @@ export default function CategoriesPage() {
                     {/* Enhanced image container với multiple layers */}
                     <div className="relative w-20 h-20 rounded-2xl mr-6 overflow-hidden flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                       {/* Main background image */}
-                      <Image
-                        src={category.picture || '/images/default-category.jpg'}
+                      <CustomImage
+                        src={category.picture || "/images/default-category.jpg"}
                         alt={category.name}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = '/images/default-category.jpg';
+                          target.src = "/images/default-category.jpg";
                         }}
                       />
-                      
+
                       {/* Gradient overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                      
+
                       {/* Floating mini image ở góc với border đẹp */}
                       <div className="absolute -top-2 -right-2 w-8 h-8 rounded-lg overflow-hidden shadow-lg ring-2 ring-white/60 group-hover:rotate-12 transition-transform duration-300">
-                        <Image
-                          src={category.picture || '/images/default-category.jpg'}
+                        <CustomImage
+                          src={
+                            category.picture || "/images/default-category.jpg"
+                          }
                           alt={category.name}
                           fill
                           className="object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/images/default-category.jpg';
+                            target.src = "/images/default-category.jpg";
                           }}
                         />
                       </div>
@@ -456,24 +492,36 @@ export default function CategoriesPage() {
                       <h3 className="text-xl font-bold text-[#3A2A24] group-hover:text-[#C8A97E] transition-colors duration-300 mb-2">
                         {category.name}
                       </h3>
-                      
+
                       <div className="flex items-center gap-6 mb-2">
                         <div className="flex items-center gap-2">
                           <div className="w-5 h-5 rounded-full bg-[#C8A97E]/20 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-[#C8A97E]" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <svg
+                              className="w-3 h-3 text-[#C8A97E]"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                           </div>
                           <span className="text-sm font-medium text-[#6D4C41]">
                             {category.totalMusics} bài hát
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                           <div className="w-5 h-5 rounded-full bg-[#C8A97E]/20 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-[#C8A97E]" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
+                            <svg
+                              className="w-3 h-3 text-[#C8A97E]"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                              <path
+                                fillRule="evenodd"
+                                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                           </div>
                           <span className="text-sm font-medium text-[#6D4C41]">
@@ -481,7 +529,7 @@ export default function CategoriesPage() {
                           </span>
                         </div>
                       </div>
-                      
+
                       {category.description && (
                         <p className="text-sm text-[#6D4C41]/80 line-clamp-2 leading-relaxed">
                           {category.description}

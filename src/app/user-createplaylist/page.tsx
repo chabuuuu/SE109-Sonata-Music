@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Navbar from "@/components/navbar";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 
 // Sample data for playlists
 const playlistsData = [
@@ -263,7 +263,7 @@ const PlaylistPage = () => {
                 <div className="p-4">
                   <div className="relative mb-4">
                     <div className="relative w-full aspect-square rounded shadow-md">
-                      <Image
+                      <CustomImage
                         src={playlist.image || "/placeholder-playlist.jpg"}
                         alt={playlist.title}
                         fill
@@ -297,7 +297,7 @@ const PlaylistPage = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 h-20 z-40 flex items-center px-4">
         <div className="flex items-center w-1/4">
           <div className="relative h-14 w-14 mr-3">
-            <Image
+            <CustomImage
               src="/podcast-thumbnail.jpg"
               alt="Current playing"
               fill
