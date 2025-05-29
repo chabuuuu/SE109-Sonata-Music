@@ -1,35 +1,49 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Navbar from '@/components/navbar';
-import Image from 'next/image';
-import SearchBar from '@/components/SearchBar';
-import BottomBanner from '@/components/bottom_banner';
-import { getRecommendedSongs, Song } from '@/services/recommendService';
-import { getPopularAlbums, Album, searchAlbums, AlbumSearchResponse } from '@/services/albumService';
-import { getTimelessPieces } from '@/services/timelessService';
-import { getTopArtists, Artist, getArtistsForHome, getAllArtists } from '@/services/artistService';
-import { getInstrumentSpotlight, InstrumentSpotlight, Instrument } from '@/services/instrumentService';
-import { getErasAndStyles, EraStyle, Period } from '@/services/eraService';
-import { 
-  addToFavorite, 
-  removeFromFavorite, 
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Navbar from "@/components/navbar";
+import CustomImage from "@/components/CustomImage";
+import SearchBar from "@/components/SearchBar";
+import BottomBanner from "@/components/bottom_banner";
+import { getRecommendedSongs, Song } from "@/services/recommendService";
+import {
+  getPopularAlbums,
+  Album,
+  searchAlbums,
+  AlbumSearchResponse,
+} from "@/services/albumService";
+import { getTimelessPieces } from "@/services/timelessService";
+import {
+  getTopArtists,
+  Artist,
+  getArtistsForHome,
+  getAllArtists,
+} from "@/services/artistService";
+import {
+  getInstrumentSpotlight,
+  InstrumentSpotlight,
+  Instrument,
+} from "@/services/instrumentService";
+import { getErasAndStyles, EraStyle, Period } from "@/services/eraService";
+import {
+  addToFavorite,
+  removeFromFavorite,
   checkIsFavorite,
   clearFavoriteStatusCache,
   favoriteEvents,
   followArtist,
-  unfollowArtist, 
+  unfollowArtist,
   checkIsFollowingArtist,
   clearFollowStatusCache,
   likeAlbum,
   unlikeAlbum,
-  checkIsLikedAlbum
-} from '@/services/favoriteService';
-import axios from 'axios';
-import { useAuth } from '@/context/AuthContext';
-import { getToken } from '@/services/authService';
-import Link from 'next/link';
-import { toast } from 'react-hot-toast';
+  checkIsLikedAlbum,
+} from "@/services/favoriteService";
+import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
+import { getToken } from "@/services/authService";
+import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -194,16 +208,16 @@ const fallbackArtists = [
 // Interface cho FavoriteButton props
 interface FavoriteButtonProps {
   id: number;
-  type: 'music' | 'artist' | 'album';
+  type: "music" | "artist" | "album";
   className?: string;
   iconSize?: string;
 }
 
-const FavoriteButton: React.FC<FavoriteButtonProps> = ({ 
-  id, 
-  type, 
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({
+  id,
+  type,
   className = "text-[#C8A97E] hover:text-[#A67C52] transition-colors",
-  iconSize = "h-5 w-5"
+  iconSize = "h-5 w-5",
 }) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -223,19 +237,19 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     try {
       setIsCheckingStatus(true);
       let status = false;
-      if (type === 'music') {
+      if (type === "music") {
         status = await checkIsFavorite(id);
-      } else if (type === 'artist') {
+      } else if (type === "artist") {
         status = await checkIsFollowingArtist(id);
-      } else if (type === 'album') {
+      } else if (type === "album") {
         status = await checkIsLikedAlbum(id);
       }
-      
+
       if (isMounted.current) {
         setIsFavorited(status);
       }
     } catch (error) {
-      console.error('❤️ Lỗi khi kiểm tra trạng thái favorite:', error);
+      console.error("❤️ Lỗi khi kiểm tra trạng thái favorite:", error);
       // Không hiển thị toast cho lỗi check status để tránh spam
     } finally {
       if (isMounted.current) {
@@ -279,14 +293,14 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       // Chỉ update nếu event match với component hiện tại
       if (data.type === type && data.id === id && isMounted.current) {
         console.log(`🔄 Global event received for ${type} ${id}:`, data);
-        
+
         // Cập nhật state trực tiếp từ event để tránh delay
-        if (data.action === 'added' || data.action === 'followed') {
+        if (data.action === "added" || data.action === "followed") {
           setIsFavorited(true);
-        } else if (data.action === 'removed' || data.action === 'unfollowed') {
+        } else if (data.action === "removed" || data.action === "unfollowed") {
           setIsFavorited(false);
         }
-        
+
         // Force re-check sau một khoảng thời gian ngắn để đảm bảo consistency
         setTimeout(() => {
           if (isMounted.current) {
@@ -309,7 +323,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       if (isMounted.current) {
         console.log(`🔄 Force refresh triggered for ${type} ${id}`);
         // Clear cache trước khi refresh
-        if (type === 'artist') {
+        if (type === "artist") {
           clearFollowStatusCache(id);
         } else {
           clearFavoriteStatusCache(id);
@@ -320,19 +334,19 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     };
 
     // Add event listeners
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    favoriteEvents.on('favoriteStatusChanged', handleFavoriteStatusChanged);
-    favoriteEvents.on('allFavoritesCleared', handleAllFavoritesCleared);
-    favoriteEvents.on('forceRefreshAll', handleForceRefreshAll);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    favoriteEvents.on("favoriteStatusChanged", handleFavoriteStatusChanged);
+    favoriteEvents.on("allFavoritesCleared", handleAllFavoritesCleared);
+    favoriteEvents.on("forceRefreshAll", handleForceRefreshAll);
 
     // Cleanup
     return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      favoriteEvents.off('favoriteStatusChanged', handleFavoriteStatusChanged);
-      favoriteEvents.off('allFavoritesCleared', handleAllFavoritesCleared);
-      favoriteEvents.off('forceRefreshAll', handleForceRefreshAll);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      favoriteEvents.off("favoriteStatusChanged", handleFavoriteStatusChanged);
+      favoriteEvents.off("allFavoritesCleared", handleAllFavoritesCleared);
+      favoriteEvents.off("forceRefreshAll", handleForceRefreshAll);
     };
   }, [isLoggedIn, id, type]);
 
@@ -341,44 +355,44 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      toast.error('Vui lòng đăng nhập để thực hiện thao tác này');
+      toast.error("Vui lòng đăng nhập để thực hiện thao tác này");
       return;
     }
 
     if (isLoading) return;
 
     setIsLoading(true);
-    
+
     // Optimistic update
     const previousState = isFavorited;
     setIsFavorited(!isFavorited);
 
     try {
-      if (type === 'music') {
+      if (type === "music") {
         if (previousState) {
           await removeFromFavorite(id);
-          toast.success('Đã xóa khỏi danh sách yêu thích');
+          toast.success("Đã xóa khỏi danh sách yêu thích");
         } else {
           await addToFavorite(id);
-          toast.success('Đã thêm vào danh sách yêu thích');
+          toast.success("Đã thêm vào danh sách yêu thích");
         }
-      } else if (type === 'artist') {
+      } else if (type === "artist") {
         if (previousState) {
           await unfollowArtist(id);
-          toast.success('Đã hủy theo dõi nghệ sĩ');
+          toast.success("Đã hủy theo dõi nghệ sĩ");
         } else {
           const result = await followArtist(id);
           if (result.success) {
-            toast.success('Đã theo dõi nghệ sĩ');
+            toast.success("Đã theo dõi nghệ sĩ");
           }
         }
-      } else if (type === 'album') {
+      } else if (type === "album") {
         if (previousState) {
           await unlikeAlbum(id);
-          toast.success('Đã bỏ thích album');
+          toast.success("Đã bỏ thích album");
         } else {
           await likeAlbum(id);
-          toast.success('Đã thích album');
+          toast.success("Đã thích album");
         }
       }
 
@@ -388,34 +402,36 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
           checkFavoriteStatus();
         }
       }, 1000);
-
     } catch (error: any) {
-      console.error('❤️ Lỗi khi toggle favorite:', error);
-      
+      console.error("❤️ Lỗi khi toggle favorite:", error);
+
       // Revert optimistic update
       if (isMounted.current) {
         setIsFavorited(previousState);
       }
-      
-      const errorMessage = error.message || 'Có lỗi xảy ra khi thực hiện thao tác';
-      
+
+      const errorMessage =
+        error.message || "Có lỗi xảy ra khi thực hiện thao tác";
+
       // Xử lý trường hợp đã follow/favorite rồi
-      if (errorMessage.includes('Đã follow') || 
-          errorMessage.includes('đã follow') || 
-          errorMessage.includes('Đã theo dõi') ||
-          errorMessage.includes('đã theo dõi') ||
-          errorMessage.includes('Đã thích') ||
-          errorMessage.includes('đã thích') ||
-          errorMessage.includes('already') ||
-          errorMessage.includes('duplicate') ||
-          errorMessage.includes('exists')) {
-        console.warn('Action already performed:', errorMessage);
+      if (
+        errorMessage.includes("Đã follow") ||
+        errorMessage.includes("đã follow") ||
+        errorMessage.includes("Đã theo dõi") ||
+        errorMessage.includes("đã theo dõi") ||
+        errorMessage.includes("Đã thích") ||
+        errorMessage.includes("đã thích") ||
+        errorMessage.includes("already") ||
+        errorMessage.includes("duplicate") ||
+        errorMessage.includes("exists")
+      ) {
+        console.warn("Action already performed:", errorMessage);
         // Set state dựa trên thông báo lỗi
         if (isMounted.current) {
           setIsFavorited(true);
         }
         // Clear cache để force fresh check
-        if (type === 'artist') {
+        if (type === "artist") {
           clearFollowStatusCache(id);
         } else {
           clearFavoriteStatusCache(id);
@@ -426,14 +442,14 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
             checkFavoriteStatus();
           }
         }, 500);
-        
+
         // Hiển thị thông báo thành công thay vì lỗi
-        if (type === 'artist') {
-          toast.success('Đã theo dõi nghệ sĩ này rồi');
-        } else if (type === 'music') {
-          toast.success('Đã thêm vào yêu thích rồi');
-        } else if (type === 'album') {
-          toast.success('Đã thích album này rồi');
+        if (type === "artist") {
+          toast.success("Đã theo dõi nghệ sĩ này rồi");
+        } else if (type === "music") {
+          toast.success("Đã thêm vào yêu thích rồi");
+        } else if (type === "album") {
+          toast.success("Đã thích album này rồi");
         }
       } else {
         toast.error(errorMessage);
@@ -465,20 +481,30 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   }
 
   return (
-    <button 
+    <button
       onClick={handleToggleFavorite}
       disabled={isLoading || !isLoggedIn}
-      className={`${className} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''} ${!isLoggedIn ? 'opacity-50' : ''} relative group`}
+      className={`${className} ${
+        isLoading ? "opacity-50 cursor-not-allowed" : ""
+      } ${!isLoggedIn ? "opacity-50" : ""} relative group`}
       title={
-        !isLoggedIn 
-          ? 'Vui lòng đăng nhập'
-          : type === 'artist' 
-            ? (isFavorited ? 'Bỏ theo dõi' : 'Theo dõi nghệ sĩ')
-            : (isFavorited ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích')
+        !isLoggedIn
+          ? "Vui lòng đăng nhập"
+          : type === "artist"
+          ? isFavorited
+            ? "Bỏ theo dõi"
+            : "Theo dõi nghệ sĩ"
+          : isFavorited
+          ? "Bỏ khỏi yêu thích"
+          : "Thêm vào yêu thích"
       }
     >
       {isLoading ? (
-        <svg className={`${iconSize} animate-spin`} fill="none" viewBox="0 0 24 24">
+        <svg
+          className={`${iconSize} animate-spin`}
+          fill="none"
+          viewBox="0 0 24 24"
+        >
           <circle
             className="opacity-25"
             cx="12"
@@ -496,7 +522,9 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       ) : (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className={`${iconSize} transition-transform duration-200 ${isFavorited ? 'scale-110' : 'group-hover:scale-110'}`}
+          className={`${iconSize} transition-transform duration-200 ${
+            isFavorited ? "scale-110" : "group-hover:scale-110"
+          }`}
           viewBox="0 0 20 20"
           fill={isFavorited ? "currentColor" : "none"}
           stroke="currentColor"
@@ -551,7 +579,7 @@ const PlaylistCard: React.FC<{
 }> = ({ title, description, image, songId, onPlayClick }) => (
   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
     <figure className="relative mb-4 rounded-md overflow-hidden">
-      <Image
+      <CustomImage
         src={image}
         alt={title || "Music"}
         width={500}
@@ -560,7 +588,7 @@ const PlaylistCard: React.FC<{
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       {/* Play button */}
-      <button 
+      <button
         onClick={onPlayClick}
         className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
       >
@@ -587,12 +615,7 @@ const PlaylistCard: React.FC<{
       <div className="mt-auto pt-3 flex justify-between items-center">
         <span className="text-xs text-[#8D6C61]">Classical</span>
         <div className="flex space-x-2">
-          {songId && (
-            <FavoriteButton 
-              id={songId} 
-              type="music"
-            />
-          )}
+          {songId && <FavoriteButton id={songId} type="music" />}
         </div>
       </div>
     </div>
@@ -608,7 +631,7 @@ const PlaylistCard: React.FC<{
 // }> = ({ title, image, date, duration }) => (
 //   <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col">
 //     <figure className="relative mb-4 rounded-md overflow-hidden">
-//       <Image
+//       <CustomImage
 //         src={image}
 //         alt={title}
 //         width={500}
@@ -698,7 +721,7 @@ const AlbumCard: React.FC<{
   <Link href={`/album/${album.id}`} className="block h-full">
     <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer">
       <figure className="relative mb-4 rounded-md overflow-hidden">
-        <Image
+        <CustomImage
           src={album.coverPhoto}
           alt={album.name || "Album"}
           width={500}
@@ -707,7 +730,7 @@ const AlbumCard: React.FC<{
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         {/* Play button */}
-        <button 
+        <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -762,7 +785,9 @@ const AlbumCard: React.FC<{
         <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
           {album.name}
         </h3>
-        <p className="text-sm text-[#6D4C41] line-clamp-2">{album.description}</p>
+        <p className="text-sm text-[#6D4C41] line-clamp-2">
+          {album.description}
+        </p>
         <div className="mt-auto pt-3 flex justify-between items-center">
           <div className="flex items-center">
             <span className="text-xs text-[#8D6C61]">
@@ -787,8 +812,8 @@ const AlbumCard: React.FC<{
             )}
           </div>
           <div className="flex space-x-2">
-            <FavoriteButton 
-              id={typeof album.id === 'string' ? parseInt(album.id) : album.id} 
+            <FavoriteButton
+              id={typeof album.id === "string" ? parseInt(album.id) : album.id}
               type="album"
             />
           </div>
@@ -816,15 +841,16 @@ const ArtistCard: React.FC<{
   }
 
   // Xử lý ảnh fallback nếu picture bị thiếu hoặc không hợp lệ
-  const artistImage = artist.picture && artist.picture.trim() !== '' 
-    ? artist.picture 
-    : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjBFNkQ2Ii8+CjxwYXRoIGQ9Ik0yNTAgMjAwQzI3NyAyMDAgMzAwIDIyMyAzMDAgMjUwQzMwMCAyNzcgMjc3IDMwMCAyNTAgMzAwQzIyMyAzMDAgMjAwIDI3NyAyMDAgMjUwQzIwMCAyMjMgMjIzIDIwMCAyNTAgMjAwWiIgZmlsbD0iI0Q5QjdBQSIvPgo8cGF0aCBkPSJNMzUwIDM4MEM0MDAgMzUwIDQ1MCAzMDAgNDUwIDI1MEMzOTggMjUwIDM3MyAyNzUgMzUwIDMwMEMzMjcgMzI1IDMwMiAzNTAgMjUwIDM1MEM0MzEgMzQ5IDQ1MCAzNjUgMzUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHBhdGggZD0iTTE1MCAzODBDMTAwIDM1MCA1MCAzMDAgNTAgMjUwQzEwMiAyNTAgMTI3IDI3NSAxNTAgMzAwQzE3MyAzMjUgMTk4IDM1MCAyNTAgMzUwQzE5IDM0OSA1MCAzNjUgMTUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSIyMjYiIHk9IjIyNiI+CjxwYXRoIGQ9Ik0yNCA0QzM1IDQgNDQgMTMgNDQgMjRDNDQgMzUgMzUgNDQgMjQgNDRDMTMgNDQgNCAzNSA0IDI0QzQgMTMgMTMgNCAyNCA0WiIgZmlsbD0iIzNBMkEyNCIvPgo8Y2lyY2xlIGN4PSIyNCIgY3k9IjIwIiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMzRDMTIgMjggMTcuMzcgMjQgMjQgMjRDMzAuNjMgMjQgMzYgMjggMzYgMzQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4KPC9zdmc+'; // SVG placeholder của artist
+  const artistImage =
+    artist.picture && artist.picture.trim() !== ""
+      ? artist.picture
+      : "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjBFNkQ2Ii8+CjxwYXRoIGQ9Ik0yNTAgMjAwQzI3NyAyMDAgMzAwIDIyMyAzMDAgMjUwQzMwMCAyNzcgMjc3IDMwMCAyNTAgMzAwQzIyMyAzMDAgMjAwIDI3NyAyMDAgMjUwQzIwMCAyMjMgMjIzIDIwMCAyNTAgMjAwWiIgZmlsbD0iI0Q5QjdBQSIvPgo8cGF0aCBkPSJNMzUwIDM4MEM0MDAgMzUwIDQ1MCAzMDAgNDUwIDI1MEMzOTggMjUwIDM3MyAyNzUgMzUwIDMwMEMzMjcgMzI1IDMwMiAzNTAgMjUwIDM1MEM0MzEgMzQ5IDQ1MCAzNjUgMzUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHBhdGggZD0iTTE1MCAzODBDMTAwIDM1MCA1MCAzMDAgNTAgMjUwQzEwMiAyNTAgMTI3IDI3NSAxNTAgMzAwQzE3MyAzMjUgMTk4IDM1MCAyNTAgMzUwQzE5IDM0OSA1MCAzNjUgMTUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSIyMjYiIHk9IjIyNiI+CjxwYXRoIGQ9Ik0yNCA0QzM1IDQgNDQgMTMgNDQgMjRDNDQgMzUgMzUgNDQgMjQgNDRDMTMgNDQgNCAzNSA0IDI0QzQgMTMgMTMgNCAyNCA0WiIgZmlsbD0iIzNBMkEyNCIvPgo8Y2lyY2xlIGN4PSIyNCIgY3k9IjIwIiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMzRDMTIgMjggMTcuMzcgMjQgMjQgMjRDMzAuNjMgMjQgMzYgMjggMzYgMzQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4KPC9zdmc+"; // SVG placeholder của artist
 
   return (
     <Link href={`/artist/${artist.id}`} className="block h-full">
       <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer">
         <figure className="relative mb-4 rounded-md overflow-hidden">
-          <Image
+          <CustomImage
             src={artistImage}
             alt={artist.name || "Artist"}
             width={500}
@@ -833,12 +859,13 @@ const ArtistCard: React.FC<{
             onError={(e) => {
               // Fallback nếu ảnh load lỗi
               const target = e.target as HTMLImageElement;
-              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjBFNkQ2Ii8+CjxwYXRoIGQ9Ik0yNTAgMjAwQzI3NyAyMDAgMzAwIDIyMyAzMDAgMjUwQzMwMCAyNzcgMjc3IDMwMCAyNTAgMzAwQzIyMyAzMDAgMjAwIDI3NyAyMDAgMjUwQzIwMCAyMjMgMjIzIDIwMCAyNTAgMjAwWiIgZmlsbD0iI0Q5QjdBQSIvPgo8cGF0aCBkPSJNMzUwIDM4MEM0MDAgMzUwIDQ1MCAzMDAgNDUwIDI1MEMzOTggMjUwIDM3MyAyNzUgMzUwIDMwMEMzMjcgMzI1IDMwMiAzNTAgMjUwIDM1MEM0MzEgMzQ5IDQ1MCAzNjUgMzUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHBhdGggZD0iTTE1MCAzODBDMTAwIDM1MCA1MCAzMDAgNTAgMjUwQzEwMiAyNTAgMTI3IDI3NSAxNTAgMzAwQzE3MyAzMjUgMTk4IDM1MCAyNTAgMzUwQzE5IDM0OSA1MCAzNjUgMTUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSIyMjYiIHk9IjIyNiI+CjxwYXRoIGQ9Ik0yNCA0QzM1IDQgNDQgMTMgNDQgMjRDNDQgMzUgMzUgNDQgMjQgNDRDMTMgNDQgNCAzNSA0IDI0QzQgMTMgMTMgNCAyNCA0WiIgZmlsbD0iIzNBMkEyNCIvPgo8Y2lyY2xlIGN4PSIyNCIgY3k9IjIwIiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMzRDMTIgMjggMTcuMzcgMjQgMjQgMjRDMzAuNjMgMjQgMzYgMjggMzYgMzQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4KPC9zdmc+';
+              target.src =
+                "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjBFNkQ2Ii8+CjxwYXRoIGQ9Ik0yNTAgMjAwQzI3NyAyMDAgMzAwIDIyMyAzMDAgMjUwQzMwMCAyNzcgMjc3IDMwMCAyNTAgMzAwQzIyMyAzMDAgMjAwIDI3NyAyMDAgMjUwQzIwMCAyMjMgMjIzIDIwMCAyNTAgMjAwWiIgZmlsbD0iI0Q5QjdBQSIvPgo8cGF0aCBkPSJNMzUwIDM4MEM0MDAgMzUwIDQ1MCAzMDAgNDUwIDI1MEMzOTggMjUwIDM3MyAyNzUgMzUwIDMwMEMzMjcgMzI1IDMwMiAzNTAgMjUwIDM1MEM0MzEgMzQ5IDQ1MCAzNjUgMzUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHBhdGggZD0iTTE1MCAzODBDMTAwIDM1MCA1MCAzMDAgNTAgMjUwQzEwMiAyNTAgMTI3IDI3NSAxNTAgMzAwQzE3MyAzMjUgMTk4IDM1MCAyNTAgMzUwQzE5IDM0OSA1MCAzNjUgMTUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSIyMjYiIHk9IjIyNiI+CjxwYXRoIGQ9Ik0yNCA0QzM1IDQgNDQgMTMgNDQgMjRDNDQgMzUgMzUgNDQgMjQgNDRDMTMgNDQgNCAzNSA0IDI0QzQgMTMgMTMgNCAyNCA0WiIgZmlsbD0iIzNBMkEyNCIvPgo8Y2lyY2xlIGN4PSIyNCIgY3k9IjIwIiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMzRDMTIgMjggMTcuMzcgMjQgMjQgMjRDMzAuNjMgMjQgMzYgMjggMzYgMzQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4KPC9zdmc+";
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           {/* Play button */}
-          <button 
+          <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -870,18 +897,14 @@ const ArtistCard: React.FC<{
           </p>
           <div className="mt-auto pt-3 flex justify-between items-center">
             <span className="text-xs text-[#8D6C61]">
-              {artist.followers !== undefined && artist.followers !== null 
-                ? artist.followers > 0 
+              {artist.followers !== undefined && artist.followers !== null
+                ? artist.followers > 0
                   ? `${artist.followers.toLocaleString()} followers`
                   : "New artist"
-                : "No followers info"
-              }
+                : "No followers info"}
             </span>
             <div className="flex space-x-2">
-              <FavoriteButton 
-                id={artist.id} 
-                type="artist"
-              />
+              <FavoriteButton id={artist.id} type="artist" />
             </div>
           </div>
         </div>
@@ -906,7 +929,7 @@ const ArtistCard: React.FC<{
 
 //       {songs.length > 0 && (
 //         <figure className="relative rounded-md overflow-hidden">
-//           <Image
+//           <CustomImage
 //             src={songs[0].coverPhoto}
 //             alt={songs[0].name}
 //             width={500}
@@ -934,7 +957,6 @@ const ArtistCard: React.FC<{
 //     </article>
 //   );
 // };
-
 
 // Search bar (classical theme)
 const SearchBarComponent: React.FC = () => {
@@ -1123,7 +1145,6 @@ const SearchBarComponent: React.FC = () => {
   );
 };
 
-
 const InstrumentSpotlightSection: React.FC<{
   spotlights: InstrumentSpotlight[];
   loading: boolean;
@@ -1200,7 +1221,10 @@ const InstrumentSpotlightSection: React.FC<{
           <div className="bg-[#F0E6D6] border border-[#D3B995] p-5 rounded-lg animate-pulse shadow-sm">
             <div className="h-10 bg-[#D3B995] rounded mb-6"></div>
             {[...Array(5)].map((_, i) => (
-              <div key={`instrument-sidebar-loading-${i}`} className="flex items-center gap-4 mb-4">
+              <div
+                key={`instrument-sidebar-loading-${i}`}
+                className="flex items-center gap-4 mb-4"
+              >
                 <div className="w-16 h-16 rounded-md bg-[#D3B995]"></div>
                 <div className="flex-1">
                   <div className="h-5 bg-[#D3B995] rounded w-3/4 mb-2"></div>
@@ -1282,7 +1306,7 @@ const InstrumentSpotlightSection: React.FC<{
             />
             <div className="absolute inset-0 p-8 flex flex-col md:flex-row items-start md:items-center">
               <div className="w-48 h-48 md:w-56 md:h-56 rounded-md shadow-xl overflow-hidden mb-4 md:mb-0 md:mr-8 bg-[#F0E6D6] border-4 border-[#F0E6D6]">
-                <Image
+                <CustomImage
                   src={featuredImage}
                   alt={featuredInstrument.name}
                   width={500}
@@ -1342,7 +1366,7 @@ const InstrumentSpotlightSection: React.FC<{
                       isSelected ? "border-white shadow-lg" : "border-[#C8A97E]"
                     } flex-shrink-0`}
                   >
-                    <Image
+                    <CustomImage
                       src={getInstrumentImage(instrument)}
                       alt={instrument.name}
                       width={500}
@@ -1398,7 +1422,7 @@ const InstrumentSpotlightSection: React.FC<{
                   className="bg-[#F0E6D6] border border-[#D3B995] rounded-lg hover:shadow-lg transition-all duration-300 overflow-hidden group h-full flex flex-col"
                 >
                   <figure className="relative overflow-hidden">
-                    <Image
+                    <CustomImage
                       src={song.coverPhoto}
                       alt={song.name}
                       width={500}
@@ -1406,7 +1430,7 @@ const InstrumentSpotlightSection: React.FC<{
                       className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <button 
+                    <button
                       onClick={() => onPlayClick && onPlayClick(song.id)}
                       className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
                     >
@@ -1432,10 +1456,7 @@ const InstrumentSpotlightSection: React.FC<{
                     </p>
                     <div className="mt-auto flex justify-between items-center">
                       <div className="text-xs text-[#8D6C61]">3:45</div>
-                      <FavoriteButton 
-                        id={song.id} 
-                        type="music"
-                      />
+                      <FavoriteButton id={song.id} type="music" />
                     </div>
                   </div>
                 </article>
@@ -1497,11 +1518,9 @@ const EraStyleSection: React.FC<{
           href={`/period/${eraStyle.period.id}`}
           className="block"
         >
-          <article
-            className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer hover:scale-105"
-          >
+          <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer hover:scale-105">
             <figure className="relative mb-4 rounded-md overflow-hidden">
-              <Image
+              <CustomImage
                 src={eraStyle.period.picture || "/default-era.jpg"}
                 alt={eraStyle.period.name}
                 width={500}
@@ -1509,7 +1528,7 @@ const EraStyleSection: React.FC<{
                 className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <button 
+              <button
                 className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
                 onClick={(e) => {
                   e.preventDefault();
@@ -1603,8 +1622,10 @@ const HomePage: React.FC = () => {
 
     // Listen to favorite events để force refresh Top Artists khi có thay đổi
     const handleFavoriteStatusChanged = (data: any) => {
-      if (data.type === 'artist') {
-        console.log('🔄 Artist follow status changed, force refreshing Top Artists');
+      if (data.type === "artist") {
+        console.log(
+          "🔄 Artist follow status changed, force refreshing Top Artists"
+        );
         // Clear cache và force refresh all favorite buttons
         clearFollowStatusCache();
         favoriteEvents.forceRefreshAll();
@@ -1612,15 +1633,15 @@ const HomePage: React.FC = () => {
     };
 
     // Add event listeners
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    favoriteEvents.on('favoriteStatusChanged', handleFavoriteStatusChanged);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    favoriteEvents.on("favoriteStatusChanged", handleFavoriteStatusChanged);
 
     // Cleanup
     return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      favoriteEvents.off('favoriteStatusChanged', handleFavoriteStatusChanged);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      favoriteEvents.off("favoriteStatusChanged", handleFavoriteStatusChanged);
     };
   }, []);
 
@@ -1809,8 +1830,8 @@ const HomePage: React.FC = () => {
 
         // Sử dụng getAllArtists để lấy tất cả nghệ sĩ thay vì chỉ top 5
         const artistsResponse = await getAllArtists(1, 20); // Lấy 20 nghệ sĩ đầu tiên
-        console.log("🎭 All Artists data from API:", artistsResponse); 
-        
+        console.log("🎭 All Artists data from API:", artistsResponse);
+
         if (artistsResponse.success && artistsResponse.data.items.length > 0) {
           setTopArtists(artistsResponse.data.items);
         } else {
@@ -1897,7 +1918,7 @@ const HomePage: React.FC = () => {
               <div className="flex items-center gap-8">
                 {/* Portrait */}
                 <div className="overflow-hidden rounded-full w-36 h-36 border-4 border-[#C8A97E] shadow-md">
-                  <Image
+                  <CustomImage
                     src={currentArtist.image}
                     alt={`${currentArtist.name} portrait`}
                     width={500}
@@ -1965,9 +1986,7 @@ const HomePage: React.FC = () => {
                   />
                 ))
               : // Fallback to default playlists if API fails
-                playlistData.map((p) => (
-                  <PlaylistCard key={p.id} {...p} />
-                ))}
+                playlistData.map((p) => <PlaylistCard key={p.id} {...p} />)}
           </ContentSection>
 
           {/* Popular Albums */}
@@ -2094,7 +2113,8 @@ const HomePage: React.FC = () => {
                   />
                 </svg>
                 <p className="italic text-lg text-[#6D4C41]">
-                  {apiError || "Không có nghệ sĩ nào hiện tại. Vui lòng thử lại sau."}
+                  {apiError ||
+                    "Không có nghệ sĩ nào hiện tại. Vui lòng thử lại sau."}
                 </p>
                 <button
                   onClick={async () => {
@@ -2103,12 +2123,17 @@ const HomePage: React.FC = () => {
                       setApiError(null);
                       // Sử dụng getAllArtists thay vì getTopArtists
                       const artistsResponse = await getAllArtists(1, 20);
-                      if (artistsResponse.success && artistsResponse.data.items.length > 0) {
+                      if (
+                        artistsResponse.success &&
+                        artistsResponse.data.items.length > 0
+                      ) {
                         setTopArtists(artistsResponse.data.items);
                       }
                     } catch (error) {
                       console.error("Retry failed:", error);
-                      setApiError("Không thể tải danh sách nghệ sĩ. Vui lòng thử lại sau.");
+                      setApiError(
+                        "Không thể tải danh sách nghệ sĩ. Vui lòng thử lại sau."
+                      );
                     } finally {
                       setArtistsLoading(false);
                     }

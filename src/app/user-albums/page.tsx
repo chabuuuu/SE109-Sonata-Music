@@ -2,8 +2,13 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
-import Image from "next/image";
-import { getPopularAlbums, searchAlbums, Album, AlbumSearchResponse } from "@/services/albumService";
+import CustomImage from "@/components/CustomImage";
+import {
+  getPopularAlbums,
+  searchAlbums,
+  Album,
+  AlbumSearchResponse,
+} from "@/services/albumService";
 
 /*****************************************************************
  *  CLASSICAL ALBUMS PAGE – Unified Top‑Bar + Working Grid/List
@@ -26,7 +31,7 @@ const AlbumCard: React.FC<{ album: Album }> = ({ album }) => (
   <Link href={`/album/${album.id}`} className="group">
     <div className="relative rounded-md overflow-hidden shadow hover:shadow-lg transition-all">
       <div className="relative w-full aspect-square">
-        <Image
+        <CustomImage
           src={album.coverPhoto}
           alt={album.name}
           fill
@@ -63,7 +68,12 @@ const AlbumRow: React.FC<{ album: Album; index: number }> = ({
       <span className="col-span-1 text-sm text-[#6D4C41]">{index + 1}</span>
       <div className="col-span-6 flex items-center space-x-4">
         <div className="w-12 h-12 relative">
-          <Image src={album.coverPhoto} alt={album.name} fill className="rounded object-cover" />
+          <CustomImage
+            src={album.coverPhoto}
+            alt={album.name}
+            fill
+            className="rounded object-cover"
+          />
         </div>
         <div>
           <h3 className="font-medium truncate">{album.name}</h3>
@@ -71,7 +81,7 @@ const AlbumRow: React.FC<{ album: Album; index: number }> = ({
         </div>
       </div>
       <span className="col-span-3 text-sm text-[#6D4C41] truncate">
-        {album.albumType || 'Album'}
+        {album.albumType || "Album"}
       </span>
       <span className="col-span-2 text-right text-sm text-[#6D4C41]">
         {album.musics?.length || 0} tracks
@@ -89,11 +99,11 @@ const capitalizeFirstLetter = (str: string): string => {
 /**************************
  *  SEARCH BAR COMPONENT  *
  **************************/
-const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void; isSearching?: boolean }> = ({
-  term,
-  setTerm,
-  isSearching = false,
-}) => {
+const SearchBar: React.FC<{
+  term: string;
+  setTerm: (s: string) => void;
+  isSearching?: boolean;
+}> = ({ term, setTerm, isSearching = false }) => {
   // Xử lý thay đổi input với tự động viết hoa chữ cái đầu
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -105,7 +115,9 @@ const SearchBar: React.FC<{ term: string; setTerm: (s: string) => void; isSearch
   return (
     <div className="flex items-center bg-[#E6D7C3] rounded-full overflow-hidden shadow">
       <svg
-        className={`w-5 h-5 ml-3 text-[#6D4C41] ${isSearching ? 'animate-spin' : ''}`}
+        className={`w-5 h-5 ml-3 text-[#6D4C41] ${
+          isSearching ? "animate-spin" : ""
+        }`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -155,14 +167,15 @@ export default function AlbumsPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selectedFilter, setSelectedFilter] = useState("All Albums");
   const [term, setTerm] = useState("");
-  
+
   // API state management
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<AlbumSearchResponse | null>(null);
+  const [searchResults, setSearchResults] =
+    useState<AlbumSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   // Featured album state - thêm state để quản lý featured album ngẫu nhiên
   const [featuredAlbum, setFeaturedAlbum] = useState<Album | null>(null);
 
@@ -174,15 +187,15 @@ export default function AlbumsPage() {
         setError(null);
         const popularAlbums = await getPopularAlbums(20); // Lấy 20 albums phổ biến
         setAlbums(popularAlbums);
-        
+
         // Set featured album ngẫu nhiên từ danh sách
         if (popularAlbums.length > 0) {
           const randomIndex = Math.floor(Math.random() * popularAlbums.length);
           setFeaturedAlbum(popularAlbums[randomIndex]);
         }
       } catch (err) {
-        console.error('Lỗi khi tải albums:', err);
-        setError('Không thể tải danh sách albums. Vui lòng thử lại sau.');
+        console.error("Lỗi khi tải albums:", err);
+        setError("Không thể tải danh sách albums. Vui lòng thử lại sau.");
       } finally {
         setLoading(false);
       }
@@ -216,7 +229,7 @@ export default function AlbumsPage() {
             setFeaturedAlbum(results.items[0]);
           }
         } catch (err) {
-          console.error('Lỗi khi tìm kiếm albums:', err);
+          console.error("Lỗi khi tìm kiếm albums:", err);
           setSearchResults({ total: 0, items: [] });
           setFeaturedAlbum(null);
         } finally {
@@ -236,8 +249,9 @@ export default function AlbumsPage() {
   }, [term, albums]);
 
   // Determine which albums to display
-  const displayAlbums = term.trim() && searchResults ? searchResults.items : albums;
-  
+  const displayAlbums =
+    term.trim() && searchResults ? searchResults.items : albums;
+
   const filteredAlbums = displayAlbums;
 
   return (
@@ -247,7 +261,11 @@ export default function AlbumsPage() {
         {/* TOP BAR */}
         <div className="sticky top-0 z-30 bg-[#D3B995] shadow-md px-8 py-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <SearchBar term={term} setTerm={setTerm} isSearching={isSearching} />
+            <SearchBar
+              term={term}
+              setTerm={setTerm}
+              isSearching={isSearching}
+            />
             <div className="flex flex-col md:flex-row md:items-center md:space-x-6 gap-3">
               <div className="flex space-x-3 order-2 md:order-1">
                 {navTabs.map((t) => (
@@ -336,7 +354,7 @@ export default function AlbumsPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#E6D7C3] via-[#C8A97E]/80 to-transparent" />
                 <div className="absolute inset-0 p-8 flex flex-col md:flex-row items-start md:items-center">
                   <div className="relative w-48 h-48 md:w-56 md:h-56 mb-4 md:mb-0 md:mr-8">
-                    <Image
+                    <CustomImage
                       src={featuredAlbum.coverPhoto}
                       alt={featuredAlbum.name}
                       fill
@@ -351,9 +369,13 @@ export default function AlbumsPage() {
                     <h2 className="text-4xl font-bold mb-1 max-w-xl leading-snug">
                       {featuredAlbum.name}
                     </h2>
-                    <p className="text-xl opacity-80 mb-4">{featuredAlbum.description}</p>
+                    <p className="text-xl opacity-80 mb-4">
+                      {featuredAlbum.description}
+                    </p>
                     <p className="mb-6">
-                      {new Date(featuredAlbum.releaseDate).getFullYear()} • {featuredAlbum.musics?.length || 0} tracks • {featuredAlbum.albumType || 'Album'}
+                      {new Date(featuredAlbum.releaseDate).getFullYear()} •{" "}
+                      {featuredAlbum.musics?.length || 0} tracks •{" "}
+                      {featuredAlbum.albumType || "Album"}
                     </p>
                     <div className="flex space-x-4">
                       <Link href={`/album/${featuredAlbum.id}`}>
@@ -383,7 +405,7 @@ export default function AlbumsPage() {
           {error && (
             <div className="text-center py-12 bg-red-50 border border-red-200 rounded-lg mb-6">
               <p className="text-red-600 mb-4">{error}</p>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="bg-[#C8A97E] hover:bg-[#A67C52] text-white px-6 py-2 rounded-full"
               >
@@ -401,35 +423,75 @@ export default function AlbumsPage() {
                     {isSearching ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#C8A97E]"></div>
-                        <p className="text-[#3A2A24] font-medium">Đang tìm kiếm albums...</p>
+                        <p className="text-[#3A2A24] font-medium">
+                          Đang tìm kiếm albums...
+                        </p>
                       </>
                     ) : searchResults ? (
                       <>
-                        <svg className="w-5 h-5 text-[#C8A97E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <svg
+                          className="w-5 h-5 text-[#C8A97E]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
                         </svg>
                         <p className="text-[#3A2A24] font-medium">
-                          Tìm thấy <span className="text-[#C8A97E] font-bold">{searchResults.total}</span> album cho 
-                          <span className="text-[#6D4C41] font-semibold ml-1">"{term}"</span>
+                          Tìm thấy{" "}
+                          <span className="text-[#C8A97E] font-bold">
+                            {searchResults.total}
+                          </span>{" "}
+                          album cho
+                          <span className="text-[#6D4C41] font-semibold ml-1">
+                            "{term}"
+                          </span>
                         </p>
                       </>
                     ) : (
                       <>
-                        <svg className="w-5 h-5 text-[#8D6E63]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        <svg
+                          className="w-5 h-5 text-[#8D6E63]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                          />
                         </svg>
-                        <p className="text-[#6D4C41]">Không tìm thấy album nào</p>
+                        <p className="text-[#6D4C41]">
+                          Không tìm thấy album nào
+                        </p>
                       </>
                     )}
                   </div>
-                  
+
                   {term && (
                     <button
                       onClick={() => setTerm("")}
                       className="flex items-center gap-1 text-[#6D4C41] hover:text-[#C8A97E] transition-colors text-sm"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                       Xóa
                     </button>
@@ -482,10 +544,12 @@ export default function AlbumsPage() {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🎵</div>
               <h3 className="text-xl font-semibold text-[#6D4C41] mb-2">
-                {term.trim() ? 'Không tìm thấy album phù hợp' : 'Chưa có albums nào'}
+                {term.trim()
+                  ? "Không tìm thấy album phù hợp"
+                  : "Chưa có albums nào"}
               </h3>
               <p className="text-[#8D6E63]">
-                {term.trim() ? 'Hãy thử từ khóa khác' : 'Vui lòng quay lại sau'}
+                {term.trim() ? "Hãy thử từ khóa khác" : "Vui lòng quay lại sau"}
               </p>
             </div>
           )}

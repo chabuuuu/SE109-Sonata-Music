@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent } from "react";
 import axios from "axios";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import { Music } from "lucide-react";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 
@@ -114,7 +114,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             <div className="mt-2 mb-3">
               {fileType === "cover" ? (
                 <div className="relative w-16 h-16">
-                  <Image
+                  <CustomImage
                     src={uploadedUrl}
                     alt="Cover art preview"
                     width={64}

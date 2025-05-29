@@ -1,7 +1,7 @@
 "use client";
 
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 
 const MusicPlayerBar = () => {
   const {
@@ -46,7 +46,7 @@ const MusicPlayerBar = () => {
         style={{ cursor: "pointer" }}
       >
         <div className="w-16 h-16 flex-shrink-0">
-          <Image
+          <CustomImage
             src={currentMusic.coverPhoto}
             alt={currentMusic.name}
             width={64}
