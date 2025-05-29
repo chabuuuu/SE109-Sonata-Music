@@ -1,194 +1,3 @@
-// "use client";
-
-// import React, {
-//   createContext,
-//   useContext,
-//   useState,
-//   useRef,
-//   useEffect,
-//   ReactNode,
-// } from "react";
-// import axios from "axios";
-// import { getAuthHeaders } from "@/services/authService";
-
-// export interface GlobalMusic {
-//   id: string;
-//   name: string;
-//   artist: string;
-//   coverPhoto: string;
-//   resourceLink: string;
-//   favoriteCount: number;
-//   lyrics?: string;
-//   isFavorite?: boolean; // THÊM MỚI: Trạng thái yêu thích
-// }
-
-// interface MusicPlayerState {
-//   playlist: GlobalMusic[]; // THÊM MỚI
-//   currentTrackIndex: number | null; // THÊM MỚI
-//   currentMusic: GlobalMusic | null;
-//   isPlaying: boolean;
-//   currentTime: number;
-//   duration: number;
-//   volume: number;
-//   audioLoading: boolean;
-//   audioError: string;
-//   isExpanded: boolean;
-//   playMusic: (trackIndex: number, playlist: GlobalMusic[]) => void; // THAY ĐỔI
-//   togglePlayPause: () => void;
-//   playNext: () => void; // THÊM MỚI
-//   playPrevious: () => void; // THÊM MỚI
-//   toggleFavorite: (songId: string) => void; // THÊM MỚI
-//   seek: (time: number) => void;
-//   changeVolume: (volume: number) => void;
-//   toggleExpandPlayer: () => void;
-// }
-
-// const MusicPlayerContext = createContext<MusicPlayerState | undefined>(
-//   undefined
-// );
-
-// export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
-//   // --- STATE MỚI CHO PLAYLIST ---
-//   const [playlist, setPlaylist] = useState<GlobalMusic[]>([]);
-//   const [currentTrackIndex, setCurrentTrackIndex] = useState<number | null>(
-//     null
-//   );
-
-//   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-//   const [currentTime, setCurrentTime] = useState(0);
-//   const [duration, setDuration] = useState(0);
-//   const [volume, setVolume] = useState(1);
-//   const [audioSrc, setAudioSrc] = useState<string | null>(null);
-//   const [audioLoading, setAudioLoading] = useState<boolean>(false);
-//   const [audioError, setAudioError] = useState<string>("");
-//   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-
-//   const audioRef = useRef<HTMLAudioElement>(null);
-
-//   const currentMusic =
-//     currentTrackIndex !== null ? playlist[currentTrackIndex] : null;
-
-//   useEffect(() => {
-//     if (currentMusic) {
-//       const fetchAudioStream = async () => {
-//         /* ... logic fetch audio giữ nguyên ... */
-//       };
-//       fetchAudioStream();
-//     } else {
-//       setIsPlaying(false);
-//       setAudioSrc(null);
-//     }
-//   }, [currentMusic]);
-
-//   useEffect(() => {
-//     const audio = audioRef.current;
-//     if (!audio) return;
-//     if (isPlaying && audio.src) {
-//       audio.play().catch((e) => console.error("Play error:", e));
-//     } else {
-//       audio.pause();
-//     }
-//   }, [isPlaying, audioSrc]);
-
-//   const handleTimeUpdate = () => {
-//     if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
-//   };
-//   const handleLoadedMetadata = () => {
-//     if (audioRef.current) setDuration(audioRef.current.duration);
-//   };
-
-//   // Tự động chuyển bài khi hết nhạc
-//   const handleEnded = () => {
-//     playNext();
-//   };
-
-//   // --- HÀM ĐIỀU KHIỂN MỚI ---
-//   const playMusic = (trackIndex: number, newPlaylist: GlobalMusic[]) => {
-//     setPlaylist(newPlaylist);
-//     setCurrentTrackIndex(trackIndex);
-//     setIsPlaying(true);
-//   };
-
-//   const playNext = () => {
-//     if (playlist.length === 0 || currentTrackIndex === null) return;
-//     const nextIndex = (currentTrackIndex + 1) % playlist.length;
-//     setCurrentTrackIndex(nextIndex);
-//   };
-
-//   const playPrevious = () => {
-//     if (playlist.length === 0 || currentTrackIndex === null) return;
-//     const prevIndex =
-//       (currentTrackIndex - 1 + playlist.length) % playlist.length;
-//     setCurrentTrackIndex(prevIndex);
-//   };
-
-//   const toggleFavorite = async (songId: string) => {
-//     // Logic giả lập: Gọi API để yêu thích và cập nhật lại state
-//     console.log(`Toggling favorite for song ID: ${songId}`);
-//     // await api.toggleFavorite(songId);
-//     setPlaylist((prevPlaylist) =>
-//       prevPlaylist.map((song) =>
-//         song.id === songId ? { ...song, isFavorite: !song.isFavorite } : song
-//       )
-//     );
-//   };
-
-//   const togglePlayPause = () => {
-//     if (audioRef.current && audioRef.current.src) setIsPlaying(!isPlaying);
-//   };
-//   const seek = (time: number) => {
-//     if (audioRef.current) audioRef.current.currentTime = time;
-//   };
-//   const changeVolume = (newVolume: number) => {
-//     if (audioRef.current) audioRef.current.volume = newVolume;
-//     setVolume(newVolume);
-//   };
-//   const toggleExpandPlayer = () => setIsExpanded(!isExpanded);
-
-//   const value = {
-//     playlist,
-//     currentTrackIndex,
-//     currentMusic,
-//     isPlaying,
-//     currentTime,
-//     duration,
-//     volume,
-//     audioLoading,
-//     audioError,
-//     isExpanded,
-//     playMusic,
-//     togglePlayPause,
-//     playNext,
-//     playPrevious,
-//     toggleFavorite,
-//     seek,
-//     changeVolume,
-//     toggleExpandPlayer,
-//   };
-
-//   return (
-//     <MusicPlayerContext.Provider value={value}>
-//       <audio
-//         ref={audioRef}
-//         src={audioSrc}
-//         onTimeUpdate={handleTimeUpdate}
-//         onLoadedMetadata={handleLoadedMetadata}
-//         onEnded={handleEnded}
-//         onError={() => setAudioError("Lỗi phát nhạc")}
-//         className="hidden"
-//       />
-//       {children}
-//     </MusicPlayerContext.Provider>
-//   );
-// };
-
-// export const useMusicPlayer = (): MusicPlayerState => {
-//   const context = useContext(MusicPlayerContext);
-//   if (context === undefined)
-//     throw new Error("useMusicPlayer must be used within a MusicPlayerProvider");
-//   return context;
-// };
-
 "use client";
 
 import React, {
@@ -201,6 +10,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import { getAuthHeaders } from "@/services/authService";
+import { addToFavorite, removeFromFavorite, checkIsFavorite, clearFavoriteStatusCache, favoriteEvents } from "@/services/favoriteService";
 
 // --- BƯỚC 1: ĐỊNH NGHĨA CÁC KIỂU DỮ LIỆU TỪ API ---
 
@@ -459,14 +269,70 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const toggleFavorite = async (songId: string) => {
-    // Logic giả lập: Gọi API để yêu thích và cập nhật lại state
-    console.log(`Toggling favorite for song ID: ${songId}`);
-    // await api.toggleFavorite(songId);
-    setPlaylist((prevPlaylist) =>
-      prevPlaylist.map((song) =>
-        song.id === songId ? { ...song, isFavorite: !song.isFavorite } : song
-      )
-    );
+    try {
+      const musicId = parseInt(songId);
+      if (isNaN(musicId)) {
+        console.error('Invalid music ID:', songId);
+        return;
+      }
+
+      // Tìm bài hát trong playlist hiện tại
+      const currentSong = playlist.find(song => song.id === songId);
+      if (!currentSong) {
+        console.error('Song not found in playlist:', songId);
+        return;
+      }
+
+      console.log(`🎵 Toggling favorite for song: ${currentSong.name} (ID: ${musicId})`);
+
+      // Kiểm tra trạng thái favorite hiện tại
+      const isFavorite = currentSong.isFavorite || false;
+
+      if (isFavorite) {
+        // Xóa khỏi favorite
+        await removeFromFavorite(musicId);
+        console.log('✅ Removed from favorites');
+        
+        // Emit global event
+        favoriteEvents.emit('favoriteStatusChanged', {
+          type: 'music',
+          id: musicId,
+          action: 'removed',
+          newStatus: false
+        });
+      } else {
+        // Thêm vào favorite
+        await addToFavorite(musicId);
+        console.log('✅ Added to favorites');
+        
+        // Emit global event
+        favoriteEvents.emit('favoriteStatusChanged', {
+          type: 'music',
+          id: musicId,
+          action: 'added',
+          newStatus: true
+        });
+      }
+
+      // Clear cache để force refresh status
+      clearFavoriteStatusCache(musicId);
+
+      // Cập nhật state local
+      setPlaylist((prevPlaylist) =>
+        prevPlaylist.map((song) =>
+          song.id === songId ? { ...song, isFavorite: !isFavorite } : song
+        )
+      );
+
+    } catch (error) {
+      console.error('❌ Error toggling favorite:', error);
+      // Clear cache trong trường hợp lỗi để force refresh
+      const musicId = parseInt(songId);
+      if (!isNaN(musicId)) {
+        clearFavoriteStatusCache(musicId);
+      }
+      // Có thể thêm toast notification ở đây nếu cần
+    }
   };
 
   const value = {
@@ -493,7 +359,7 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
     <MusicPlayerContext.Provider value={value}>
       <audio
         ref={audioRef}
-        src={audioSrc}
+        src={audioSrc || undefined}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}

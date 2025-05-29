@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from 'react-hot-toast';
 
 // BƯỚC 1: IMPORT HOOK TỪ CONTEXT
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
@@ -15,6 +16,13 @@ import {
   Artist as ApiArtist,
   ArtistSearchResponse 
 } from "@/services/artistService";
+
+import { 
+  followArtist, 
+  unfollowArtist, 
+  getMyFollowedArtists,
+  checkIsFollowingArtist 
+} from "@/services/favoriteService";
 
 // Giả sử bạn có một file định nghĩa type chung
 // Nếu không, bạn có thể định nghĩa nó ở đây để TypeScript không báo lỗi
@@ -160,6 +168,10 @@ export default function ClassicalMusicArtistsPage() {
   const [totalArtists, setTotalArtists] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchResults, setSearchResults] = useState<ArtistSearchResponse | null>(null);
+  
+  // Follow state management
+  const [followedArtists, setFollowedArtists] = useState<Set<number>>(new Set());
+  const [followLoading, setFollowLoading] = useState<Set<number>>(new Set());
 
   /* ────── Dropdown outside‑click helper ────── */
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -174,6 +186,21 @@ export default function ClassicalMusicArtistsPage() {
     }
     window.addEventListener("click", handleClickOutside);
     return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // Load followed artists on mount
+  useEffect(() => {
+    const loadFollowedArtists = async () => {
+      try {
+        const response = await getMyFollowedArtists(100, 1); // Load first 100 followed artists
+        const followedIds = new Set(response.data.items.map(item => item.artistId));
+        setFollowedArtists(followedIds);
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách nghệ sĩ đã follow:', error);
+      }
+    };
+
+    loadFollowedArtists();
   }, []);
 
   // Fetch all artists on component mount
@@ -344,6 +371,45 @@ export default function ClassicalMusicArtistsPage() {
       console.error('Lỗi khi phát nhạc của nghệ sĩ:', error);
     }
 
+  };
+
+  // Handle follow/unfollow artist
+  const handleFollowToggle = async (artistId: number, artistName: string) => {
+    // Prevent event bubbling
+    const isCurrentlyFollowing = followedArtists.has(artistId);
+    
+    // Add to loading set
+    setFollowLoading(prev => new Set(prev).add(artistId));
+    
+    try {
+      if (isCurrentlyFollowing) {
+        await unfollowArtist(artistId);
+        setFollowedArtists(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(artistId);
+          return newSet;
+        });
+        toast.success(`Đã hủy theo dõi ${artistName}`);
+      } else {
+        await followArtist(artistId);
+        setFollowedArtists(prev => new Set(prev).add(artistId));
+        toast.success(`Đã theo dõi ${artistName}`);
+      }
+    } catch (error) {
+      console.error('Lỗi khi follow/unfollow:', error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Không thể thực hiện thao tác này');
+      }
+    } finally {
+      // Remove from loading set
+      setFollowLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(artistId);
+        return newSet;
+      });
+    }
   };
 
   return (
@@ -716,6 +782,46 @@ export default function ClassicalMusicArtistsPage() {
                       <p className="text-xs text-[#8D6E63] text-center mt-1">
                         {artist.nationality || 'Unknown'}
                       </p>
+                      
+                      {/* Follow Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleFollowToggle(artist.id, artist.name);
+                        }}
+                        disabled={followLoading.has(artist.id)}
+                        className={`mt-3 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          followedArtists.has(artist.id)
+                            ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
+                            : 'bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white'
+                        }`}
+                      >
+                        {followLoading.has(artist.id) ? (
+                          <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-3 h-3"
+                            viewBox="0 0 20 20"
+                            fill={followedArtists.has(artist.id) ? "currentColor" : "none"}
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                        {followLoading.has(artist.id) 
+                          ? 'Đang xử lý...' 
+                          : followedArtists.has(artist.id) 
+                            ? 'Đã theo dõi' 
+                            : 'Theo dõi'
+                        }
+                      </button>
                     </div>
                   </Link>
                 ))}
@@ -751,27 +857,67 @@ export default function ClassicalMusicArtistsPage() {
                           {artist.nationality || 'Unknown'} • {artist.viewCount || 0} lượt xem
                         </p>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handlePlayArtist(artist);
-                        }}
-                        className="p-2 rounded-full bg-[#3A2A24] text-[#F8F0E3] hover:bg-[#6D4C41] transition-colors"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2">
+                        {/* Follow Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFollowToggle(artist.id, artist.name);
+                          }}
+                          disabled={followLoading.has(artist.id)}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            followedArtists.has(artist.id)
+                              ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
+                              : 'bg-white border border-[#C8A97E] text-[#C8A97E] hover:bg-[#C8A97E] hover:text-white'
+                          }`}
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
+                          {followLoading.has(artist.id) ? (
+                            <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-3 h-3"
+                              viewBox="0 0 20 20"
+                              fill={followedArtists.has(artist.id) ? "currentColor" : "none"}
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          )}
+                          {followedArtists.has(artist.id) ? 'Đã theo dõi' : 'Theo dõi'}
+                        </button>
+                        
+                        {/* Play Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handlePlayArtist(artist);
+                          }}
+                          className="p-2 rounded-full bg-[#3A2A24] text-[#F8F0E3] hover:bg-[#6D4C41] transition-colors"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 8l4 2-4 2V8z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </Link>
                 ))}

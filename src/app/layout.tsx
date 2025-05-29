@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { MusicPlayerProvider } from "@/context/MusicPlayerContext";
 import PersistentPlayerLayout from "@/components/PersistentPlayerLayout";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,34 @@ export default function RootLayout({
             <PersistentPlayerLayout />
           </MusicPlayerProvider>
         </AuthProvider>
+
+        {/* Toast notifications */}
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#F8F0E3',
+              color: '#3A2A24',
+              border: '1px solid #C8A97E',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontFamily: "'Playfair Display', serif",
+            },
+            success: {
+              iconTheme: {
+                primary: '#C8A97E',
+                secondary: '#F8F0E3',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#d32f2f',
+                secondary: '#F8F0E3',
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );
