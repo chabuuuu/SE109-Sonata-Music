@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { ReactNode, useEffect } from "react";
 import styles from "./adminNavbar.module.css";
+import { Gift } from "lucide-react";
 
 // if somebody uses this it needs to pass something in it
 interface ContributorLayoutProps {
@@ -104,13 +105,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                   }`}
                   onClick={() => router.push("/contributor-exchange-premium")}
                 >
-                  <CustomImage
-                    src="/layout_imgs/library_logo.png"
-                    alt="Library logo"
-                    height={20}
-                    width={20}
-                    className="object-contain"
-                  />
+                  <Gift />
                   <span className="text-base"> Exchange Premium</span>
                 </li>
               </ul>
