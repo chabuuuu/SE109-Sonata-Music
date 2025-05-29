@@ -9,8 +9,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "api.sonata.io.vn",
+      },
+      {
+        protocol: "https",
+        hostname: "sonata.io.vn",
       },
     ],
   },
