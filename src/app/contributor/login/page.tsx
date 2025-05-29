@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
 
 export default function LoginPage() {
@@ -39,7 +39,7 @@ export default function LoginPage() {
       const token = response.data.data.accessToken;
       if (token) {
         localStorage.setItem(CONTRIBUTOR_TOKEN, token);
-        
+
         router.push("/contributor-view-all");
       } else {
         setError("Không nhận được token từ server.");
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
       <div className="hidden md:block">
         <div className="relative h-full w-full">
-          <Image
+          <CustomImage
             src="/violin-sheet.jpeg"
             alt="Violin with sheet music"
             fill
@@ -75,7 +75,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md p-8">
           <div className="flex justify-center mb-6">
-            <Image
+            <CustomImage
               src="/sonata-logo.png"
               alt="Sonata Logo"
               height={80}
@@ -88,7 +88,9 @@ export default function LoginPage() {
             <h1 className="text-3xl text-black/60 font-bold mb-2 ">
               Contributor Login
             </h1>
-            <p className="text-black/60 text-sm">Thank you for your hardwork.</p>
+            <p className="text-black/60 text-sm">
+              Thank you for your hardwork.
+            </p>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -149,7 +151,10 @@ export default function LoginPage() {
               </label>
             </div>
 
-            <a href="../user-login" className="text-black hover:text-yello-300" > A listener of Sonata? Click here.</a>
+            <a href="../user-login" className="text-black hover:text-yello-300">
+              {" "}
+              A listener of Sonata? Click here.
+            </a>
 
             <button
               type="submit"

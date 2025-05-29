@@ -8,7 +8,7 @@ import {
   activateEmail,
 } from "@/services/contributorAuthServices";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 
 export default function ContributorRegisterPage() {
   const router = useRouter();
@@ -162,7 +162,7 @@ export default function ContributorRegisterPage() {
       {/* Left: Image */}
       <div className="hidden md:block">
         <div className="relative h-full w-full">
-          <Image
+          <CustomImage
             src="/violin-sheet.jpeg"
             alt="Violin with sheet music"
             fill
@@ -175,7 +175,7 @@ export default function ContributorRegisterPage() {
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md p-8">
           <div className="flex justify-center mb-6">
-            <Image
+            <CustomImage
               src="/sonata-logo.png"
               alt="Sonata Logo"
               height={80}
@@ -243,7 +243,9 @@ export default function ContributorRegisterPage() {
               </form>
 
               <div className="mt-8 text-center">
-                <p className="text-sm text-gray-700">Didn&apos;t receive the OTP?</p>
+                <p className="text-sm text-gray-700">
+                  Didn&apos;t receive the OTP?
+                </p>
                 <button
                   className="inline-block mt-2 px-6 py-2 border border-gray-400 text-gray-800 rounded-full text-sm font-semibold hover:bg-gray-100"
                   onClick={() => {

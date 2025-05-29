@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import SearchBar from "@/components/SearchBar";
@@ -143,7 +143,7 @@ const AlbumDetailPage: React.FC = () => {
       {/* Thông tin bài hát */}
       <div className="col-span-7 flex items-center space-x-4">
         <div className="w-12 h-12 relative flex-shrink-0 rounded-lg overflow-hidden border-2 border-[#D3B995]">
-          <Image
+          <CustomImage
             src={track.coverPhoto}
             alt={track.name}
             fill
@@ -246,7 +246,7 @@ const AlbumDetailPage: React.FC = () => {
                 <div className="flex flex-col lg:flex-row">
                   {/* Album Cover */}
                   <div className="lg:w-80 lg:h-80 w-full h-64 relative flex-shrink-0">
-                    <Image
+                    <CustomImage
                       src={album.coverPhoto}
                       alt={album.name}
                       fill

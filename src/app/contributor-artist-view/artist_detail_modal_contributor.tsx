@@ -10,7 +10,7 @@ import {
   School,
   BookOpen,
 } from "lucide-react";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import axios from "axios";
 import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
 
@@ -193,7 +193,7 @@ const ContributorArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
               <div className="md:w-1/3 p-4">
                 <div className=" aspect-square overflow-hidden rounded-lg shadow-md mb-4">
                   <div className="relative w-full h-full">
-                    <Image
+                    <CustomImage
                       src={artist.picture}
                       alt={artist.name}
                       fill
@@ -291,7 +291,7 @@ const ContributorArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
                           >
                             <div className="w-10 h-10 rounded overflow-hidden mr-2">
                               <div className=" w-full h-full relative">
-                                <Image
+                                <CustomImage
                                   src={orchestra.picture}
                                   alt={orchestra.name}
                                   fill
@@ -323,7 +323,7 @@ const ContributorArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
                           >
                             <div className="w-10 h-10 rounded overflow-hidden mr-2">
                               <div className=" w-full h-full relative">
-                                <Image
+                                <CustomImage
                                   src={genre.picture}
                                   alt={genre.name}
                                   fill
@@ -355,7 +355,7 @@ const ContributorArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
                           >
                             <div className="w-10 h-10 rounded overflow-hidden mr-2">
                               <div className="relative w-full h-full">
-                                <Image
+                                <CustomImage
                                   src={music.coverPhoto}
                                   alt={music.name}
                                   fill
@@ -386,7 +386,7 @@ const ContributorArtistDetailModal = ({ onClose, id }: ArtistDetailProp) => {
                             >
                               <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
                                 <div className="w-full h-full relative">
-                                  <Image
+                                  <CustomImage
                                     src={studentRel.student.picture}
                                     alt={studentRel.student.name}
                                     fill

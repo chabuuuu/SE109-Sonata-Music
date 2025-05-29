@@ -1,5 +1,5 @@
 import React from "react";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 
 const NavbarAdmin = () => {
   return (
@@ -8,7 +8,7 @@ const NavbarAdmin = () => {
       <div className="h-full w-64 bg-gradient-to-b from-[#39639D] to-black flex flex-col items-center justify-evenly">
         {/* Logo */}
         <div className="p-4">
-          <Image
+          <CustomImage
             src="/layout_imgs/sonata_logo.png"
             alt="logo of the website"
             height={40} // Set the height as needed (adjust this value)
@@ -21,7 +21,7 @@ const NavbarAdmin = () => {
         <nav className="flex-1 pt-2">
           <ul>
             <li className="px-6 py-3 flex items-center gap-5 text-gray-300 hover:bg-slate-500 rounded-sm">
-              <Image
+              <CustomImage
                 src="/layout_imgs/dashboard-icon.svg"
                 alt="home logo"
                 height={40} // Set the height as needed
@@ -31,7 +31,7 @@ const NavbarAdmin = () => {
               Dashboard
             </li>
             <li className="px-6 py-3 flex items-center gap-5 text-gray-300 hover:bg-slate-500 rounded-sm">
-              <Image
+              <CustomImage
                 src="/layout_imgs/unchosen-admin-icon.svg"
                 alt="Artists Management"
                 height={25} // Set the height to 25px
@@ -41,7 +41,7 @@ const NavbarAdmin = () => {
               Artists Management
             </li>
             <li className="px-6 py-3 flex items-center gap-5 text-gray-300 hover:bg-slate-500 rounded-sm">
-              <Image
+              <CustomImage
                 src="/layout_imgs/unchosen-admin-icon.svg"
                 alt="Album Management"
                 height={25} // Set the height to 25px
@@ -51,7 +51,7 @@ const NavbarAdmin = () => {
               Album Management
             </li>
             <li className="px-6 py-3 flex items-center gap-5 text-gray-300 hover:bg-slate-500 rounded-sm">
-              <Image
+              <CustomImage
                 src="/layout_imgs/unchosen-admin-icon.svg"
                 alt="Categories Management"
                 height={25} // Set the height to 25px
@@ -61,7 +61,7 @@ const NavbarAdmin = () => {
               Categories Management
             </li>
             <li className="px-6 py-3 flex items-center gap-5 text-gray-300 hover:bg-slate-500 rounded-sm">
-              <Image
+              <CustomImage
                 src="/layout_imgs/chosen-admin-icon.svg"
                 alt="Song Requests"
                 height={25} // Set the height to 25px
