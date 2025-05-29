@@ -152,20 +152,19 @@ export default function ExchangePremiumPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <SearchBar />
         <main className="flex-1 overflow-y-auto">
-          <div className="min-h-full bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+          <div className="min-h-full bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
             {/* Main Content */}
             <div className="max-w-2xl mx-auto px-6 py-12">
-              <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+              <div className="bg-white backdrop-blur-sm rounded-3xl border border-amber-200 shadow-2xl overflow-hidden">
                 {/* Card Header */}
-
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-center">
-                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="bg-gradient-to-r from-amber-700/60 to-orange-700/90 p-8 text-center">
+                  <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Gift className="w-8 h-8 text-white" />
                   </div>
                   <h2 className="text-2xl font-bold text-white mb-2">
                     Exchange Premium
                   </h2>
-                  <p className="text-blue-100">
+                  <p className="text-amber-100">
                     Convert your points to premium access
                   </p>
                 </div>
@@ -173,17 +172,17 @@ export default function ExchangePremiumPage() {
                 {/* Form Content */}
                 <div className="p-8">
                   {/* Points Display */}
-                  <div className="bg-blue-900/30 rounded-2xl p-6 mb-8 border border-blue-700/30">
+                  <div className="bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl p-6 mb-8 border border-amber-200">
                     <div className="text-center">
-                      <p className="text-blue-200 text-sm mb-2">
+                      <p className="text-amber-700 text-sm mb-2">
                         Points to Exchange
                       </p>
-                      <div className="text-4xl font-bold text-white mb-2">
+                      <div className="text-4xl font-bold text-amber-800 mb-2">
                         <p>10</p>
                       </div>
-                      <p className="text-blue-300 text-sm">Premium Points</p>
-                      <p className="text-blue-200 text-sm mb-2 mt-4">For</p>
-                      <div className="text-4xl font-bold text-yellow-300 mb-2">
+                      <p className="text-amber-600 text-sm">Premium Points</p>
+                      <p className="text-amber-700 text-sm mb-2 mt-4">For</p>
+                      <div className="text-4xl font-bold text-orange-600 mb-2">
                         <p>15 days</p>
                       </div>
                     </div>
@@ -192,25 +191,25 @@ export default function ExchangePremiumPage() {
                   {/* User Status Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     {/* Current Points Card */}
-                    <div className="bg-blue-900/20 rounded-2xl border border-blue-700/30 p-6">
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-orange-400" />
+                          <User className="w-5 h-5 text-orange-600" />
                         </div>
                         <div>
-                          <p className="text-white font-medium">Your Points</p>
-                          <p className="text-blue-200 text-sm">
+                          <p className="text-amber-800 font-medium">Your Points</p>
+                          <p className="text-amber-600 text-sm">
                             Available for exchange
                           </p>
                         </div>
                       </div>
-                      <div className="text-3xl font-bold text-orange-400">
+                      <div className="text-3xl font-bold text-orange-600">
                         {userPoints}
                       </div>
                     </div>
 
                     {/* Premium Status Card */}
-                    <div className="bg-blue-900/20 rounded-2xl border border-blue-700/30 p-6">
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6">
                       <div className="flex items-center gap-3 mb-3">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -222,23 +221,23 @@ export default function ExchangePremiumPage() {
                           <Calendar
                             className={`w-5 h-5 ${
                               isPremiumActive()
-                                ? "text-green-400"
-                                : "text-gray-400"
+                                ? "text-green-600"
+                                : "text-gray-500"
                             }`}
                           />
                         </div>
                         <div>
-                          <p className="text-white font-medium">
+                          <p className="text-amber-800 font-medium">
                             Premium Status
                           </p>
-                          <p className="text-blue-200 text-sm">
+                          <p className="text-amber-600 text-sm">
                             {isPremiumActive() ? "Active" : "Inactive"}
                           </p>
                         </div>
                       </div>
                       <div
                         className={`text-sm font-medium ${
-                          isPremiumActive() ? "text-green-400" : "text-gray-400"
+                          isPremiumActive() ? "text-green-600" : "text-gray-500"
                         }`}
                       >
                         {formatExpiryDate(premiumExpiredAt)}
@@ -247,13 +246,13 @@ export default function ExchangePremiumPage() {
                   </div>
 
                   {/* Points Exchange Controls */}
-                  <div className="bg-blue-900/20 rounded-2xl border border-blue-700/30 p-6 mb-8">
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6 mb-8">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-white font-medium mb-1">
+                        <h3 className="text-amber-800 font-medium mb-1">
                           Points to Exchange
                         </h3>
-                        <p className="text-blue-200 text-sm">
+                        <p className="text-amber-600 text-sm">
                           Select amount to exchange
                         </p>
                       </div>
@@ -261,31 +260,31 @@ export default function ExchangePremiumPage() {
                         <button
                           onClick={handleDecrement}
                           disabled={pointsToExchange <= 0 || isLoading}
-                          className="w-10 h-10 bg-red-500/20 hover:bg-red-500/30 disabled:bg-gray-500/20 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-200 border border-red-500/30 disabled:border-gray-500/30"
+                          className="w-10 h-10 bg-red-100 hover:bg-red-200 disabled:bg-gray-100 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-200 border border-red-200 disabled:border-gray-200"
                         >
                           <Minus
                             className={`w-5 h-5 ${
                               pointsToExchange <= 0
                                 ? "text-gray-400"
-                                : "text-red-400"
+                                : "text-red-600"
                             }`}
                           />
                         </button>
 
-                        <div className="text-2xl font-bold text-white min-w-[60px] text-center">
+                        <div className="text-2xl font-bold text-amber-800 min-w-[60px] text-center">
                           {pointsToExchange}
                         </div>
 
                         <button
                           onClick={handleIncrement}
                           disabled={pointsToExchange >= userPoints || isLoading}
-                          className="w-10 h-10 bg-green-500/20 hover:bg-green-500/30 disabled:bg-gray-500/20 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-200 border border-green-500/30 disabled:border-gray-500/30"
+                          className="w-10 h-10 bg-green-100 hover:bg-green-200 disabled:bg-gray-100 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-200 border border-green-200 disabled:border-gray-200"
                         >
                           <Plus
                             className={`w-5 h-5 ${
                               pointsToExchange >= userPoints
                                 ? "text-gray-400"
-                                : "text-green-400"
+                                : "text-green-600"
                             }`}
                           />
                         </button>
@@ -293,19 +292,19 @@ export default function ExchangePremiumPage() {
                     </div>
 
                     {/* Exchange Rate Display */}
-                    <div className="mt-4 pt-4 border-t border-blue-700/30">
+                    <div className="mt-4 pt-4 border-t border-amber-200">
                       <div className="flex justify-between text-sm">
-                        <span className="text-blue-200">Exchange Rate:</span>
-                        <span className="text-blue-200">
+                        <span className="text-amber-600">Exchange Rate:</span>
+                        <span className="text-amber-600">
                           10 points = 15 days premium
                         </span>
                       </div>
                       {pointsToExchange > 0 && (
                         <div className="flex justify-between text-sm mt-1">
-                          <span className="text-white font-medium">
+                          <span className="text-amber-800 font-medium">
                             You'll get:
                           </span>
-                          <span className="text-yellow-300 font-medium">
+                          <span className="text-orange-600 font-medium">
                             {Math.floor(pointsToExchange / 10) * 15} days
                             premium
                           </span>
@@ -322,7 +321,7 @@ export default function ExchangePremiumPage() {
                       pointsToExchange <= 0 ||
                       userPoints < pointsToExchange
                     }
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg"
+                    className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg"
                   >
                     {isLoading ? (
                       <>
@@ -339,13 +338,13 @@ export default function ExchangePremiumPage() {
 
                   {/* Insufficient Points Warning */}
                   {userPoints < pointsToExchange && pointsToExchange > 0 && (
-                    <div className="mt-4 bg-yellow-900/30 border border-yellow-700/50 rounded-xl p-4 flex items-center gap-3">
-                      <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+                    <div className="mt-4 bg-amber-100 border border-amber-300 rounded-xl p-4 flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
                       <div>
-                        <p className="text-yellow-300 font-medium">
+                        <p className="text-amber-800 font-medium">
                           Insufficient Points
                         </p>
-                        <p className="text-yellow-400 text-sm">
+                        <p className="text-amber-700 text-sm">
                           You need {pointsToExchange - userPoints} more points
                           to exchange
                         </p>
@@ -355,13 +354,13 @@ export default function ExchangePremiumPage() {
 
                   {/* Status Messages */}
                   {exchangeStatus === "success" && (
-                    <div className="mt-6 bg-green-900/30 border border-green-700/50 rounded-xl p-4 flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <div className="mt-6 bg-green-100 border border-green-300 rounded-xl p-4 flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
                       <div>
-                        <p className="text-green-300 font-medium">
+                        <p className="text-green-800 font-medium">
                           Exchange Successful!
                         </p>
-                        <p className="text-green-400 text-sm">
+                        <p className="text-green-700 text-sm">
                           Premium access has been granted.
                         </p>
                       </div>
@@ -369,13 +368,13 @@ export default function ExchangePremiumPage() {
                   )}
 
                   {exchangeStatus === "error" && (
-                    <div className="mt-6 bg-red-900/30 border border-red-700/50 rounded-xl p-4 flex items-center gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                    <div className="mt-6 bg-red-100 border border-red-300 rounded-xl p-4 flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
                       <div>
-                        <p className="text-red-300 font-medium">
+                        <p className="text-red-800 font-medium">
                           Exchange Failed
                         </p>
-                        <p className="text-red-400 text-sm">
+                        <p className="text-red-700 text-sm">
                           Please enter a valid username
                         </p>
                       </div>
@@ -385,7 +384,7 @@ export default function ExchangePremiumPage() {
               </div>
 
               {/* Footer Info */}
-              <div className="text-center mt-8 text-blue-300 text-sm">
+              <div className="text-center mt-8 text-amber-700 text-sm">
                 <p>
                   Premium access includes ad-free listening and exclusive
                   content
