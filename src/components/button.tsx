@@ -16,7 +16,7 @@ const Button = ({data}:{data:string}) => {
       if (admin) {
         router.push('/admin/login');
       } else if(contributor) {
-        router.push('contributor/login');
+        router.push('/contributor/login');
       }
     }
   }
