@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import CustomImage from "@/components/CustomImage";
@@ -1300,7 +1300,7 @@ const InstrumentSpotlightSection: React.FC<{
             Instrument Spotlight
           </h2>
           <Link
-            href="#"
+            href="/instruments"
             className="text-sm text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
           >
             Show all &rsaquo;
@@ -1347,7 +1347,7 @@ const InstrumentSpotlightSection: React.FC<{
             Instrument Spotlight
           </h2>
           <Link
-            href="#"
+            href="/instruments"
             className="text-sm text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
           >
             Show all &rsaquo;
@@ -1376,7 +1376,7 @@ const InstrumentSpotlightSection: React.FC<{
           Instrument Spotlight
         </h2>
         <Link
-          href="#"
+          href="/instruments"
           className="text-sm text-[#6D4C41] hover:text-[#3A2A24] transition-colors"
         >
           Show all &rsaquo;
@@ -1588,7 +1588,7 @@ const EraStyleSection: React.FC<{
 }> = ({ eraStyles, loading }) => {
   if (loading) {
     return (
-      <ContentSection title="Eras and Styles" showAllLink="#">
+      <ContentSection title="Eras and Styles" showAllLink="/eras">
         {[...Array(5)].map((_, index) => (
           <div key={`era-loading-${index}`} className="animate-pulse">
             <div className="bg-gray-200 rounded-lg h-48 mb-2"></div>
@@ -1601,7 +1601,7 @@ const EraStyleSection: React.FC<{
   }
 
   return (
-    <ContentSection title="Eras and Styles" showAllLink="/user-categories">
+    <ContentSection title="Eras and Styles" showAllLink="/eras">
       {eraStyles.map((eraStyle) => (
         <Link
           key={eraStyle.period.id}
@@ -1852,46 +1852,34 @@ const HomePage: React.FC = () => {
   }, []);
 
   // Fetch recommended songs
-  useEffect(() => {
-    const fetchRecommendedSongs = async () => {
-      try {
-        setLoading(true);
-        setApiError(null);
+  const fetchRecommendedSongs = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        const songs = await getRecommendedSongs(5);
-        setRecommendedSongs(songs);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách bài hát đề xuất:", error);
-        setApiError("Không thể tải danh sách bài hát đề xuất");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRecommendedSongs();
+      const songs = await getRecommendedSongs(5); // Chỉ lấy 5 bài hát
+      setRecommendedSongs(songs);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách bài hát gợi ý:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Fetch popular albums theo API mới
-  const fetchPopularAlbums = React.useCallback(async () => {
+  useEffect(() => {
+    fetchRecommendedSongs();
+  }, [fetchRecommendedSongs]);
+
+  // Fetch popular albums
+  const fetchPopularAlbums = useCallback(async () => {
     try {
       setAlbumsLoading(true);
       setApiError(null);
 
-      const albums = await getPopularAlbums(8); // Lấy 8 album phổ biến nhất
-
-      if (albums && albums.length > 0) {
-        console.log("Đã tải thành công:", albums.length, "album");
-        setPopularAlbums(albums);
-      } else {
-        console.warn("Không có dữ liệu album từ API popular-albums");
-        setPopularAlbums([]);
-      }
+      const albums = await getPopularAlbums(5); // Chỉ lấy 5 albums
+      setPopularAlbums(albums);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách album phổ biến:", error);
-      setApiError(
-        "Không thể tải danh sách album phổ biến. Vui lòng thử lại sau."
-      );
-      setPopularAlbums([]);
+      setApiError("Không thể tải danh sách album. Vui lòng thử lại sau.");
     } finally {
       setAlbumsLoading(false);
     }
@@ -1926,8 +1914,8 @@ const HomePage: React.FC = () => {
         setArtistsLoading(true);
         setApiError(null);
 
-        // Sử dụng getAllArtists để lấy tất cả nghệ sĩ thay vì chỉ top 5
-        const artistsResponse = await getAllArtists(1, 20); // Lấy 20 nghệ sĩ đầu tiên
+        // Chỉ lấy 5 nghệ sĩ đầu tiên
+        const artistsResponse = await getAllArtists(1, 5);
         console.log("🎭 All Artists data from API:", artistsResponse);
 
         if (artistsResponse.success && artistsResponse.data.items.length > 0) {
@@ -2057,7 +2045,7 @@ const HomePage: React.FC = () => {
         {/* Sections */}
         <div>
           {/* Recommended Songs */}
-          <ContentSection title="Recommended Songs" showAllLink="#">
+          <ContentSection title="Recommended Songs" showAllLink="/recommended-songs">
             {loading
               ? // Loading state
                 Array(5)
@@ -2073,7 +2061,7 @@ const HomePage: React.FC = () => {
                     </div>
                   ))
               : recommendedSongs.length > 0
-              ? recommendedSongs.map((song) => (
+              ? recommendedSongs.slice(0, 5).map((song) => (
                   <PlaylistCard
                     key={song.id}
                     title={song.name}
@@ -2084,7 +2072,7 @@ const HomePage: React.FC = () => {
                   />
                 ))
               : // Fallback to default playlists if API fails
-                playlistData.map((p) => <PlaylistCard key={p.id} {...p} />)}
+                playlistData.slice(0, 5).map((p) => <PlaylistCard key={p.id} {...p} />)}
           </ContentSection>
 
           {/* Popular Albums */}
@@ -2104,7 +2092,7 @@ const HomePage: React.FC = () => {
                   </div>
                 ))
             ) : popularAlbums.length > 0 ? (
-              popularAlbums.map((album) => (
+              popularAlbums.slice(0, 5).map((album) => (
                 <AlbumCard key={album.id} album={album} />
               ))
             ) : (
@@ -2139,7 +2127,7 @@ const HomePage: React.FC = () => {
           </ContentSection>
 
           {/* Timeless Pieces */}
-          <ContentSection title="Timeless Pieces" showAllLink="#">
+          <ContentSection title="Timeless Pieces" showAllLink="/timeless-pieces">
             {timelessLoading ? (
               // Loading state
               Array(5)
@@ -2155,7 +2143,7 @@ const HomePage: React.FC = () => {
                   </div>
                 ))
             ) : timelessPieces.length > 0 ? (
-              timelessPieces.map((song) => (
+              timelessPieces.slice(0, 5).map((song) => (
                 <PlaylistCard
                   key={song.id}
                   title={song.name}
@@ -2191,7 +2179,7 @@ const HomePage: React.FC = () => {
                   </div>
                 ))
             ) : topArtists.length > 0 ? (
-              topArtists.map((artist) => (
+              topArtists.slice(0, 5).map((artist) => (
                 <ArtistCard key={artist.id} artist={artist} />
               ))
             ) : (
@@ -2219,8 +2207,8 @@ const HomePage: React.FC = () => {
                     try {
                       setArtistsLoading(true);
                       setApiError(null);
-                      // Sử dụng getAllArtists thay vì getTopArtists
-                      const artistsResponse = await getAllArtists(1, 20);
+                      // Chỉ lấy 5 nghệ sĩ
+                      const artistsResponse = await getAllArtists(1, 5);
                       if (
                         artistsResponse.success &&
                         artistsResponse.data.items.length > 0
