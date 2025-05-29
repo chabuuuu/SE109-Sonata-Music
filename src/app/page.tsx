@@ -903,9 +903,6 @@ const ArtistCard: React.FC<{
                   : "New artist"
                 : "No followers info"}
             </span>
-            <div className="flex space-x-2">
-              <FavoriteButton id={artist.id} type="artist" />
-            </div>
           </div>
         </div>
       </article>

@@ -7,6 +7,11 @@ import { useParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { getAuthHeaders, isAuthenticated } from "@/services/authService";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
+import { 
+  getUnansweredQuizzes, 
+  answerQuiz, 
+  type QuizQuestion 
+} from "@/services/quizService";
 
 // Interfaces
 interface Genre {
@@ -271,6 +276,68 @@ const ErrorDisplay = ({ error }: { error: string }) => (
   </div>
 );
 
+// Component thông báo đẹp hơn thay vì alert
+const NotificationModal = ({ 
+  isOpen, 
+  message, 
+  type = "info", 
+  onClose 
+}: { 
+  isOpen: boolean; 
+  message: string; 
+  type?: "info" | "success" | "error"; 
+  onClose: () => void; 
+}) => {
+  if (!isOpen) return null;
+
+  const iconMap = {
+    info: (
+      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    success: (
+      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    error: (
+      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  };
+
+  const colorMap = {
+    info: "from-blue-50 to-blue-100 border-blue-200",
+    success: "from-green-50 to-green-100 border-green-200", 
+    error: "from-red-50 to-red-100 border-red-200",
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <Card className={`max-w-md w-full p-6 bg-gradient-to-br ${colorMap[type]} border`} glass>
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            {iconMap[type]}
+          </div>
+          <div className="flex-1">
+            <p className="text-gray-800 text-lg leading-relaxed">{message}</p>
+          </div>
+        </div>
+        <div className="mt-6 text-center">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-[#C8A97E] hover:bg-[#A67C52] text-white rounded-full font-semibold transition-all duration-300 transform hover:scale-105"
+          >
+            Đóng
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
 // Revolutionary Hero section với advanced glassmorphism
 const Hero = ({
   music,
@@ -281,6 +348,7 @@ const Hero = ({
   showLyrics,
   onQuiz,
   hasQuiz,
+  isLoadingQuizzes,
 }: any) => {
   const isAuth = isAuthenticated();
 
@@ -293,7 +361,6 @@ const Hero = ({
           alt={music.name}
           fill
           className="object-cover"
-          priority
         />
       </div>
 
@@ -505,25 +572,53 @@ const Hero = ({
               </span>
             </button>
 
-            {hasQuiz && (
+            {/* Quiz button - chỉ hiển thị khi đã đăng nhập */}
+            {isAuth && (
               <button
                 onClick={onQuiz}
-                className="group flex items-center gap-3 px-8 py-4 bg-white/20 backdrop-blur-xl border-2 border-white/30 text-white rounded-full hover:bg-white/30 hover:border-white/50 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl"
+                disabled={isLoadingQuizzes}
+                className={`group flex items-center gap-3 px-8 py-4 bg-white/20 backdrop-blur-xl border-2 border-white/30 text-white rounded-full hover:bg-white/30 hover:border-white/50 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl ${
+                  isLoadingQuizzes ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               >
-                <svg
-                  className="w-6 h-6 transition-transform group-hover:scale-110"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span className="text-lg">Trắc nghiệm</span>
+                {isLoadingQuizzes ? (
+                  <svg
+                    className="w-6 h-6 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-6 h-6 transition-transform group-hover:scale-110"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                )}
+                <span className="text-lg">
+                  {isLoadingQuizzes ? "Đang tải..." : "Trắc nghiệm"}
+                </span>
               </button>
             )}
           </div>
@@ -589,16 +684,21 @@ const LyricsDisplay = ({ lyrics }: { lyrics: string }) => (
   </Card>
 );
 
-// Enhanced Quiz component
+// Enhanced Quiz component với API tích hợp
 const QuizDisplay = ({
   quiz,
   onClose,
+  onAnswerSubmitted,
 }: {
-  quiz: Quiz;
+  quiz: QuizQuestion;
   onClose: () => void;
+  onAnswerSubmitted?: () => void;
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [result, setResult] = useState<{ result: boolean; message: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const answers = [
     { key: "A", value: quiz.answerA },
@@ -606,6 +706,29 @@ const QuizDisplay = ({
     { key: "C", value: quiz.answerC },
     { key: "D", value: quiz.answerD },
   ];
+
+  const handleSubmitAnswer = async () => {
+    if (!selectedAnswer || isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      const answerResult = await answerQuiz(quiz.id, selectedAnswer as "A" | "B" | "C" | "D");
+      setResult(answerResult);
+      setShowResult(true);
+      
+      // Gọi callback nếu có để cập nhật danh sách quiz
+      if (onAnswerSubmitted) {
+        onAnswerSubmitted();
+      }
+    } catch (err: any) {
+      setError(err.message || "Đã xảy ra lỗi khi submit câu trả lời");
+      console.error("Error submitting quiz answer:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Card className="p-8" glass hover>
@@ -666,13 +789,13 @@ const QuizDisplay = ({
           {answers.map((answer, index) => (
             <button
               key={answer.key}
-              onClick={() => !showResult && setSelectedAnswer(answer.key)}
+              onClick={() => !showResult && !isSubmitting && setSelectedAnswer(answer.key)}
               className={`p-4 text-left rounded-xl transition-all duration-300 border-2 ${
                 selectedAnswer === answer.key
                   ? "bg-[#C8A97E] text-white border-[#C8A97E] shadow-lg transform scale-105"
-                  : "bg-white hover:bg-[#F8F0E3] border-[#D3B995]/30 hover:border-[#C8A97E]/50"
-              }`}
-              disabled={showResult}
+                  : "bg-white hover:bg-[#F8F0E3] border-[#D3B995]/30 hover:border-[#C8A97E]/50 text-[#2D1B14]"
+              } ${(showResult || isSubmitting) ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+              disabled={showResult || isSubmitting}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <span className="font-bold text-lg">{answer.key}.</span>{" "}
@@ -681,26 +804,82 @@ const QuizDisplay = ({
           ))}
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div className="text-center p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Submit button */}
         {selectedAnswer && !showResult && (
           <div className="text-center">
             <button
-              onClick={() => setShowResult(true)}
-              className="px-8 py-3 bg-[#C8A97E] hover:bg-[#A67C52] text-white rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+              onClick={handleSubmitAnswer}
+              disabled={isSubmitting}
+              className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 transform shadow-lg ${
+                isSubmitting
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#C8A97E] hover:bg-[#A67C52] hover:scale-105 text-white"
+              }`}
             >
-              Xem kết quả
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Đang xử lý...
+                </div>
+              ) : (
+                "Gửi câu trả lời"
+              )}
             </button>
           </div>
         )}
 
-        {showResult && (
-          <div className="text-center p-6 bg-gradient-to-br from-[#F8F0E3] to-[#E6D7C3] rounded-xl border border-[#D3B995]/30">
-            <p className="text-lg text-[#2D1B14]">
+        {/* Result display */}
+        {showResult && result && (
+          <div className={`text-center p-6 rounded-xl border ${
+            result.result 
+              ? "bg-gradient-to-br from-green-50 to-green-100 border-green-200" 
+              : "bg-gradient-to-br from-red-50 to-red-100 border-red-200"
+          }`}>
+            <div className="flex items-center justify-center mb-4">
+              {result.result ? (
+                <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+            </div>
+            <p className={`text-lg font-bold mb-2 ${result.result ? "text-green-700" : "text-red-700"}`}>
+              {result.result ? "🎉 Chính xác!" : "😔 Chưa đúng"}
+            </p>
+            <p className="text-lg text-[#2D1B14] mb-2">
               Bạn đã chọn đáp án:{" "}
               <span className="font-bold text-[#C8A97E]">{selectedAnswer}</span>
             </p>
-            <p className="text-sm text-[#5D4037] mt-2">
-              Cảm ơn bạn đã tham gia! Hãy tiếp tục khám phá thêm nhiều bài hát
-              thú vị khác.
+            <p className={`text-sm ${result.result ? "text-green-600" : "text-red-600"}`}>
+              {result.message}
+            </p>
+            <p className="text-sm text-[#5D4037] mt-3">
+              Cảm ơn bạn đã tham gia! Hãy tiếp tục khám phá thêm nhiều bài hát thú vị khác.
             </p>
           </div>
         )}
@@ -935,8 +1114,30 @@ const MusicPlayer = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showLyrics, setShowLyrics] = useState(false);
-  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null); // Thay `any` bằng Quiz interface
+  const [currentQuiz, setCurrentQuiz] = useState<QuizQuestion | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [availableQuizzes, setAvailableQuizzes] = useState<QuizQuestion[]>([]);
+  const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(false);
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
+  
+  // State cho notification
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    message: string;
+    type: "info" | "success" | "error";
+  }>({
+    isOpen: false,
+    message: "",
+    type: "info",
+  });
+
+  const showNotification = (message: string, type: "info" | "success" | "error" = "info") => {
+    setNotification({ isOpen: true, message, type });
+  };
+
+  const closeNotification = () => {
+    setNotification(prev => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     const fetchMusic = async () => {
@@ -961,34 +1162,6 @@ const MusicPlayer = () => {
     fetchMusic();
   }, [musicIdFromParam]);
 
-  // // BƯỚC 6: TẠO HÀM ĐIỀU KHIỂN PLAYER TOÀN CỤC
-  // const handlePlayRequest = () => {
-  //   if (!music) return;
-
-  //   // 1. Ánh xạ dữ liệu từ API của bạn sang định dạng `GlobalMusic`
-  //   const musicDataForPlayer: GlobalMusic = {
-  //     id: music.id.toString(), // Chuyển id từ number sang string
-  //     name: music.name,
-  //     artist:
-  //       music.artists.length > 0
-  //         ? music.artists[0].name
-  //         : "Nghệ sĩ chưa xác định",
-  //     coverPhoto: music.coverPhoto,
-  //     resourceLink: music.resourceLink,
-  //     favoriteCount: music.favoriteCount,
-  //     lyrics: music.lyric,
-  //   };
-
-  //   // 2. Kiểm tra và ra lệnh cho player
-  //   if (currentMusic?.id === musicDataForPlayer.id) {
-  //     // Nếu bài hát này đang được tải trong player, chỉ cần play/pause
-  //     togglePlayPause();
-  //   } else {
-  //     // Nếu là bài hát mới, ra lệnh cho player tải và phát
-  //     playMusic(musicDataForPlayer);
-  //   }
-  // };
-
   const handlePlayButtonClick = () => {
     if (!music) return;
 
@@ -1004,10 +1177,44 @@ const MusicPlayer = () => {
 
   const handlePlayPause = () => togglePlayPause();
   const handleShowLyrics = () => setShowLyrics(!showLyrics);
-  const handleQuiz = () => {
-    if (music && music.quizzes && music.quizzes.length > 0) {
-      setCurrentQuiz(music.quizzes[0]);
-      setShowQuiz(true);
+  
+  // Cập nhật hàm handleQuiz để sử dụng API mới
+  const handleQuiz = async () => {
+    if (!music || !isAuthenticated()) return;
+
+    try {
+      setIsLoadingQuizzes(true);
+      setError(null);
+      
+      const quizzes = await getUnansweredQuizzes(music.id);
+      
+      // Safety check: đảm bảo quizzes là array và có length
+      if (Array.isArray(quizzes) && quizzes.length > 0) {
+        setAvailableQuizzes(quizzes);
+        setCurrentQuizIndex(0);
+        setCurrentQuiz(quizzes[0]);
+        setShowQuiz(true);
+      } else {
+        // Hiển thị thông báo không có quiz
+        showNotification("Không có câu hỏi trắc nghiệm nào cho bài hát này hoặc bạn đã trả lời hết rồi!");
+      }
+    } catch (err: any) {
+      console.error("Error loading quizzes:", err);
+      showNotification(err.message || "Đã xảy ra lỗi khi tải quiz", "error");
+    } finally {
+      setIsLoadingQuizzes(false);
+    }
+  };
+
+  // Hàm để chuyển sang quiz tiếp theo (nếu có)
+  const handleNextQuiz = async () => {
+    if (currentQuizIndex < availableQuizzes.length - 1) {
+      const nextIndex = currentQuizIndex + 1;
+      setCurrentQuizIndex(nextIndex);
+      setCurrentQuiz(availableQuizzes[nextIndex]);
+    } else {
+      // Hết quiz, có thể load lại danh sách mới
+      await handleQuiz();
     }
   };
 
@@ -1051,6 +1258,7 @@ const MusicPlayer = () => {
               showLyrics={showLyrics}
               onQuiz={handleQuiz}
               hasQuiz={music.quizzes?.length > 0}
+              isLoadingQuizzes={isLoadingQuizzes}
             />
           </div>
 
@@ -1065,10 +1273,24 @@ const MusicPlayer = () => {
 
                 {/* Quiz */}
                 {showQuiz && currentQuiz && (
-                  <QuizDisplay
-                    quiz={currentQuiz}
-                    onClose={() => setShowQuiz(false)}
-                  />
+                  <div className="space-y-4">
+                    {/* Quiz Progress */}
+                    {availableQuizzes.length > 1 && (
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-xl border border-white/30 rounded-full text-[#2D1B14] font-medium">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Câu {currentQuizIndex + 1} / {availableQuizzes.length}
+                        </div>
+                      </div>
+                    )}
+                    <QuizDisplay
+                      quiz={currentQuiz}
+                      onClose={() => setShowQuiz(false)}
+                      onAnswerSubmitted={handleNextQuiz}
+                    />
+                  </div>
                 )}
 
                 {/* Album Info và Related Content */}
@@ -1133,6 +1355,7 @@ const MusicPlayer = () => {
                         Thống kê
                       </h3>
                     </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-4 bg-gradient-to-br from-[#F8F0E3]/50 to-[#E6D7C3]/30 rounded-xl">
                         <div className="text-3xl font-bold text-[#C8A97E] mb-2">
@@ -1183,7 +1406,7 @@ const MusicPlayer = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-2 border-b border-[#D3B995]/30">
                       <span className="text-sm text-[#5D4037]">Trạng thái</span>
-                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                      <span className="px-3 py-1 bg-gradient-to-r from-green-100 to-green-200 text-green-700 rounded-full text-xs font-bold">
                         {music.approved ? "✓ Đã duyệt" : "⏳ Chờ duyệt"}
                       </span>
                     </div>
@@ -1324,6 +1547,14 @@ const MusicPlayer = () => {
           </div>
         </main>
       </div>
+
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={notification.isOpen}
+        message={notification.message}
+        type={notification.type}
+        onClose={closeNotification}
+      />
     </div>
   );
 };
