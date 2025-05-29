@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, Settings, Search } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import Pagination from "@mui/material/Pagination";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import * as QuizType from "./quiz-type-api";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
@@ -70,7 +70,9 @@ export default function QuizzesFeedbackAdmin() {
   const handleDelete = async (quizId: string) => {
     try {
       await axios.delete(`https://api.sonata.io.vn/api/v1/quiz/${quizId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}` },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+        },
       });
       setRefreshTrigger((prev) => prev + 1);
       alert("Delete quiz successfully!");
@@ -219,7 +221,7 @@ export default function QuizzesFeedbackAdmin() {
               </button>
             </div>
             <button className="flex items-center gap-2 border border-sky-900/70 bg-white rounded-md px-3 py-1.5 text-sm text-sky-900/70">
-              <Image
+              <CustomImage
                 src="../../Download_icon.svg"
                 alt="download icon"
                 width={24}

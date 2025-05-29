@@ -12,7 +12,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "api.sonata.io.vn",
+      },
+      {
+        protocol: "https",
+        hostname: "sonata.io.vn",
       },
     ],
   },

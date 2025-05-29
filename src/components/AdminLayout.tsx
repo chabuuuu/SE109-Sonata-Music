@@ -1,7 +1,7 @@
 "use client";
 import NavMenu from "@/components/navmenu";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { ReactNode, useEffect } from "react";
@@ -16,7 +16,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // add hooks navigation
   const router = useRouter();
   const pathName = usePathname();
-
 
   // Compute the “active key” from the path:
   const activeItem = React.useMemo(() => {
@@ -43,7 +42,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           {/* TOP: Logo + Nav */}
           <div>
             <div className="flex justify-center p-4">
-              <Image
+              <CustomImage
                 src="/sonata-logo.png"
                 alt="logo of the website"
                 width={135}
@@ -58,9 +57,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   className={`${styles.menuItem} ${
                     activeItem === "artists" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/admin-artists-management')}
+                  onClick={() => router.push("/admin-artists-management")}
                 >
-                  <Image
+                  <CustomImage
                     src="/layout_imgs/search_logo.png"
                     alt="search logo"
                     height={20} // equivalent to h-5 (20px)
@@ -75,9 +74,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   className={`${styles.menuItem} ${
                     activeItem === "viewAll" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/admin-view-all')}
+                  onClick={() => router.push("/admin-view-all")}
                 >
-                  <Image
+                  <CustomImage
                     src="/layout_imgs/library_logo.png"
                     alt="Library logo"
                     height={20} // equivalent to h-5 (20px)
@@ -92,9 +91,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   className={`${styles.menuItem} ${
                     activeItem === "categories" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/admin-categories-all')}
+                  onClick={() => router.push("/admin-categories-all")}
                 >
-                  <Image
+                  <CustomImage
                     src="/layout_imgs/createPlaylist_logo.png"
                     alt="create playlist logo"
                     height={20} // equivalent to h-5 (20px)
@@ -109,9 +108,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   className={`${styles.menuItem} ${
                     activeItem === "contributors" ? styles.active : ""
                   }`}
-                  onClick={() => router.push('/admin-contributor-management')}
+                  onClick={() => router.push("/admin-contributor-management")}
                 >
-                  <Image
+                  <CustomImage
                     src="/layout_imgs/contributor.png"
                     alt="create playlist logo"
                     height={20} // equivalent to h-5 (20px)
@@ -120,8 +119,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   />
                   <span className="text-base">Contributors Management</span>
                 </li>
-
-                
               </ul>
             </nav>
           </div>

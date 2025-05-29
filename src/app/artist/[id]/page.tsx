@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { getArtistById, Artist } from "@/services/artistService";
@@ -242,7 +242,7 @@ const ArtistDetailPage: React.FC = () => {
         <div className="relative">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
-            <Image
+            <CustomImage
               src={artist.picture}
               alt={artist.name}
               fill
@@ -267,7 +267,7 @@ const ArtistDetailPage: React.FC = () => {
               <div className="lg:col-span-1">
                 <div className="relative">
                   <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl border-4 border-white/50 backdrop-blur-sm">
-                    <Image
+                    <CustomImage
                       src={artist.picture}
                       alt={artist.name}
                       fill
@@ -435,7 +435,7 @@ const ArtistDetailPage: React.FC = () => {
                             key={genre.id}
                             className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#F8F0E3] to-[#E6D7C3] rounded-xl hover:shadow-md transition-shadow"
                           >
-                            <Image
+                            <CustomImage
                               src={genre.picture}
                               alt={genre.name}
                               width={60}
@@ -468,7 +468,7 @@ const ArtistDetailPage: React.FC = () => {
                             key={instrument.id}
                             className="text-center p-6 bg-gradient-to-br from-[#F8F0E3] to-[#E6D7C3] rounded-xl hover:shadow-md transition-shadow"
                           >
-                            <Image
+                            <CustomImage
                               src={instrument.picture}
                               alt={instrument.name}
                               width={80}
@@ -635,7 +635,7 @@ const ArtistDetailPage: React.FC = () => {
                           >
                             {/* Cover Photo */}
                             <div className="relative w-16 h-16 flex-shrink-0">
-                              <Image
+                              <CustomImage
                                 src={music.coverPhoto}
                                 alt={music.name}
                                 fill
@@ -762,7 +762,7 @@ const ArtistDetailPage: React.FC = () => {
                   <div className="space-y-3">
                     {artist.periods.map((period) => (
                       <div key={period.id} className="flex items-center gap-3">
-                        <Image
+                        <CustomImage
                           src={period.picture}
                           alt={period.name}
                           width={40}
@@ -790,7 +790,7 @@ const ArtistDetailPage: React.FC = () => {
                         key={orchestra.id}
                         className="flex items-center gap-3"
                       >
-                        <Image
+                        <CustomImage
                           src={orchestra.picture}
                           alt={orchestra.name}
                           width={40}

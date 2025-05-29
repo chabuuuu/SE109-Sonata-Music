@@ -1,52 +1,60 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Heart, Disc, Play, Eye, X, Calendar } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { toast } from 'react-hot-toast';
-import { 
-  getMyLikedAlbums, 
-  unlikeAlbum, 
+import React, { useState, useEffect } from "react";
+import { Heart, Disc, Play, Eye, X, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
+import CustomImage from "@/components/CustomImage";
+import { toast } from "react-hot-toast";
+import {
+  getMyLikedAlbums,
+  unlikeAlbum,
   FavoriteAlbum,
-  FavoriteAlbumListResponse 
-} from '@/services/favoriteService';
+  FavoriteAlbumListResponse,
+} from "@/services/favoriteService";
 
 const FavoriteAlbums: React.FC = () => {
   const [favoriteAlbums, setFavoriteAlbums] = useState<FavoriteAlbum[]>([]);
   const [loading, setLoading] = useState(true);
-  const [removeLoading, setRemoveLoading] = useState<string | number | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [removeLoading, setRemoveLoading] = useState<string | number | null>(
+    null
+  );
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const router = useRouter();
 
   // Fetch favorite albums từ API
-  const fetchFavoriteAlbums = async (page: number = 1, append: boolean = false) => {
+  const fetchFavoriteAlbums = async (
+    page: number = 1,
+    append: boolean = false
+  ) => {
     try {
       if (!append) {
         setLoading(true);
       }
-      
-      const response: FavoriteAlbumListResponse = await getMyLikedAlbums(10, page);
-      
+
+      const response: FavoriteAlbumListResponse = await getMyLikedAlbums(
+        10,
+        page
+      );
+
       if (response.success && response.data) {
         const newAlbums = response.data.items;
-        
+
         if (append) {
-          setFavoriteAlbums(prev => [...prev, ...newAlbums]);
+          setFavoriteAlbums((prev) => [...prev, ...newAlbums]);
         } else {
           setFavoriteAlbums(newAlbums);
         }
-        
+
         setTotalCount(response.data.total);
         setHasMore(newAlbums.length === 10); // Nếu trả về đủ 10 items thì có thể còn page sau
         setCurrentPage(page);
       }
     } catch (error) {
-      console.error('Lỗi khi tải danh sách album yêu thích:', error);
-      toast.error('Không thể tải danh sách album yêu thích');
+      console.error("Lỗi khi tải danh sách album yêu thích:", error);
+      toast.error("Không thể tải danh sách album yêu thích");
     } finally {
       setLoading(false);
     }
@@ -56,18 +64,22 @@ const FavoriteAlbums: React.FC = () => {
   const handleRemoveFromFavorite = async (albumId: string | number) => {
     try {
       setRemoveLoading(albumId);
-      
+
       // Gọi API unlike album
       await unlikeAlbum(Number(albumId));
-      
+
       // Cập nhật state local
-      setFavoriteAlbums(prev => prev.filter(album => album.albumId !== albumId.toString()));
-      setTotalCount(prev => prev - 1);
-      
-      toast.success('Đã xóa album khỏi danh sách yêu thích');
+      setFavoriteAlbums((prev) =>
+        prev.filter((album) => album.albumId !== albumId.toString())
+      );
+      setTotalCount((prev) => prev - 1);
+
+      toast.success("Đã xóa album khỏi danh sách yêu thích");
     } catch (error: any) {
-      console.error('Lỗi khi xóa album khỏi favorite:', error);
-      toast.error(error.message || 'Không thể xóa album khỏi danh sách yêu thích');
+      console.error("Lỗi khi xóa album khỏi favorite:", error);
+      toast.error(
+        error.message || "Không thể xóa album khỏi danh sách yêu thích"
+      );
     } finally {
       setRemoveLoading(null);
     }
@@ -81,10 +93,10 @@ const FavoriteAlbums: React.FC = () => {
   // Format date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -107,18 +119,20 @@ const FavoriteAlbums: React.FC = () => {
   if (loading && favoriteAlbums.length === 0) {
     return (
       <div className="space-y-4">
-        {Array(4).fill(0).map((_, i) => (
-          <div key={i} className="bg-white/80 rounded-xl p-6 animate-pulse">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-[#D3B995] rounded-lg"></div>
-              <div className="flex-1">
-                <div className="h-6 bg-[#D3B995] rounded w-1/3 mb-2"></div>
-                <div className="h-4 bg-[#D3B995] rounded w-1/2 mb-2"></div>
-                <div className="h-4 bg-[#D3B995] rounded w-1/4"></div>
+        {Array(4)
+          .fill(0)
+          .map((_, i) => (
+            <div key={i} className="bg-white/80 rounded-xl p-6 animate-pulse">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-[#D3B995] rounded-lg"></div>
+                <div className="flex-1">
+                  <div className="h-6 bg-[#D3B995] rounded w-1/3 mb-2"></div>
+                  <div className="h-4 bg-[#D3B995] rounded w-1/2 mb-2"></div>
+                  <div className="h-4 bg-[#D3B995] rounded w-1/4"></div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     );
   }
@@ -132,19 +146,17 @@ const FavoriteAlbums: React.FC = () => {
             <h2 className="text-2xl font-bold text-[#2D1B14] font-['Playfair_Display',serif]">
               Favorite Albums
             </h2>
-            <p className="text-[#5D4037]">
-              {totalCount} album yêu thích
-            </p>
+            <p className="text-[#5D4037]">{totalCount} album yêu thích</p>
           </div>
 
           {/* View Mode Toggle */}
           <div className="flex items-center gap-2 bg-white/60 rounded-lg p-1 border border-[#D3B995]/30">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-[#C8A97E] text-white'
-                  : 'text-[#6D4C41] hover:bg-[#E6D7C3]'
+                viewMode === "grid"
+                  ? "bg-[#C8A97E] text-white"
+                  : "text-[#6D4C41] hover:bg-[#E6D7C3]"
               }`}
               title="Grid View"
             >
@@ -153,16 +165,20 @@ const FavoriteAlbums: React.FC = () => {
               </svg>
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className={`p-2 rounded-md transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-[#C8A97E] text-white'
-                  : 'text-[#6D4C41] hover:bg-[#E6D7C3]'
+                viewMode === "list"
+                  ? "bg-[#C8A97E] text-white"
+                  : "text-[#6D4C41] hover:bg-[#E6D7C3]"
               }`}
               title="List View"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
             </button>
           </div>
@@ -182,30 +198,31 @@ const FavoriteAlbums: React.FC = () => {
         </div>
       ) : (
         <>
-          {viewMode === 'grid' ? (
+          {viewMode === "grid" ? (
             /* Grid View */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {favoriteAlbums.map((albumItem) => (
-                <div 
+                <div
                   key={albumItem.albumId}
                   className="group bg-white/80 backdrop-blur-sm hover:bg-white/90 rounded-xl p-4 transition-all duration-200 border border-[#D3B995]/20 hover:border-[#C8A97E]/40 hover:shadow-lg"
                 >
                   <div className="relative">
                     {/* Album Cover */}
-                    <div 
+                    <div
                       className="relative w-full aspect-square rounded-lg overflow-hidden mb-4 cursor-pointer"
                       onClick={() => handleNavigateToAlbum(albumItem.albumId)}
                     >
-                      <Image
+                      <CustomImage
                         src={albumItem.album.coverPhoto}
                         alt={albumItem.album.name}
                         fill
                         className="object-cover grayscale-[10%] sepia-[5%] group-hover:grayscale-0 group-hover:sepia-0 transition-all duration-300"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/default-album.jpg';
+                          (e.target as HTMLImageElement).src =
+                            "/images/default-album.jpg";
                         }}
                       />
-                      
+
                       {/* Play overlay */}
                       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button className="bg-[#C8A97E] text-white rounded-full p-3 shadow-lg hover:bg-[#A67C52] transition-colors">
@@ -216,7 +233,9 @@ const FavoriteAlbums: React.FC = () => {
 
                     {/* Remove button */}
                     <button
-                      onClick={() => handleRemoveFromFavorite(albumItem.albumId)}
+                      onClick={() =>
+                        handleRemoveFromFavorite(albumItem.albumId)
+                      }
                       disabled={removeLoading === albumItem.albumId}
                       className="absolute top-2 right-2 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
                       title="Xóa khỏi yêu thích"
@@ -231,21 +250,21 @@ const FavoriteAlbums: React.FC = () => {
 
                   {/* Album Info */}
                   <div>
-                    <h3 
+                    <h3
                       className="font-bold text-[#2D1B14] truncate group-hover:text-[#C8A97E] transition-colors cursor-pointer font-['Playfair_Display',serif]"
                       onClick={() => handleNavigateToAlbum(albumItem.albumId)}
                     >
                       {albumItem.album.name}
                     </h3>
                     <p className="text-sm text-[#5D4037] truncate mt-1">
-                      {albumItem.album.description || 'No description'}
+                      {albumItem.album.description || "No description"}
                     </p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-[#6D4C41]">
                       <span>{getReleaseYear(albumItem.album.releaseDate)}</span>
                       <span>•</span>
                       <span>{albumItem.album.albumType}</span>
                     </div>
-                    
+
                     {/* Added date */}
                     <div className="mt-3 pt-3 border-t border-[#E6D7C3]">
                       <span className="text-xs text-[#8D6C61]">
@@ -260,7 +279,7 @@ const FavoriteAlbums: React.FC = () => {
             /* List View */
             <div className="space-y-3">
               {favoriteAlbums.map((albumItem, index) => (
-                <div 
+                <div
                   key={albumItem.albumId}
                   className="group bg-white/80 backdrop-blur-sm hover:bg-white/90 rounded-xl p-4 transition-all duration-200 border border-[#D3B995]/20 hover:border-[#C8A97E]/40 hover:shadow-lg"
                 >
@@ -274,29 +293,32 @@ const FavoriteAlbums: React.FC = () => {
 
                     {/* Album Info */}
                     <div className="col-span-6 flex items-center gap-4">
-                      <div 
+                      <div
                         className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer"
                         onClick={() => handleNavigateToAlbum(albumItem.albumId)}
                       >
-                        <Image
+                        <CustomImage
                           src={albumItem.album.coverPhoto}
                           alt={albumItem.album.name}
                           fill
                           className="object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/images/default-album.jpg';
+                            (e.target as HTMLImageElement).src =
+                              "/images/default-album.jpg";
                           }}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 
+                        <h3
                           className="font-semibold text-[#2D1B14] truncate group-hover:text-[#C8A97E] transition-colors cursor-pointer"
-                          onClick={() => handleNavigateToAlbum(albumItem.albumId)}
+                          onClick={() =>
+                            handleNavigateToAlbum(albumItem.albumId)
+                          }
                         >
                           {albumItem.album.name}
                         </h3>
                         <p className="text-sm text-[#5D4037] truncate">
-                          {albumItem.album.description || 'No description'}
+                          {albumItem.album.description || "No description"}
                         </p>
                       </div>
                     </div>
@@ -316,11 +338,15 @@ const FavoriteAlbums: React.FC = () => {
                       <div className="flex items-center gap-4 text-sm text-[#6D4C41]">
                         <div className="flex items-center gap-1">
                           <Eye className="w-3 h-3" />
-                          <span>{albumItem.album.viewCount.toLocaleString()}</span>
+                          <span>
+                            {albumItem.album.viewCount.toLocaleString()}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Heart className="w-3 h-3" />
-                          <span>{albumItem.album.likeCount.toLocaleString()}</span>
+                          <span>
+                            {albumItem.album.likeCount.toLocaleString()}
+                          </span>
                         </div>
                       </div>
                       <div className="text-xs text-[#8D6C61] mt-1">
@@ -331,7 +357,9 @@ const FavoriteAlbums: React.FC = () => {
                     {/* Actions */}
                     <div className="col-span-1 text-center">
                       <button
-                        onClick={() => handleRemoveFromFavorite(albumItem.albumId)}
+                        onClick={() =>
+                          handleRemoveFromFavorite(albumItem.albumId)
+                        }
                         disabled={removeLoading === albumItem.albumId}
                         className="w-8 h-8 text-[#8D6C61] hover:text-red-500 transition-colors disabled:opacity-50"
                         title="Xóa khỏi yêu thích"
@@ -365,7 +393,7 @@ const FavoriteAlbums: React.FC = () => {
                 Đang tải...
               </div>
             ) : (
-              'Tải thêm albums'
+              "Tải thêm albums"
             )}
           </button>
         </div>
@@ -374,4 +402,4 @@ const FavoriteAlbums: React.FC = () => {
   );
 };
 
-export default FavoriteAlbums; 
+export default FavoriteAlbums;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/navbar";
@@ -288,7 +288,7 @@ const Hero = ({
     <section className="relative h-[600px] rounded-3xl overflow-hidden mb-12 group shadow-2xl">
       {/* Background Image với parallax effect */}
       <div className="absolute inset-0 transform transition-transform duration-700 group-hover:scale-110">
-        <Image
+        <CustomImage
           src={music.coverPhoto}
           alt={music.name}
           fill
@@ -743,7 +743,7 @@ const ArtistsSection = ({
         >
           <div className="relative">
             <div className="w-20 h-20 rounded-2xl overflow-hidden border-3 border-[#C8A97E] shadow-lg">
-              <Image
+              <CustomImage
                 src={artist.picture}
                 alt={artist.name}
                 fill
@@ -1167,7 +1167,7 @@ const MusicPlayer = () => {
                 >
                   <div className="text-center mb-6">
                     <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden shadow-lg mb-4 ring-4 ring-[#C8A97E]/20">
-                      <Image
+                      <CustomImage
                         src={music.coverPhoto}
                         alt={music.name}
                         width={80}
@@ -1237,7 +1237,7 @@ const MusicPlayer = () => {
                           className="flex items-center gap-3 p-3 bg-gradient-to-r from-[#F8F0E3]/50 to-[#E6D7C3]/30 rounded-xl border border-[#D3B995]/30 hover:shadow-md transition-all duration-300"
                         >
                           <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#C8A97E] shadow-md flex-shrink-0">
-                            <Image
+                            <CustomImage
                               src={artist.picture}
                               alt={artist.name}
                               fill
@@ -1298,7 +1298,7 @@ const MusicPlayer = () => {
                           className="flex items-center gap-3 p-3 bg-gradient-to-r from-[#F8F0E3]/50 to-[#E6D7C3]/30 rounded-xl border border-[#D3B995]/30"
                         >
                           <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#C8A97E] shadow-md flex-shrink-0">
-                            <Image
+                            <CustomImage
                               src={composer.picture}
                               alt={composer.name}
                               fill

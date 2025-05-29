@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { X, Edit } from "lucide-react";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import axios from "axios";
 
@@ -103,7 +103,7 @@ const DetailModalArtist = ({ onClose, data }: DetailModalArtistProps) => {
         {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -113,7 +113,11 @@ const DetailModalArtist = ({ onClose, data }: DetailModalArtistProps) => {
       alert("Category updated successfully!");
     } catch (err) {
       console.error("Error updating category:", err);
-      alert(`Failed to update category: ${err || "Unknown error"}. Please try again.`);
+      alert(
+        `Failed to update category: ${
+          err || "Unknown error"
+        }. Please try again.`
+      );
     }
   };
 
@@ -128,14 +132,14 @@ const DetailModalArtist = ({ onClose, data }: DetailModalArtistProps) => {
       >
         {/* Image Header Section */}
         <div className="relative h-56 w-full overflow-hidden">
-          <Image 
-            src={data.picture} 
-            alt={data.name} 
-            fill 
-            className="object-cover" 
+          <CustomImage
+            src={data.picture}
+            alt={data.name}
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-          
+
           <div className="absolute top-4 right-4 flex space-x-2">
             <button
               className="p-2 bg-black/30 hover:bg-black/50 rounded-full transition-all duration-300 text-white"
@@ -150,155 +154,199 @@ const DetailModalArtist = ({ onClose, data }: DetailModalArtistProps) => {
               <X size={18} />
             </button>
           </div>
-          
+
           <div className="absolute bottom-4 left-6 right-6">
             <h2 className="text-2xl font-bold text-white drop-shadow-md">
               {data.name || "Detail"}
             </h2>
           </div>
         </div>
-        
+
         <div className="p-6">
           {/* Personal Information */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Personal Information</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Personal Information
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-gray-600"><strong>Born:</strong> {data.dateOfBirth}</p>
-                <p className="text-gray-600"><strong>Died:</strong> {data.dateOfDeath || 'N/A'}</p>
+                <p className="text-gray-600">
+                  <strong>Born:</strong> {data.dateOfBirth}
+                </p>
+                <p className="text-gray-600">
+                  <strong>Died:</strong> {data.dateOfDeath || "N/A"}
+                </p>
               </div>
               <div>
-                <p className="text-gray-600"><strong>Nationality:</strong> {data.nationality}</p>
-                <p className="text-gray-600"><strong>Roles:</strong> {data.roles.join(', ')}</p>
+                <p className="text-gray-600">
+                  <strong>Nationality:</strong> {data.nationality}
+                </p>
+                <p className="text-gray-600">
+                  <strong>Roles:</strong> {data.roles.join(", ")}
+                </p>
               </div>
             </div>
           </div>
-          
+
           {/* Description */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Description</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Description
+            </h3>
             <p className="text-gray-600 whitespace-pre-line leading-relaxed bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500">
               {data.description}
             </p>
           </div>
-          
+
           {/* Awards and Honors */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Awards and Honors</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Awards and Honors
+            </h3>
             <p className="text-gray-600">{data.awardsAndHonors}</p>
           </div>
-          
+
           {/* Teaching and Academic Contributions */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Teaching and Academic Contributions</h3>
-            <p className="text-gray-600">{data.teachingAndAcademicContributions}</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Teaching and Academic Contributions
+            </h3>
+            <p className="text-gray-600">
+              {data.teachingAndAcademicContributions}
+            </p>
           </div>
-          
+
           {/* Significant Performances */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Significant Performances</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Significant Performances
+            </h3>
             <p className="text-gray-600">{data.significantPerformences}</p>
           </div>
-          
+
           {/* Genres */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Genres</h3>
             <ul className="list-disc list-inside text-gray-600">
-              {data.genres.map(genre => (
+              {data.genres.map((genre) => (
                 <li key={genre.id}>{genre.name}</li>
               ))}
             </ul>
           </div>
-          
+
           {/* Orchestras */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Orchestras</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Orchestras
+            </h3>
             <ul className="list-disc list-inside text-gray-600">
-              {data.orchestras.map(orchestra => (
+              {data.orchestras.map((orchestra) => (
                 <li key={orchestra.id}>{orchestra.name}</li>
               ))}
             </ul>
           </div>
-          
+
           {/* Periods */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Periods</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Periods
+            </h3>
             <ul className="list-disc list-inside text-gray-600">
-              {data.periods.map(period => (
+              {data.periods.map((period) => (
                 <li key={period.id}>{period.name}</li>
               ))}
             </ul>
           </div>
-          
+
           {/* Musics Composed */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Musics Composed</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Musics Composed
+            </h3>
             <ul className="list-disc list-inside text-gray-600">
-              {data.musicsComposed.map(music => (
+              {data.musicsComposed.map((music) => (
                 <li key={music.id}>{music.name}</li>
               ))}
             </ul>
           </div>
-          
+
           {/* Musics */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Musics</h3>
             <ul className="list-disc list-inside text-gray-600">
-              {data.musics.map(music => (
+              {data.musics.map((music) => (
                 <li key={music.id}>{music.name}</li>
               ))}
             </ul>
           </div>
-          
+
           {/* Instruments */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Instruments</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Instruments
+            </h3>
             <ul className="list-disc list-inside text-gray-600">
-              {data.instruments.map(instrument => (
+              {data.instruments.map((instrument) => (
                 <li key={instrument.id}>{instrument.name}</li>
               ))}
             </ul>
           </div>
-          
+
           {/* Artist Students */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Artist Students</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Artist Students
+            </h3>
             <ul className="list-disc list-inside text-gray-600">
-              {data.artistStudents.map(student => (
+              {data.artistStudents.map((student) => (
                 <li key={student.id}>{student.student.name}</li>
               ))}
             </ul>
           </div>
-          
+
           {/* Edit Section */}
           {isEditing && (
             <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4 text-black">Edit Category Information</h3>
+              <h3 className="text-lg font-semibold mb-4 text-black">
+                Edit Category Information
+              </h3>
               <form onSubmit={handleSave}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Name
+                  </label>
                   <input
                     type="text"
                     value={editData.name}
-                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, name: e.target.value })
+                    }
                     className="mt-1 text-black block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Picture URL</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Picture URL
+                  </label>
                   <input
                     type="text"
                     value={editData.picture}
-                    onChange={(e) => setEditData({ ...editData, picture: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, picture: e.target.value })
+                    }
                     className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description
+                  </label>
                   <input
                     type="text"
                     value={editData.description}
-                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                    onChange={(e) =>
+                      setEditData({ ...editData, description: e.target.value })
+                    }
                     className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { X, Clock, Eye, User, Music, Edit } from "lucide-react";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import axios from "axios";
 import FileUploadSection from "@/components/upload-file";
@@ -99,7 +99,7 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
       >
         {/* Image Header Section */}
         <div className="relative h-56 w-full overflow-hidden">
-          <Image
+          <CustomImage
             src={data.picture}
             alt={data.title}
             fill

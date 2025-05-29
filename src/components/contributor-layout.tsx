@@ -1,7 +1,7 @@
 "use client";
 import NavMenu from "@/components/navmenu";
 import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
-import Image from "next/image";
+import CustomImage from "@/components/CustomImage";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { ReactNode, useEffect } from "react";
@@ -20,7 +20,11 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
   // Compute the “active key” from the path:
   const activeItem = React.useMemo(() => {
     if (pathName.startsWith("/contributor-artist-view")) return "artists";
-    if (pathName.startsWith("/contributor-view-all") || pathName.startsWith("/contributor-add-song")) return "viewAll";
+    if (
+      pathName.startsWith("/contributor-view-all") ||
+      pathName.startsWith("/contributor-add-song")
+    )
+      return "viewAll";
     if (pathName.startsWith("/contributor-exchange-premium")) return "exchange";
     return "dashboard";
   }, [pathName]);
@@ -41,7 +45,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
           {/* TOP: Logo + Nav */}
           <div>
             <div className="flex justify-center p-4">
-              <Image
+              <CustomImage
                 src="/sonata-logo.png"
                 alt="logo of the website"
                 width={135}
@@ -66,7 +70,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                   }`}
                   onClick={() => router.push("/contributor-artist-view")}
                 >
-                  <Image
+                  <CustomImage
                     src="/layout_imgs/search_logo.png"
                     alt="search logo"
                     height={20}
@@ -83,7 +87,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                   }`}
                   onClick={() => router.push("/contributor-view-all")}
                 >
-                  <Image
+                  <CustomImage
                     src="/layout_imgs/library_logo.png"
                     alt="Library logo"
                     height={20}
@@ -100,7 +104,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                   }`}
                   onClick={() => router.push("/contributor-exchange-premium")}
                 >
-                  <Image
+                  <CustomImage
                     src="/layout_imgs/library_logo.png"
                     alt="Library logo"
                     height={20}
@@ -109,7 +113,6 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                   />
                   <span className="text-base"> Exchange Premium</span>
                 </li>
-
               </ul>
             </nav>
           </div>
