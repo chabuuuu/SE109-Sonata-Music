@@ -81,11 +81,11 @@ interface ArtistApiResponse {
 
 // Background images for random rotation
 const backgroundImages = [
-  "/backgrounds/music-background-1.jpg",
-  "/backgrounds/music-background-2.jpg",
-  "/backgrounds/music-background-3.jpg",
-  "/backgrounds/music-background-4.jpg",
-  "/backgrounds/music-background-5.jpg",
+  "/music-background-1.jpg",
+  "/music-background-2.jpg",
+  "/music-background-3.jpg",
+  "/music-background-4.jpg",
+  "/music-background-5.jpg",
 ];
 
 // Playlists data
