@@ -10,7 +10,13 @@ import React, {
 } from "react";
 import axios from "axios";
 import { getAuthHeaders } from "@/services/authService";
-import { addToFavorite, removeFromFavorite, checkIsFavorite, clearFavoriteStatusCache, favoriteEvents } from "@/services/favoriteService";
+import {
+  addToFavorite,
+  removeFromFavorite,
+  checkIsFavorite,
+  clearFavoriteStatusCache,
+  favoriteEvents,
+} from "@/services/favoriteService";
 
 // --- BƯỚC 1: ĐỊNH NGHĨA CÁC KIỂU DỮ LIỆU TỪ API ---
 
@@ -32,6 +38,7 @@ interface ApiMusic {
   listenCount: number;
   lyric?: string;
   artists?: ApiArtist[];
+  description?: string;
   // ... các trường khác từ API detail
 }
 
@@ -272,18 +279,20 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
     try {
       const musicId = parseInt(songId);
       if (isNaN(musicId)) {
-        console.error('Invalid music ID:', songId);
+        console.error("Invalid music ID:", songId);
         return;
       }
 
       // Tìm bài hát trong playlist hiện tại
-      const currentSong = playlist.find(song => song.id === songId);
+      const currentSong = playlist.find((song) => song.id === songId);
       if (!currentSong) {
-        console.error('Song not found in playlist:', songId);
+        console.error("Song not found in playlist:", songId);
         return;
       }
 
-      console.log(`🎵 Toggling favorite for song: ${currentSong.name} (ID: ${musicId})`);
+      console.log(
+        `🎵 Toggling favorite for song: ${currentSong.name} (ID: ${musicId})`
+      );
 
       // Kiểm tra trạng thái favorite hiện tại
       const isFavorite = currentSong.isFavorite || false;
@@ -291,26 +300,26 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
       if (isFavorite) {
         // Xóa khỏi favorite
         await removeFromFavorite(musicId);
-        console.log('✅ Removed from favorites');
-        
+        console.log("✅ Removed from favorites");
+
         // Emit global event
-        favoriteEvents.emit('favoriteStatusChanged', {
-          type: 'music',
+        favoriteEvents.emit("favoriteStatusChanged", {
+          type: "music",
           id: musicId,
-          action: 'removed',
-          newStatus: false
+          action: "removed",
+          newStatus: false,
         });
       } else {
         // Thêm vào favorite
         await addToFavorite(musicId);
-        console.log('✅ Added to favorites');
-        
+        console.log("✅ Added to favorites");
+
         // Emit global event
-        favoriteEvents.emit('favoriteStatusChanged', {
-          type: 'music',
+        favoriteEvents.emit("favoriteStatusChanged", {
+          type: "music",
           id: musicId,
-          action: 'added',
-          newStatus: true
+          action: "added",
+          newStatus: true,
         });
       }
 
@@ -323,9 +332,8 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
           song.id === songId ? { ...song, isFavorite: !isFavorite } : song
         )
       );
-
     } catch (error) {
-      console.error('❌ Error toggling favorite:', error);
+      console.error("❌ Error toggling favorite:", error);
       // Clear cache trong trường hợp lỗi để force refresh
       const musicId = parseInt(songId);
       if (!isNaN(musicId)) {
