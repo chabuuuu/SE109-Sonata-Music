@@ -19,6 +19,7 @@ export default function AdminApprovePage() {
   const [selectedMusic, setSelectedMusic] = useState<MusicType.Music | null>(
     null
   );
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -54,18 +55,21 @@ export default function AdminApprovePage() {
     };
 
     fetchCategories();
-  }, [searchTerm, currentPage, pageSize, musics]);
+  }, [searchTerm, currentPage, pageSize, refreshKey]);
 
   // handle delete
   const handleReject = async (id: number) => {
     try {
-      await axios.put(`https://api.sonata.io.vn/api/v1/music/reject/${id}`, {
+      await axios.put(`https://api.sonata.io.vn/api/v1/music/reject/${id}`,{}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
         },
       });
       // Refetch current page so count & pages stay in sync
       setCurrentPage(1);
+      console.log("Rejected succesfully.", id);
+      alert("Successfully deleted.")
+      setRefreshKey((prev) => (prev + 1));
     } catch (err) {
       console.error("Error rejecting music:", err);
       alert("Failed to reject music. Please try again.");
@@ -122,6 +126,7 @@ export default function AdminApprovePage() {
   const handleCloseModal = () => {
     setPopup(false);
     setSelectedMusic(null);
+    setRefreshKey((prev) => (prev + 1));
   };
 
   return (

@@ -187,7 +187,7 @@ const ApproveModal = ({ onClose, musicId }: SearchModalProps) => {
   const handleApprove = async () => {
     try {
       const response = await axios.put(
-        `https://api.sonata.io.vn/api/v1/music/approve/${musicId}`,
+        `https://api.sonata.io.vn/api/v1/music/approve/${musicId}`,{},
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
@@ -197,6 +197,7 @@ const ApproveModal = ({ onClose, musicId }: SearchModalProps) => {
 
       if (response.data.success) {
         alert(`Song ${songName} has been approved!`);
+        onClose();
       } else {
         alert(`Error: ${response.data.message || "Failed to approve song"})`);
       }
