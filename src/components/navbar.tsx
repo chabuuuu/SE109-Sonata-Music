@@ -66,7 +66,7 @@ const ClassicalNavbar = () => {
             </li>
             <li className="overflow-hidden rounded-md">
               <Link 
-                href="/user-likedsongs" 
+                href="/my-favorites" 
                 className="flex items-center gap-4 text-[#C8A97E] w-full p-3 transition-all duration-300 hover:bg-[#48352F] rounded-md group"
               >
                 <div className="w-6 h-6 flex items-center justify-center text-[#C8A97E] group-hover:text-[#F8F0E3]">

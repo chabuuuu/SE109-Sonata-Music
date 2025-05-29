@@ -74,25 +74,66 @@ export interface ArtistSearchResponse {
 
 export const getTopArtists = async (topN: number = 5): Promise<Artist[]> => {
   try {
+    console.log(`🎭 Fetching top ${topN} artists from API...`);
+    
     const config = {
       method: 'get',
       maxBodyLength: Infinity,
       url: `https://api.sonata.io.vn/api/v1/recommender/top-artist-today?topN=${topN}`,
       headers: {
         'Accept': 'application/json'
-      }
+      },
+      timeout: 10000 // 10 second timeout
     };
 
     const response = await axios(config);
+    console.log(`🎭 API Response status: ${response.status}`);
+    
     const data: TopArtistsResponse = response.data;
     
-    if (data.success && data.data) {
-      return data.data;
+    if (data.success && data.data && Array.isArray(data.data)) {
+      console.log(`🎭 Successfully fetched ${data.data.length} top artists`);
+      
+      // Validate and clean data
+      const validArtists = data.data.filter(artist => 
+        artist && 
+        artist.id && 
+        artist.name && 
+        typeof artist.id === 'number' && 
+        typeof artist.name === 'string'
+      );
+      
+      if (validArtists.length > 0) {
+        console.log(`🎭 Returning ${validArtists.length} valid artists`);
+        return validArtists;
+      } else {
+        console.warn('🎭 No valid artists found in API response');
+        return [];
+      }
+    } else {
+      console.warn('🎭 API response indicates failure or no data:', {
+        success: data.success,
+        hasData: !!data.data,
+        dataType: typeof data.data
+      });
+      return [];
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
+        console.error('🎭 Top artists API request timeout');
+      } else if (error.response) {
+        console.error(`🎭 Top artists API error ${error.response.status}:`, error.response.data);
+      } else if (error.request) {
+        console.error('🎭 Top artists API no response received:', error.message);
+      } else {
+        console.error('🎭 Top artists API request setup error:', error.message);
+      }
+    } else {
+      console.error('🎭 Unexpected error fetching top artists:', error);
     }
     
-    return [];
-  } catch (error) {
-    console.error('Lỗi khi lấy danh sách nghệ sĩ hàng đầu:', error);
+    // Return empty array instead of throwing to allow graceful fallback
     return [];
   }
 };
@@ -428,5 +469,49 @@ export const getArtistById = async (id: number): Promise<Artist | null> => {
       console.error('Error response status:', error.response.status);
     }
     return null;
+  }
+};
+
+export const getArtistsForHome = async (topN: number = 5): Promise<Artist[]> => {
+  try {
+    console.log(`🎭 Fetching artists for home page (${topN} items)...`);
+    
+    // Thử lấy top artists trước
+    const topArtists = await getTopArtists(topN);
+    
+    if (topArtists && topArtists.length > 0) {
+      console.log(`🎭 Successfully got ${topArtists.length} top artists from recommender API`);
+      return topArtists;
+    }
+    
+    // Nếu không có top artists, fallback sang getAllArtists
+    console.log('🎭 Top artists empty, falling back to getAllArtists...');
+    const allArtistsResponse = await getAllArtists(1, topN);
+    
+    if (allArtistsResponse.success && allArtistsResponse.data.items) {
+      console.log(`🎭 Successfully got ${allArtistsResponse.data.items.length} artists from search API`);
+      return allArtistsResponse.data.items;
+    }
+    
+    console.warn('🎭 Both APIs failed to return artists');
+    return [];
+    
+  } catch (error) {
+    console.error('🎭 Error in getArtistsForHome:', error);
+    
+    // Last fallback - try getAllArtists directly
+    try {
+      console.log('🎭 Attempting final fallback to getAllArtists...');
+      const fallbackResponse = await getAllArtists(1, topN);
+      
+      if (fallbackResponse.success && fallbackResponse.data.items) {
+        console.log(`🎭 Final fallback successful: ${fallbackResponse.data.items.length} artists`);
+        return fallbackResponse.data.items;
+      }
+    } catch (fallbackError) {
+      console.error('🎭 Final fallback also failed:', fallbackError);
+    }
+    
+    return [];
   }
 }; 

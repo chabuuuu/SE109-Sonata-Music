@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/navbar';
 import Image from 'next/image';
@@ -8,13 +8,28 @@ import BottomBanner from '@/components/bottom_banner';
 import { getRecommendedSongs, Song } from '@/services/recommendService';
 import { getPopularAlbums, Album, searchAlbums, AlbumSearchResponse } from '@/services/albumService';
 import { getTimelessPieces } from '@/services/timelessService';
-import { getTopArtists, Artist } from '@/services/artistService';
+import { getTopArtists, Artist, getArtistsForHome, getAllArtists } from '@/services/artistService';
 import { getInstrumentSpotlight, InstrumentSpotlight, Instrument } from '@/services/instrumentService';
 import { getErasAndStyles, EraStyle, Period } from '@/services/eraService';
+import { 
+  addToFavorite, 
+  removeFromFavorite, 
+  checkIsFavorite,
+  clearFavoriteStatusCache,
+  favoriteEvents,
+  followArtist,
+  unfollowArtist, 
+  checkIsFollowingArtist,
+  clearFollowStatusCache,
+  likeAlbum,
+  unlikeAlbum,
+  checkIsLikedAlbum
+} from '@/services/favoriteService';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { getToken } from '@/services/authService';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -62,26 +77,31 @@ const backgroundImages = [
 // Playlists data
 const playlistData = [
   {
+    id: 1,
     title: "Peaceful Piano",
     description: "Relax and indulge with beautiful piano pieces",
     image: "/playlist_imgs/peaceful_piano.jpg",
   },
   {
+    id: 2,
     title: "Deep Focus",
     description: "Keep calm and focus with ambient and post-",
     image: "/playlist_imgs/deep_focus.jpg",
   },
   {
+    id: 3,
     title: "Instrumental Study",
     description: "Focus with soft study music in the background",
     image: "/playlist_imgs/instrumental_study.jpg",
   },
   {
+    id: 4,
     title: "Jazz Vibes",
     description: "The original chill instrumental beats playlist",
     image: "/playlist_imgs/jazz_vibes.jpg",
   },
   {
+    id: 5,
     title: "Focus Flow",
     description: "Uptempo instrumental hip hop beats",
     image: "/playlist_imgs/focus_flow.jpg",
@@ -167,6 +187,334 @@ const fallbackArtists = [
 
 /**
  * -----------------------------
+ *  FAVORITE BUTTON COMPONENT
+ * -----------------------------
+ */
+
+// Interface cho FavoriteButton props
+interface FavoriteButtonProps {
+  id: number;
+  type: 'music' | 'artist' | 'album';
+  className?: string;
+  iconSize?: string;
+}
+
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({ 
+  id, 
+  type, 
+  className = "text-[#C8A97E] hover:text-[#A67C52] transition-colors",
+  iconSize = "h-5 w-5"
+}) => {
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const { isLoggedIn } = useAuth();
+
+  // Tạo ref để track component mount status
+  const isMounted = useRef(true);
+
+  // Function để check favorite status
+  const checkFavoriteStatus = async () => {
+    if (!isLoggedIn || !isMounted.current) {
+      setIsCheckingStatus(false);
+      return;
+    }
+
+    try {
+      setIsCheckingStatus(true);
+      let status = false;
+      if (type === 'music') {
+        status = await checkIsFavorite(id);
+      } else if (type === 'artist') {
+        status = await checkIsFollowingArtist(id);
+      } else if (type === 'album') {
+        status = await checkIsLikedAlbum(id);
+      }
+      
+      if (isMounted.current) {
+        setIsFavorited(status);
+      }
+    } catch (error) {
+      console.error('❤️ Lỗi khi kiểm tra trạng thái favorite:', error);
+      // Không hiển thị toast cho lỗi check status để tránh spam
+    } finally {
+      if (isMounted.current) {
+        setIsCheckingStatus(false);
+      }
+    }
+  };
+
+  // Kiểm tra trạng thái favorite khi component mount
+  useEffect(() => {
+    isMounted.current = true;
+    checkFavoriteStatus();
+
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+    };
+  }, [id, type, isLoggedIn]);
+
+  // Thêm listener cho window focus để re-check status khi user quay lại tab/page
+  useEffect(() => {
+    const handleFocus = () => {
+      // Delay một chút để đảm bảo API calls khác đã hoàn thành
+      setTimeout(() => {
+        if (isLoggedIn && isMounted.current) {
+          checkFavoriteStatus();
+        }
+      }, 500);
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isLoggedIn && isMounted.current) {
+        setTimeout(() => {
+          checkFavoriteStatus();
+        }, 500);
+      }
+    };
+
+    // Listen to global favorite events để đồng bộ trạng thái
+    const handleFavoriteStatusChanged = (data: any) => {
+      // Chỉ update nếu event match với component hiện tại
+      if (data.type === type && data.id === id && isMounted.current) {
+        console.log(`🔄 Global event received for ${type} ${id}:`, data);
+        
+        // Cập nhật state trực tiếp từ event để tránh delay
+        if (data.action === 'added' || data.action === 'followed') {
+          setIsFavorited(true);
+        } else if (data.action === 'removed' || data.action === 'unfollowed') {
+          setIsFavorited(false);
+        }
+        
+        // Force re-check sau một khoảng thời gian ngắn để đảm bảo consistency
+        setTimeout(() => {
+          if (isMounted.current) {
+            checkFavoriteStatus();
+          }
+        }, 1000);
+      }
+    };
+
+    const handleAllFavoritesCleared = (data: any) => {
+      // Clear trạng thái nếu type phù hợp
+      if (data.type === type && isMounted.current) {
+        console.log(`🔄 All favorites cleared for ${type}`);
+        checkFavoriteStatus();
+      }
+    };
+
+    // Handle force refresh all event
+    const handleForceRefreshAll = () => {
+      if (isMounted.current) {
+        console.log(`🔄 Force refresh triggered for ${type} ${id}`);
+        // Clear cache trước khi refresh
+        if (type === 'artist') {
+          clearFollowStatusCache(id);
+        } else {
+          clearFavoriteStatusCache(id);
+        }
+        // Force check lại status
+        checkFavoriteStatus();
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    favoriteEvents.on('favoriteStatusChanged', handleFavoriteStatusChanged);
+    favoriteEvents.on('allFavoritesCleared', handleAllFavoritesCleared);
+    favoriteEvents.on('forceRefreshAll', handleForceRefreshAll);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      favoriteEvents.off('favoriteStatusChanged', handleFavoriteStatusChanged);
+      favoriteEvents.off('allFavoritesCleared', handleAllFavoritesCleared);
+      favoriteEvents.off('forceRefreshAll', handleForceRefreshAll);
+    };
+  }, [isLoggedIn, id, type]);
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isLoggedIn) {
+      toast.error('Vui lòng đăng nhập để thực hiện thao tác này');
+      return;
+    }
+
+    if (isLoading) return;
+
+    setIsLoading(true);
+    
+    // Optimistic update
+    const previousState = isFavorited;
+    setIsFavorited(!isFavorited);
+
+    try {
+      if (type === 'music') {
+        if (previousState) {
+          await removeFromFavorite(id);
+          toast.success('Đã xóa khỏi danh sách yêu thích');
+        } else {
+          await addToFavorite(id);
+          toast.success('Đã thêm vào danh sách yêu thích');
+        }
+      } else if (type === 'artist') {
+        if (previousState) {
+          await unfollowArtist(id);
+          toast.success('Đã hủy theo dõi nghệ sĩ');
+        } else {
+          const result = await followArtist(id);
+          if (result.success) {
+            toast.success('Đã theo dõi nghệ sĩ');
+          }
+        }
+      } else if (type === 'album') {
+        if (previousState) {
+          await unlikeAlbum(id);
+          toast.success('Đã bỏ thích album');
+        } else {
+          await likeAlbum(id);
+          toast.success('Đã thích album');
+        }
+      }
+
+      // Force re-check status sau khi thực hiện action thành công
+      setTimeout(() => {
+        if (isMounted.current) {
+          checkFavoriteStatus();
+        }
+      }, 1000);
+
+    } catch (error: any) {
+      console.error('❤️ Lỗi khi toggle favorite:', error);
+      
+      // Revert optimistic update
+      if (isMounted.current) {
+        setIsFavorited(previousState);
+      }
+      
+      const errorMessage = error.message || 'Có lỗi xảy ra khi thực hiện thao tác';
+      
+      // Xử lý trường hợp đã follow/favorite rồi
+      if (errorMessage.includes('Đã follow') || 
+          errorMessage.includes('đã follow') || 
+          errorMessage.includes('Đã theo dõi') ||
+          errorMessage.includes('đã theo dõi') ||
+          errorMessage.includes('Đã thích') ||
+          errorMessage.includes('đã thích') ||
+          errorMessage.includes('already') ||
+          errorMessage.includes('duplicate') ||
+          errorMessage.includes('exists')) {
+        console.warn('Action already performed:', errorMessage);
+        // Set state dựa trên thông báo lỗi
+        if (isMounted.current) {
+          setIsFavorited(true);
+        }
+        // Clear cache để force fresh check
+        if (type === 'artist') {
+          clearFollowStatusCache(id);
+        } else {
+          clearFavoriteStatusCache(id);
+        }
+        // Force re-check để đảm bảo state đúng
+        setTimeout(() => {
+          if (isMounted.current) {
+            checkFavoriteStatus();
+          }
+        }, 500);
+        
+        // Hiển thị thông báo thành công thay vì lỗi
+        if (type === 'artist') {
+          toast.success('Đã theo dõi nghệ sĩ này rồi');
+        } else if (type === 'music') {
+          toast.success('Đã thêm vào yêu thích rồi');
+        } else if (type === 'album') {
+          toast.success('Đã thích album này rồi');
+        }
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // Hiển thị loading khi đang check status
+  if (isCheckingStatus) {
+    return (
+      <div className={iconSize}>
+        <svg
+          className={`${iconSize} animate-pulse text-[#D3B995]`}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <button 
+      onClick={handleToggleFavorite}
+      disabled={isLoading || !isLoggedIn}
+      className={`${className} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''} ${!isLoggedIn ? 'opacity-50' : ''} relative group`}
+      title={
+        !isLoggedIn 
+          ? 'Vui lòng đăng nhập'
+          : type === 'artist' 
+            ? (isFavorited ? 'Bỏ theo dõi' : 'Theo dõi nghệ sĩ')
+            : (isFavorited ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích')
+      }
+    >
+      {isLoading ? (
+        <svg className={`${iconSize} animate-spin`} fill="none" viewBox="0 0 24 24">
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className={`${iconSize} transition-transform duration-200 ${isFavorited ? 'scale-110' : 'group-hover:scale-110'}`}
+          viewBox="0 0 20 20"
+          fill={isFavorited ? "currentColor" : "none"}
+          stroke="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+            clipRule="evenodd"
+            strokeWidth={isFavorited ? "0" : "2"}
+          />
+        </svg>
+      )}
+    </button>
+  );
+};
+
+/**
+ * -----------------------------
  *  REUSABLE COMPONENTS
  * -----------------------------
  */
@@ -205,7 +553,7 @@ const PlaylistCard: React.FC<{
     <figure className="relative mb-4 rounded-md overflow-hidden">
       <Image
         src={image}
-        alt={title}
+        alt={title || "Music"}
         width={500}
         height={500}
         className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
@@ -239,30 +587,12 @@ const PlaylistCard: React.FC<{
       <div className="mt-auto pt-3 flex justify-between items-center">
         <span className="text-xs text-[#8D6C61]">Classical</span>
         <div className="flex space-x-2">
-          <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-          <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-            </svg>
-          </button>
+          {songId && (
+            <FavoriteButton 
+              id={songId} 
+              type="music"
+            />
+          )}
         </div>
       </div>
     </div>
@@ -370,7 +700,7 @@ const AlbumCard: React.FC<{
       <figure className="relative mb-4 rounded-md overflow-hidden">
         <Image
           src={album.coverPhoto}
-          alt={album.name}
+          alt={album.name || "Album"}
           width={500}
           height={500}
           className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
@@ -457,44 +787,10 @@ const AlbumCard: React.FC<{
             )}
           </div>
           <div className="flex space-x-2">
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Thêm logic thích album ở đây
-              }}
-              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Thêm logic thêm vào playlist ở đây
-              }}
-              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-              </svg>
-            </button>
+            <FavoriteButton 
+              id={typeof album.id === 'string' ? parseInt(album.id) : album.id} 
+              type="album"
+            />
           </div>
         </div>
       </div>
@@ -505,98 +801,94 @@ const AlbumCard: React.FC<{
 // Artist card component
 const ArtistCard: React.FC<{
   artist: Artist;
-}> = ({ artist }) => (
-  <Link href={`/artist/${artist.id}`} className="block h-full">
-    <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer">
-      <figure className="relative mb-4 rounded-md overflow-hidden">
-        <Image
-          src={artist.picture}
-          alt={artist.name}
-          width={500}
-          height={500}
-          className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        {/* Play button */}
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Thêm logic phát nhạc của nghệ sĩ ở đây
-          }}
-          className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-          </svg>
-        </button>
-        <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          Artist
+}> = ({ artist }) => {
+  // Kiểm tra an toàn cho artist object
+  if (!artist || !artist.id) {
+    return (
+      <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg h-full flex flex-col">
+        <div className="w-full aspect-square bg-[#D3B995] mb-4 rounded-md animate-pulse"></div>
+        <div className="flex-1 flex flex-col">
+          <div className="h-5 bg-[#D3B995] rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-[#D3B995] rounded w-1/2"></div>
         </div>
-      </figure>
-      <div className="flex-1 flex flex-col">
-        <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
-          {artist.name}
-        </h3>
-        <p className="text-sm text-[#6D4C41] line-clamp-2">
-          {artist.description}
-        </p>
-        <div className="mt-auto pt-3 flex justify-between items-center">
-          <span className="text-xs text-[#8D6C61]">
-            {artist.followers} followers
-          </span>
-          <div className="flex space-x-2">
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Thêm logic thích nghệ sĩ ở đây
-              }}
-              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
+      </article>
+    );
+  }
+
+  // Xử lý ảnh fallback nếu picture bị thiếu hoặc không hợp lệ
+  const artistImage = artist.picture && artist.picture.trim() !== '' 
+    ? artist.picture 
+    : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjBFNkQ2Ii8+CjxwYXRoIGQ9Ik0yNTAgMjAwQzI3NyAyMDAgMzAwIDIyMyAzMDAgMjUwQzMwMCAyNzcgMjc3IDMwMCAyNTAgMzAwQzIyMyAzMDAgMjAwIDI3NyAyMDAgMjUwQzIwMCAyMjMgMjIzIDIwMCAyNTAgMjAwWiIgZmlsbD0iI0Q5QjdBQSIvPgo8cGF0aCBkPSJNMzUwIDM4MEM0MDAgMzUwIDQ1MCAzMDAgNDUwIDI1MEMzOTggMjUwIDM3MyAyNzUgMzUwIDMwMEMzMjcgMzI1IDMwMiAzNTAgMjUwIDM1MEM0MzEgMzQ5IDQ1MCAzNjUgMzUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHBhdGggZD0iTTE1MCAzODBDMTAwIDM1MCA1MCAzMDAgNTAgMjUwQzEwMiAyNTAgMTI3IDI3NSAxNTAgMzAwQzE3MyAzMjUgMTk4IDM1MCAyNTAgMzUwQzE5IDM0OSA1MCAzNjUgMTUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSIyMjYiIHk9IjIyNiI+CjxwYXRoIGQ9Ik0yNCA0QzM1IDQgNDQgMTMgNDQgMjRDNDQgMzUgMzUgNDQgMjQgNDRDMTMgNDQgNCAzNSA0IDI0QzQgMTMgMTMgNCAyNCA0WiIgZmlsbD0iIzNBMkEyNCIvPgo8Y2lyY2xlIGN4PSIyNCIgY3k9IjIwIiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMzRDMTIgMjggMTcuMzcgMjQgMjQgMjRDMzAuNjMgMjQgMzYgMjggMzYgMzQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4KPC9zdmc+'; // SVG placeholder của artist
+
+  return (
+    <Link href={`/artist/${artist.id}`} className="block h-full">
+      <article className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg hover:shadow-lg transition-all duration-300 group h-full flex flex-col cursor-pointer">
+        <figure className="relative mb-4 rounded-md overflow-hidden">
+          <Image
+            src={artistImage}
+            alt={artist.name || "Artist"}
+            width={500}
+            height={500}
+            className="w-full aspect-square object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105 group-hover:grayscale-0 group-hover:sepia-0"
+            onError={(e) => {
+              // Fallback nếu ảnh load lỗi
+              const target = e.target as HTMLImageElement;
+              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjBFNkQ2Ii8+CjxwYXRoIGQ9Ik0yNTAgMjAwQzI3NyAyMDAgMzAwIDIyMyAzMDAgMjUwQzMwMCAyNzcgMjc3IDMwMCAyNTAgMzAwQzIyMyAzMDAgMjAwIDI3NyAyMDAgMjUwQzIwMCAyMjMgMjIzIDIwMCAyNTAgMjAwWiIgZmlsbD0iI0Q5QjdBQSIvPgo8cGF0aCBkPSJNMzUwIDM4MEM0MDAgMzUwIDQ1MCAzMDAgNDUwIDI1MEMzOTggMjUwIDM3MyAyNzUgMzUwIDMwMEMzMjcgMzI1IDMwMiAzNTAgMjUwIDM1MEM0MzEgMzQ5IDQ1MCAzNjUgMzUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHBhdGggZD0iTTE1MCAzODBDMTAwIDM1MCA1MCAzMDAgNTAgMjUwQzEwMiAyNTAgMTI3IDI3NSAxNTAgMzAwQzE3MyAzMjUgMTk4IDM1MCAyNTAgMzUwQzE5IDM0OSA1MCAzNjUgMTUwIDM4MFoiIGZpbGw9IiNEOUI3QUEiLz4KPHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSIyMjYiIHk9IjIyNiI+CjxwYXRoIGQ9Ik0yNCA0QzM1IDQgNDQgMTMgNDQgMjRDNDQgMzUgMzUgNDQgMjQgNDRDMTMgNDQgNCAzNSA0IDI0QzQgMTMgMTMgNCAyNCA0WiIgZmlsbD0iIzNBMkEyNCIvPgo8Y2lyY2xlIGN4PSIyNCIgY3k9IjIwIiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMzRDMTIgMjggMTcuMzcgMjQgMjQgMjRDMzAuNjMgMjQgMzYgMjggMzYgMzQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4KPC9zdmc+';
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          {/* Play button */}
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              // Thêm logic phát nhạc của nghệ sĩ ở đây
+            }}
+            className="absolute bottom-4 right-4 bg-white text-[#3A2A24] rounded-full p-3 transform translate-y-14 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-[#C8A97E] hover:text-white"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Thêm logic thêm vào playlist ở đây
-              }}
-              className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-              </svg>
-            </button>
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </button>
+          <div className="absolute top-3 left-3 bg-[#3A2A24]/80 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            Artist
+          </div>
+        </figure>
+        <div className="flex-1 flex flex-col">
+          <h3 className="font-semibold text-lg mb-1 text-[#3A2A24] truncate">
+            {artist.name || "Unknown Artist"}
+          </h3>
+          <p className="text-sm text-[#6D4C41] line-clamp-2">
+            {artist.description || "No description available"}
+          </p>
+          <div className="mt-auto pt-3 flex justify-between items-center">
+            <span className="text-xs text-[#8D6C61]">
+              {artist.followers !== undefined && artist.followers !== null 
+                ? artist.followers > 0 
+                  ? `${artist.followers.toLocaleString()} followers`
+                  : "New artist"
+                : "No followers info"
+              }
+            </span>
+            <div className="flex space-x-2">
+              <FavoriteButton 
+                id={artist.id} 
+                type="artist"
+              />
+            </div>
           </div>
         </div>
-      </div>
-    </article>
-  </Link>
-);
+      </article>
+    </Link>
+  );
+};
 
 // Instrument card component
 // const InstrumentCard: React.FC<{
@@ -908,7 +1200,7 @@ const InstrumentSpotlightSection: React.FC<{
           <div className="bg-[#F0E6D6] border border-[#D3B995] p-5 rounded-lg animate-pulse shadow-sm">
             <div className="h-10 bg-[#D3B995] rounded mb-6"></div>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 mb-4">
+              <div key={`instrument-sidebar-loading-${i}`} className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-md bg-[#D3B995]"></div>
                 <div className="flex-1">
                   <div className="h-5 bg-[#D3B995] rounded w-3/4 mb-2"></div>
@@ -920,7 +1212,7 @@ const InstrumentSpotlightSection: React.FC<{
           <div className="md:col-span-3 grid grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div
-                key={i}
+                key={`instrument-songs-loading-${i}`}
                 className="bg-[#F0E6D6] border border-[#D3B995] p-5 rounded-lg animate-pulse shadow-sm"
               >
                 <div className="w-full aspect-square bg-[#D3B995] mb-4 rounded-md"></div>
@@ -1140,16 +1432,10 @@ const InstrumentSpotlightSection: React.FC<{
                     </p>
                     <div className="mt-auto flex justify-between items-center">
                       <div className="text-xs text-[#8D6C61]">3:45</div>
-                      <button className="text-[#C8A97E] hover:text-[#A67C52] transition-colors">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-                        </svg>
-                      </button>
+                      <FavoriteButton 
+                        id={song.id} 
+                        type="music"
+                      />
                     </div>
                   </div>
                 </article>
@@ -1193,7 +1479,7 @@ const EraStyleSection: React.FC<{
     return (
       <ContentSection title="Eras and Styles" showAllLink="#">
         {[...Array(5)].map((_, index) => (
-          <div key={index} className="animate-pulse">
+          <div key={`era-loading-${index}`} className="animate-pulse">
             <div className="bg-gray-200 rounded-lg h-48 mb-2"></div>
             <div className="bg-gray-200 rounded h-4 w-3/4 mb-2"></div>
             <div className="bg-gray-200 rounded h-4 w-1/2"></div>
@@ -1254,46 +1540,7 @@ const EraStyleSection: React.FC<{
               </p>
               <div className="mt-auto pt-3 flex justify-between items-center">
                 <span className="text-xs text-[#8D6C61]">Classical</span>
-                <div className="flex space-x-2">
-                  <button 
-                    className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Handle favorite functionality
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                  <button 
-                    className="text-[#C8A97E] hover:text-[#A67C52] transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Handle add to playlist functionality
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-                    </svg>
-                  </button>
-                </div>
+                {/* Bỏ nút tim theo yêu cầu */}
               </div>
             </div>
           </article>
@@ -1337,6 +1584,45 @@ const HomePage: React.FC = () => {
   const [instrumentsLoading, setInstrumentsLoading] = useState(false);
   const [erasLoading, setErasLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Clear cache khi component mount hoặc window focus để đảm bảo data fresh
+  useEffect(() => {
+    const handleFocus = () => {
+      // Clear cả follow status cache và favorite status cache khi user quay lại page để force refresh
+      clearFollowStatusCache();
+      clearFavoriteStatusCache();
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Clear cache khi page trở thành visible
+        clearFollowStatusCache();
+        clearFavoriteStatusCache();
+      }
+    };
+
+    // Listen to favorite events để force refresh Top Artists khi có thay đổi
+    const handleFavoriteStatusChanged = (data: any) => {
+      if (data.type === 'artist') {
+        console.log('🔄 Artist follow status changed, force refreshing Top Artists');
+        // Clear cache và force refresh all favorite buttons
+        clearFollowStatusCache();
+        favoriteEvents.forceRefreshAll();
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    favoriteEvents.on('favoriteStatusChanged', handleFavoriteStatusChanged);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      favoriteEvents.off('favoriteStatusChanged', handleFavoriteStatusChanged);
+    };
+  }, []);
 
   // Handle play click function
   const handlePlayClick = (songId: number) => {
@@ -1519,11 +1805,22 @@ const HomePage: React.FC = () => {
     const fetchTopArtists = async () => {
       try {
         setArtistsLoading(true);
+        setApiError(null);
 
-        const artists = await getTopArtists(5);
-        setTopArtists(artists);
+        // Sử dụng getAllArtists để lấy tất cả nghệ sĩ thay vì chỉ top 5
+        const artistsResponse = await getAllArtists(1, 20); // Lấy 20 nghệ sĩ đầu tiên
+        console.log("🎭 All Artists data from API:", artistsResponse); 
+        
+        if (artistsResponse.success && artistsResponse.data.items.length > 0) {
+          setTopArtists(artistsResponse.data.items);
+        } else {
+          console.warn("Không có dữ liệu artists từ API getAllArtists");
+          setTopArtists([]);
+        }
       } catch (error) {
-        console.error("Lỗi khi lấy danh sách nghệ sĩ hàng đầu:", error);
+        console.error("Lỗi khi lấy danh sách nghệ sĩ:", error);
+        setApiError("Không thể tải danh sách nghệ sĩ. Vui lòng thử lại sau.");
+        setTopArtists([]);
       } finally {
         setArtistsLoading(false);
       }
@@ -1648,7 +1945,7 @@ const HomePage: React.FC = () => {
                   .fill(0)
                   .map((_, i) => (
                     <div
-                      key={i}
+                      key={`recommended-loading-${i}`}
                       className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg animate-pulse"
                     >
                       <div className="w-full aspect-square bg-[#D3B995] mb-4 rounded-md"></div>
@@ -1668,7 +1965,9 @@ const HomePage: React.FC = () => {
                   />
                 ))
               : // Fallback to default playlists if API fails
-                playlistData.map((p, i) => <PlaylistCard key={i} {...p} />)}
+                playlistData.map((p) => (
+                  <PlaylistCard key={p.id} {...p} />
+                ))}
           </ContentSection>
 
           {/* Popular Albums */}
@@ -1679,7 +1978,7 @@ const HomePage: React.FC = () => {
                 .fill(0)
                 .map((_, i) => (
                   <div
-                    key={i}
+                    key={`albums-loading-${i}`}
                     className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg animate-pulse"
                   >
                     <div className="w-full aspect-square bg-[#D3B995] mb-4 rounded-md"></div>
@@ -1730,7 +2029,7 @@ const HomePage: React.FC = () => {
                 .fill(0)
                 .map((_, i) => (
                   <div
-                    key={i}
+                    key={`timeless-loading-${i}`}
                     className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg animate-pulse"
                   >
                     <div className="w-full aspect-square bg-[#D3B995] mb-4 rounded-md"></div>
@@ -1759,14 +2058,14 @@ const HomePage: React.FC = () => {
           </ContentSection>
 
           {/* Top Artists */}
-          <ContentSection title="Top Artists" showAllLink="#">
+          <ContentSection title="Top Artists" showAllLink="/user-artists">
             {artistsLoading ? (
               // Loading state
               Array(5)
                 .fill(0)
                 .map((_, i) => (
                   <div
-                    key={i}
+                    key={`artists-loading-${i}`}
                     className="bg-[#F0E6D6] border border-[#D3B995] p-4 rounded-lg animate-pulse"
                   >
                     <div className="w-full aspect-square bg-[#D3B995] mb-4 rounded-md"></div>
@@ -1779,10 +2078,46 @@ const HomePage: React.FC = () => {
                 <ArtistCard key={artist.id} artist={artist} />
               ))
             ) : (
-              <div className="text-center py-16 bg-[#F0E6D6] border border-[#D3B995] rounded-lg text-[#6D4C41]">
-                <p className="italic text-lg">
-                  No top artists available at the moment.
+              <div className="col-span-5 text-center py-16 bg-[#F0E6D6] border border-[#D3B995] rounded-lg text-[#6D4C41]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-16 w-16 mx-auto mb-4 text-[#A67C52]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                <p className="italic text-lg text-[#6D4C41]">
+                  {apiError || "Không có nghệ sĩ nào hiện tại. Vui lòng thử lại sau."}
                 </p>
+                <button
+                  onClick={async () => {
+                    try {
+                      setArtistsLoading(true);
+                      setApiError(null);
+                      // Sử dụng getAllArtists thay vì getTopArtists
+                      const artistsResponse = await getAllArtists(1, 20);
+                      if (artistsResponse.success && artistsResponse.data.items.length > 0) {
+                        setTopArtists(artistsResponse.data.items);
+                      }
+                    } catch (error) {
+                      console.error("Retry failed:", error);
+                      setApiError("Không thể tải danh sách nghệ sĩ. Vui lòng thử lại sau.");
+                    } finally {
+                      setArtistsLoading(false);
+                    }
+                  }}
+                  className="mt-4 px-6 py-3 bg-[#C8A97E] text-white rounded-full hover:bg-[#A67C52] transition-colors"
+                  disabled={artistsLoading}
+                >
+                  {artistsLoading ? "Đang tải..." : "Thử lại"}
+                </button>
               </div>
             )}
           </ContentSection>

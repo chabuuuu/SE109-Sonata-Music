@@ -8,6 +8,12 @@ import Navbar from "@/components/navbar";
 import { getArtistById, Artist } from "@/services/artistService";
 import { searchMusicsByArtist, Music } from "@/services/musicService";
 import { 
+  followArtist, 
+  unfollowArtist, 
+  checkIsFollowingArtist 
+} from "@/services/favoriteService";
+import { toast } from 'react-hot-toast';
+import { 
   Calendar, 
   MapPin, 
   Users, 
@@ -34,6 +40,7 @@ const ArtistDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'biography' | 'works' | 'timeline'>('overview');
   const [musics, setMusics] = useState<Music[]>([]);
   const [musicsLoading, setMusicsLoading] = useState(false);
@@ -53,6 +60,9 @@ const ArtistDetailPage: React.FC = () => {
         
         if (artistData) {
           setArtist(artistData);
+          // Kiểm tra follow status
+          const followStatus = await checkIsFollowingArtist(artistId);
+          setIsFollowing(followStatus);
         } else {
           setError("Không tìm thấy thông tin nghệ sĩ");
         }
@@ -98,6 +108,40 @@ const ArtistDetailPage: React.FC = () => {
 
     fetchArtistMusics();
   }, [activeTab, artistId]);
+
+  // Handle follow/unfollow
+  const handleFollowToggle = async () => {
+    try {
+      setFollowLoading(true);
+      
+      if (isFollowing) {
+        await unfollowArtist(artistId);
+        setIsFollowing(false);
+        toast.success('Đã hủy theo dõi nghệ sĩ');
+        // Cập nhật số followers
+        if (artist) {
+          setArtist(prev => prev ? { ...prev, followers: prev.followers - 1 } : prev);
+        }
+      } else {
+        await followArtist(artistId);
+        setIsFollowing(true);
+        toast.success('Đã theo dõi nghệ sĩ');
+        // Cập nhật số followers
+        if (artist) {
+          setArtist(prev => prev ? { ...prev, followers: prev.followers + 1 } : prev);
+        }
+      }
+    } catch (error) {
+      console.error('Lỗi khi follow/unfollow:', error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Không thể thực hiện thao tác này');
+      }
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Không rõ";
@@ -279,15 +323,25 @@ const ArtistDetailPage: React.FC = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-4">
                   <button
-                    onClick={() => setIsFollowing(!isFollowing)}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    onClick={handleFollowToggle}
+                    disabled={followLoading}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
                       isFollowing 
                         ? 'bg-[#C8A97E] text-white hover:bg-[#A67C52]'
                         : 'bg-white/80 text-[#3A2A24] hover:bg-[#C8A97E] hover:text-white border border-[#C8A97E]'
                     }`}
                   >
-                    <Heart className={`w-5 h-5 ${isFollowing ? 'fill-current' : ''}`} />
-                    {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                    {followLoading ? (
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Heart className={`w-5 h-5 ${isFollowing ? 'fill-current' : ''}`} />
+                    )}
+                    {followLoading 
+                      ? 'Đang xử lý...' 
+                      : isFollowing 
+                        ? 'Đang theo dõi' 
+                        : 'Theo dõi'
+                    }
                   </button>
                   
                   <button className="flex items-center gap-2 px-6 py-3 bg-white/80 text-[#3A2A24] rounded-xl font-semibold hover:bg-[#E6D7C3] transition-colors border border-[#D3B995]">
