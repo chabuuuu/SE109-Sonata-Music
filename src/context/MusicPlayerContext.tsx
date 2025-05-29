@@ -9,7 +9,7 @@ import React, {
   ReactNode,
 } from "react";
 import axios from "axios";
-import { getAuthHeaders } from "@/services/authService";
+import { getAuthHeaders, getUserId } from "@/services/authService";
 import {
   addToFavorite,
   removeFromFavorite,
@@ -81,6 +81,9 @@ interface MusicPlayerState {
   toggleExpandPlayer: () => void;
   volume: number;
   changeVolume: (newVolume: number) => void;
+  selectedQuality: "128kbps" | "320kbps";
+  isUserPremium: boolean | null;
+  changeSelectedQuality: (quality: "128kbps" | "320kbps") => void;
 
   // ... các hàm khác nếu cần
 }
@@ -104,6 +107,11 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false); // State loading mới
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
+  const [selectedQuality, setSelectedQuality] = useState<"128kbps" | "320kbps">(
+    "128kbps"
+  );
+  const [isUserPremium, setIsUserPremium] = useState<boolean | null>(null);
+  const [listenerId, setListenerId] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -112,6 +120,46 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const currentMusic =
     currentTrackIndex !== null ? playlist[currentTrackIndex] : null;
+
+  // Lấy listenerId khi component mount (hoặc khi người dùng đăng nhập)
+  useEffect(() => {
+    const id = getUserId(); // Hàm này bạn cần tự implement
+    setListenerId(id?.toString() || null);
+  }, []); // Có thể thêm dependency nếu listenerId có thể thay đổi sau khi mount
+
+  // Fetch trạng thái premium khi có listenerId
+  useEffect(() => {
+    const fetchPremiumStatus = async () => {
+      if (!listenerId) {
+        setIsUserPremium(false); // Nếu không có listenerId, coi như không premium
+        return;
+      }
+      try {
+        setIsUserPremium(null); // Đặt lại để hiển thị loading nếu cần
+        const response = await axios.get(
+          `https://api.sonata.io.vn/api/v1/listener/check-is-premium/${listenerId}`,
+          { headers: getAuthHeaders() }
+        );
+        if (response.data.success) {
+          console.log(
+            "CONTEXT PREMIUM: User is premium:",
+            response.data.data.isPremium
+          );
+          setIsUserPremium(response.data.data.isPremium);
+        } else {
+          console.warn(
+            "CONTEXT PREMIUM: Check premium API call not successful",
+            response.data.message
+          );
+          setIsUserPremium(false);
+        }
+      } catch (error) {
+        console.error("CONTEXT PREMIUM: Error fetching premium status:", error);
+        setIsUserPremium(false); // Mặc định là false nếu có lỗi
+      }
+    };
+    fetchPremiumStatus();
+  }, [listenerId]);
 
   // Hàm chuyển đổi dữ liệu từ API Queue sang định dạng GlobalMusic
   const mapApiQueueToGlobalMusic = (
@@ -196,6 +244,14 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
         return updatedPlaylist;
       });
 
+      let quality = "128";
+
+      if (selectedQuality === "320kbps" && isUserPremium) {
+        quality = "320";
+      }
+
+      detailedMusicData.resourceLink = `${detailedMusicData.resourceLink}&quality=${quality}`;
+
       // 5. Fetch và phát audio từ `resourceLink` mới
       const audioBlobResponse = await axios.get(
         detailedMusicData.resourceLink,
@@ -221,6 +277,27 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
       setCurrentTrackIndex(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const changeSelectedQuality = (quality: "128kbps" | "320kbps") => {
+    console.log(`CONTEXT QUALITY: Attempting to change quality to ${quality}`);
+    if (quality === "320kbps" && isUserPremium === false) {
+      // Kiểm tra isUserPremium rõ ràng
+      alert("Chất lượng 320kbps yêu cầu tài khoản Premium. Vui lòng nâng cấp!");
+      return;
+    }
+
+    if (selectedQuality === quality) return; // Không làm gì nếu chất lượng không đổi
+
+    setSelectedQuality(quality);
+
+    // Nếu có bài hát đang phát, phát lại với chất lượng mới
+    if (currentMusic) {
+      console.log(
+        `CONTEXT QUALITY: Quality changed to ${quality}. Reloading song: ${currentMusic.name} (ID: ${currentMusic.id})`
+      );
+      playSongById(currentMusic.id); // Gọi lại playSongById để áp dụng chất lượng mới
     }
   };
 
@@ -361,6 +438,9 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
     changeVolume,
     seek,
     toggleExpandPlayer,
+    selectedQuality,
+    isUserPremium,
+    changeSelectedQuality,
   };
 
   return (
