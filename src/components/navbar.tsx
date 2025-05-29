@@ -2,6 +2,7 @@
 
 // import React, { useState } from "react";
 import Link from "next/link";
+import { Gift } from "lucide-react";
 // import { useAuth } from "@/context/AuthContext";
 // import { useRouter } from "next/navigation";
 
@@ -76,6 +77,18 @@ const ClassicalNavbar = () => {
                   </svg>
                 </div>
                 <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">My Favorite</span>
+              </Link>
+            </li>
+
+            <li className="overflow-hidden rounded-md">
+              <Link 
+                href="/user-exchange-premium" 
+                className="flex items-center gap-4 text-[#C8A97E] w-full p-3 transition-all duration-300 hover:bg-[#48352F] rounded-md group"
+              >
+                <div className="w-6 h-6 flex items-center justify-center text-[#C8A97E] group-hover:text-[#F8F0E3]">
+                  <Gift />
+                </div>
+                <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Exchange Premium</span>
               </Link>
             </li>
 
