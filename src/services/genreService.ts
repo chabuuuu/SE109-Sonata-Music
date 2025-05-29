@@ -21,7 +21,7 @@ export interface GenreSearchResponse {
     total: number;
     items: Genre[];
   };
-  errors: null | any;
+  errors: null | unknown;
 }
 
 /**
@@ -79,7 +79,7 @@ export async function searchGenres(
     if (response.data && response.data.success && response.data.data) {
       const { total, items } = response.data.data;
       
-      const mappedItems = (items || []).map((genre: any) => ({
+      const mappedItems = (items || []).map((genre: Genre) => ({
         id: genre.id || 0,
         name: genre.name || 'Unknown Genre',
         description: genre.description || '',

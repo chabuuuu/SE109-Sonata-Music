@@ -410,7 +410,7 @@ export default function AlbumsPage() {
                         </svg>
                         <p className="text-[#3A2A24] font-medium">
                           Tìm thấy <span className="text-[#C8A97E] font-bold">{searchResults.total}</span> album cho 
-                          <span className="text-[#6D4C41] font-semibold ml-1">"{term}"</span>
+                          <span className="text-[#6D4C41] font-semibold ml-1">&quot;{term}&quot;</span>
                         </p>
                       </>
                     ) : (

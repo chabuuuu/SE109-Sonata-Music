@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Music } from './albumService';
 
 export interface Period {
   id: number;
@@ -20,7 +21,7 @@ export interface PeriodSearchResponse {
     total: number;
     items: Period[];
   };
-  errors: null | any;
+  errors: null | unknown;
 }
 
 /**
@@ -55,7 +56,7 @@ export async function searchPeriods(
     if (response.data && response.data.success && response.data.data) {
       const { total, items } = response.data.data;
       
-      const mappedItems = (items || []).map((period: any) => ({
+      const mappedItems = (items || []).map((period: Period) => ({
         id: period.id || 0,
         name: period.name || 'Unknown Period',
         description: period.description || '',
@@ -240,7 +241,7 @@ export async function getMusicsByPeriodId(
   periodId: string | number,
   rpp: number = 20,
   page: number = 1
-): Promise<{ total: number; items: any[] }> {
+): Promise<{ total: number; items: unknown[] }> {
   try {
     const url = `https://api.sonata.io.vn/api/v1/music/search?rpp=${rpp}&page=${page}`;
     

@@ -6,7 +6,6 @@ import Image from "next/image";
 const FullScreenPlayer = () => {
   const {
     currentMusic,
-    isPlaying,
     togglePlayPause,
     currentTime,
     duration,

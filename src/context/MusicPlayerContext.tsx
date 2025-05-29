@@ -285,7 +285,7 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
   const [duration, setDuration] = useState(0);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false); // State loading mới
-  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [audioSrc, setAudioSrc] = useState<string >("null");
   const [error, setError] = useState<string>("");
 
   const audioRef = useRef<HTMLAudioElement>(null);

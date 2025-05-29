@@ -11,7 +11,7 @@ export interface CategorySearchResponse {
     total: number;
     items: Category[];
   };
-  errors: null | any;
+  errors: null | unknown;
 }
 
 // Interface cho raw category data từ API
@@ -39,7 +39,7 @@ export async function getCategories(): Promise<Category[]> {
     
     // Kiểm tra response theo cấu trúc API thực tế
     if (response.data && response.data.success && Array.isArray(response.data.data)) {
-      return response.data.data.map((category: RawCategoryData) => ({
+      return response.data.data.map((category: Category) => ({
         id: category.id || '',
         name: category.name || 'Unknown Category',
         picture: category.picture || '/default-category.jpg',

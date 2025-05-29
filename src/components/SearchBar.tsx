@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { searchAlbums, Album } from '@/services/albumService';
 import { searchArtists, Artist } from '@/services/artistService';
-import { searchCategories, CategorySearchResponse } from '@/services/categoryService';
+import { searchCategories } from '@/services/categoryService';
 import { Category } from '@/interfaces/category';
 import { searchGenres, Genre } from '@/services/genreService';
 import { searchMusics, Music } from '@/services/musicService';
 import { searchInstruments, Instrument } from '@/services/instrumentService';
 import { searchOrchestrasByKeyword, Orchestra } from '@/services/orchestraService';
+import Image from "next/image";
 
 const SearchBar: React.FC = () => {
   const router = useRouter();

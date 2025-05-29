@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { getAuthHeaders, isAuthenticated } from "@/services/authService";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
+import Link from "next/link";
 
 // Interfaces
 interface Genre {
@@ -118,22 +119,8 @@ interface ApiResponse {
   success: boolean;
   message: string;
   data: Music;
-  errors: null | any;
+  errors: null | unknown;
 }
-
-// Enhanced theme với gradient và shadows
-const theme = {
-  primary: "#C8A97E",
-  primaryHover: "#A67C52",
-  secondary: "#F8F0E3",
-  accent: "#E6D7C3",
-  text: "#2D1B14",
-  textSecondary: "#5D4037",
-  border: "#D3B995",
-  background: "#FEFCF8",
-  glass: "rgba(255, 255, 255, 0.25)",
-  glassBorder: "rgba(200, 169, 126, 0.2)",
-};
 
 // Enhanced Card component với glassmorphism
 const Card = ({
@@ -246,7 +233,7 @@ const ErrorDisplay = ({ error }: { error: string }) => (
             Có vẻ như bài hát này đã biến mất vào không gian âm nhạc. Hãy thử
             khám phá những giai điệu khác né!
           </p>
-          <a
+          <Link
             href="/"
             className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#C8A97E] to-[#A67C52] text-white rounded-full font-bold transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-[#C8A97E]/50"
           >
@@ -263,8 +250,8 @@ const ErrorDisplay = ({ error }: { error: string }) => (
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Khám phá âm nhạc
-          </a>
+            Quay lại
+          </Link>
         </Card>
       </main>
     </div>
@@ -831,7 +818,7 @@ const TagsSection = ({ music }: { music: Music }) => {
       </div>
 
       <div className="space-y-4">
-        {tagSections.map((section, sectionIndex) => (
+        {tagSections.map((section) => (
           <div key={section.title}>
             <div className="flex items-center gap-2 mb-2">
               <h4 className="text-sm font-semibold text-[#5D4037]">
@@ -860,62 +847,6 @@ const TagsSection = ({ music }: { music: Music }) => {
   );
 };
 
-// Enhanced Stats Card
-const StatsCard = ({ music }: { music: Music }) => (
-  <Card className="p-6" glass hover>
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-10 h-10 bg-gradient-to-br from-[#C8A97E] to-[#A67C52] rounded-lg flex items-center justify-center shadow-lg">
-        <svg
-          className="w-6 h-6 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-      </div>
-      <div>
-        <h3 className="text-xl font-bold text-[#2D1B14] font-['Playfair_Display',serif]">
-          Thống kê
-        </h3>
-        <p className="text-[#5D4037] text-sm">Hiệu suất bài hát</p>
-      </div>
-    </div>
-
-    <div className="grid grid-cols-2 gap-4">
-      <div className="text-center p-4 bg-gradient-to-br from-[#F8F0E3]/50 to-[#E6D7C3]/30 rounded-xl">
-        <div className="text-3xl font-bold text-[#C8A97E] mb-2">
-          {music.listenCount.toLocaleString()}
-        </div>
-        <div className="text-sm text-[#5D4037]">Lượt nghe</div>
-      </div>
-      <div className="text-center p-4 bg-gradient-to-br from-[#F8F0E3]/50 to-[#E6D7C3]/30 rounded-xl">
-        <div className="text-3xl font-bold text-[#C8A97E] mb-2">
-          {music.favoriteCount.toLocaleString()}
-        </div>
-        <div className="text-sm text-[#5D4037]">Yêu thích</div>
-      </div>
-    </div>
-
-    <div className="mt-6 p-4 bg-gradient-to-r from-[#F8F0E3]/30 to-[#E6D7C3]/30 rounded-xl border border-[#D3B995]/20">
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-2 text-[#5D4037]">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="font-medium">Trạng thái</span>
-        </div>
-        <span className="px-3 py-1 bg-gradient-to-r from-green-100 to-green-200 text-green-700 rounded-full text-xs font-bold">
-          {music.approved ? "✓ Đã duyệt" : "⏳ Chờ duyệt"}
-        </span>
-      </div>
-    </div>
-  </Card>
-);
-
 // Main component với enhanced layout
 const MusicPlayer = () => {
   const params = useParams();
@@ -927,7 +858,6 @@ const MusicPlayer = () => {
     currentMusic, // Bài hát hiện tại trong player toàn cục
     isPlaying, // Trạng thái phát/dừng của player toàn cục
     isLoading: isPlayerLoading, // Trạng thái loading của player toàn cục
-    togglePlayPause, // Để sử dụng khi bài hát đã được tải
   } = useMusicPlayer();
 
   // State của trang, dùng để fetch dữ liệu và quản lý UI cục bộ (lời bài hát, quiz)
@@ -1002,7 +932,6 @@ const MusicPlayer = () => {
     playSongById(music.id);
   };
 
-  const handlePlayPause = () => togglePlayPause();
   const handleShowLyrics = () => setShowLyrics(!showLyrics);
   const handleQuiz = () => {
     if (music && music.quizzes && music.quizzes.length > 0) {

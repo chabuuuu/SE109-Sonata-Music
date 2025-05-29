@@ -7,7 +7,7 @@ export interface TimelessResponse {
   success: boolean;
   message: string;
   data: Song[];
-  errors: null | any;
+  errors: null | unknown;
 }
 
 export const getTimelessPieces = async (topN: number = 5): Promise<Song[]> => {

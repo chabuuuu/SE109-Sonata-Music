@@ -18,7 +18,7 @@ export interface EraStyleResponse {
   success: boolean;
   message: string;
   data: EraStyle[];
-  errors: null | any;
+  errors: null | unknown;
 }
 
 export const getErasAndStyles = async (topN: number = 5): Promise<EraStyle[]> => {

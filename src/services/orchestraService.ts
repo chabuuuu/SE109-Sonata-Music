@@ -20,7 +20,7 @@ export interface OrchestraSearchResponse {
     total: number;
     items: Orchestra[];
   };
-  errors: null | any;
+  errors: null | unknown;
 }
 
 /**
@@ -55,7 +55,7 @@ export async function searchOrchestras(
     if (response.data && response.data.success && response.data.data) {
       const { total, items } = response.data.data;
       
-      const mappedItems = (items || []).map((orchestra: any) => ({
+      const mappedItems = (items || []).map((orchestra: Orchestra) => ({
         id: orchestra.id || '0',
         name: orchestra.name || 'Unknown Orchestra',
         description: orchestra.description || '',

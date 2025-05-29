@@ -56,7 +56,7 @@ export async function register(
     } else {
       throw new Error(response.data.message || "Registration failed");
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
         // Lỗi từ server (4xx, 5xx)
@@ -69,7 +69,7 @@ export async function register(
       }
     }
     // Lỗi khác
-    throw new Error(error.message || "An error occurred during registration");
+    throw new Error("An error occurred during registration");
   }
 }
 
@@ -151,7 +151,7 @@ export async function activateEmail(
     } else {
       throw new Error(response.data.message || "Activation failed");
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
         // Lỗi từ server (4xx, 5xx)
@@ -165,7 +165,7 @@ export async function activateEmail(
     }
     // Lỗi khác
     throw new Error(
-      error.message || "An error occurred during account activation"
+      "An error occurred during account activation"
     );
   }
 }

@@ -25,7 +25,7 @@ export interface RecommendResponse {
   success: boolean;
   message: string;
   data: Song[];
-  errors: null | any;
+  errors: null | unknown;
 }
 
 export const getRecommendedSongs = async (topN: number = 5): Promise<Song[]> => {

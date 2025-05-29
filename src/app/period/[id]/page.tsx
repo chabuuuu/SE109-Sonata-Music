@@ -8,7 +8,9 @@ import Navbar from "@/components/navbar";
 import SearchBar from "@/components/SearchBar";
 import BottomBanner from "@/components/bottom_banner";
 import { getPeriodById, getMusicsByPeriodId, Period } from "@/services/periodService";
+import { Music } from "@/services/musicService";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
+import { Artist } from "@/services/artistService";
 
 /**
  * Component trang chi tiết period với layout nhất quán
@@ -20,7 +22,7 @@ const PeriodDetailPage: React.FC = () => {
   const { playSongById } = useMusicPlayer();
   
   const [period, setPeriod] = useState<Period | null>(null);
-  const [musics, setMusics] = useState<any[]>([]);
+  const [musics, setMusics] = useState<Music[]>([]);
   const [loading, setLoading] = useState(true);
   const [musicsLoading, setMusicsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,7 +179,7 @@ const PeriodDetailPage: React.FC = () => {
         <div className="min-w-0 flex-1">
           <h4 className="font-semibold text-[#3A2A24] truncate font-['Playfair_Display',serif] text-lg">{music.name}</h4>
           <p className="text-sm text-[#6D4C41] truncate font-['Playfair_Display',serif]">
-            {music.artists?.map((artist: any) => artist.name).join(", ") || "Unknown Artist"}
+            {music.artists?.map((artist: Artist) => artist.name).join(", ") || "Unknown Artist"}
           </p>
         </div>
       </div>

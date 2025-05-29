@@ -16,17 +16,6 @@ import {
   ArtistSearchResponse 
 } from "@/services/artistService";
 
-// Giả sử bạn có một file định nghĩa type chung
-// Nếu không, bạn có thể định nghĩa nó ở đây để TypeScript không báo lỗi
-interface Music {
-  id: string;
-  name: string;
-  artist: string;
-  coverPhoto: string;
-  resourceLink: string;
-  favoriteCount: number;
-  lyrics?: string;
-}
 
 // Helper function để viết hoa chữ cái đầu tiên
 const capitalizeFirstLetter = (str: string): string => {
@@ -158,7 +147,6 @@ export default function ClassicalMusicArtistsPage() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalArtists, setTotalArtists] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchResults, setSearchResults] = useState<ArtistSearchResponse | null>(null);
 
   /* ────── Dropdown outside‑click helper ────── */
@@ -560,7 +548,7 @@ export default function ClassicalMusicArtistsPage() {
                       </svg>
                       <p className="text-[#3A2A24] font-medium">
                         Tìm thấy <span className="text-[#C8A97E] font-bold">{searchResults.data.total}</span> kết quả cho 
-                        <span className="text-[#6D4C41] font-semibold ml-1">"{searchTerm}"</span>
+                        <span className="text-[#6D4C41] font-semibold ml-1">&ldquo;{searchTerm}&ldquo;</span>
                       </p>
                     </>
                   ) : (

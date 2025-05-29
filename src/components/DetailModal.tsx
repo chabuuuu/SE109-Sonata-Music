@@ -31,23 +31,15 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
   });
   const [coverArtUrl, setCoverArtUrl] = useState(data.picture);
 
-  // update Edit data when coverArtUrl change
-
-  useEffect(() => {
-    setEditData((prev) => ({
-      ...prev,
-      picture: coverArtUrl || data.picture, // Use coverArtUrl if available, else data.picture
-    }));
-  }, [coverArtUrl, data.picture]);
-
+  // Update editData and coverArtUrl when data changes, and update editData when coverArtUrl changes
   useEffect(() => {
     setEditData({
       name: data.title,
-      picture: coverArtUrl,
+      picture: coverArtUrl || data.picture,
       description: data.description,
     });
     setCoverArtUrl(data.picture);
-  }, [data]);
+  }, [data, coverArtUrl]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
@@ -172,7 +164,7 @@ const DetailModal = ({ onClose, data }: DetailModalProps) => {
               <h3 className="text-lg font-semibold mb-4 text-black">
                 Edit Category Information
               </h3>
-              <form onSubmit={handleSave}>
+              <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Name

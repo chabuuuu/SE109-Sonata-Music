@@ -22,7 +22,7 @@ export interface InstrumentSpotlightResponse {
   success: boolean;
   message: string;
   data: InstrumentSpotlight[];
-  errors: null | any;
+  errors: null | unknown;
 }
 
 // Interface cho response từ API search instruments
@@ -35,7 +35,7 @@ export interface InstrumentSearchResponse {
     total: number;
     items: Instrument[];
   };
-  errors: null | any;
+  errors: null | unknown;
 }
 
 export const getInstrumentSpotlight = async (topN: number = 5): Promise<InstrumentSpotlight[]> => {
@@ -118,7 +118,7 @@ export async function searchInstruments(
     if (response.data && response.data.success && response.data.data) {
       const { total, items } = response.data.data;
       
-      const mappedItems = (items || []).map((instrument: any) => ({
+      const mappedItems = (items || []).map((instrument: Instrument) => ({
         id: instrument.id || 0,
         name: instrument.name || 'Unknown Instrument',
         description: instrument.description || '',

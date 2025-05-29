@@ -286,7 +286,7 @@ export default function CategoriesPage() {
               <div className="text-sm text-[#6D4C41]">
                 {term ? (
                   <>
-                    Tìm thấy <span className="font-semibold text-[#C8A97E]">{searchTotal}</span> kết quả cho "{term}"
+                    Tìm thấy <span className="font-semibold text-[#C8A97E]">{searchTotal}</span> kết quả cho &ldquo;{term}&ldquo;
                   </>
                 ) : (
                   <>

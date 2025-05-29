@@ -22,8 +22,14 @@ import {
   Clock,
   User,
   Headphones,
-  Download
 } from "lucide-react";
+
+// Define Tab interface
+interface Tab {
+  id: 'overview' | 'biography' | 'works' | 'timeline';
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
 
 const ArtistDetailPage: React.FC = () => {
   const params = useParams();
@@ -67,7 +73,6 @@ const ArtistDetailPage: React.FC = () => {
     fetchArtistDetails();
   }, [artistId]);
 
-  // Fetch tác phẩm khi activeTab là 'works' và có artistId
   useEffect(() => {
     const fetchArtistMusics = async () => {
       if (activeTab !== 'works' || !artistId || isNaN(artistId)) {
@@ -79,7 +84,7 @@ const ArtistDetailPage: React.FC = () => {
         setMusicsError(null);
         console.log(`🎼 Fetching musics for artist ${artistId}...`);
         
-        const response = await searchMusicsByArtist(artistId, 20, 1); // Lấy 20 tác phẩm đầu tiên
+        const response = await searchMusicsByArtist(artistId, 20, 1);
         
         if (response.success && response.data.items) {
           setMusics(response.data.items);
@@ -166,16 +171,19 @@ const ArtistDetailPage: React.FC = () => {
 
   const age = calculateAge(artist.dateOfBirth, artist.dateOfDeath);
 
+  // Define tabs array with proper typing
+  const tabs: Tab[] = [
+    { id: 'overview', label: 'Tổng quan', icon: BookOpen },
+    { id: 'biography', label: 'Tiểu sử', icon: User },
+    { id: 'works', label: 'Tác phẩm', icon: MusicIcon },
+    { id: 'timeline', label: 'Thời gian', icon: Clock }
+  ];
+
   return (
     <div className="flex relative font-['Playfair_Display',serif] text-[#3A2A24] bg-gradient-to-br from-[#F8F0E3] to-[#E6D7C3]">
-      {/* Sidebar */}
       <Navbar />
-      
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto h-screen pb-8">
-        {/* Hero Section */}
         <div className="relative">
-          {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <Image
               src={artist.picture}
@@ -185,10 +193,7 @@ const ArtistDetailPage: React.FC = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#F8F0E3]"></div>
           </div>
-
-          {/* Content */}
           <div className="relative z-10 container mx-auto px-4 py-12">
-            {/* Back Button */}
             <button
               onClick={() => router.back()}
               className="mb-8 flex items-center gap-2 text-[#3A2A24] hover:text-[#C8A97E] transition-colors group"
@@ -196,9 +201,7 @@ const ArtistDetailPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               <span>Quay lại</span>
             </button>
-
             <div className="grid lg:grid-cols-3 gap-12 items-start">
-              {/* Artist Image */}
               <div className="lg:col-span-1">
                 <div className="relative">
                   <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl border-4 border-white/50 backdrop-blur-sm">
@@ -209,14 +212,11 @@ const ArtistDetailPage: React.FC = () => {
                       className="object-cover"
                     />
                   </div>
-                  {/* Play Button Overlay */}
                   <button className="absolute bottom-6 right-6 w-16 h-16 bg-[#C8A97E] rounded-full flex items-center justify-center shadow-lg hover:bg-[#A67C52] transition-all duration-300 hover:scale-110">
                     <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
                   </button>
                 </div>
               </div>
-
-              {/* Artist Info */}
               <div className="lg:col-span-2 space-y-6">
                 <div>
                   <h1 className="text-5xl lg:text-6xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif]">
@@ -230,19 +230,16 @@ const ArtistDetailPage: React.FC = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div className="text-center">
                     <div className="flex items-center justify-center w-12 h-12 bg-[#C8A97E] rounded-xl mb-2 mx-auto">
-                      <Users className="w-6 h-6 text-white" />
+                      <Users className="w- six h-6 text-white" />
                     </div>
                     <div className="text-2xl font-bold text-[#3A2A24]">
                       {artist.followers?.toLocaleString() || 0}
                     </div>
                     <div className="text-sm text-[#6D4C41]">Người theo dõi</div>
                   </div>
-                  
                   <div className="text-center">
                     <div className="flex items-center justify-center w-12 h-12 bg-[#C8A97E] rounded-xl mb-2 mx-auto">
                       <Eye className="w-6 h-6 text-white" />
@@ -252,7 +249,6 @@ const ArtistDetailPage: React.FC = () => {
                     </div>
                     <div className="text-sm text-[#6D4C41]">Lượt xem</div>
                   </div>
-
                   <div className="text-center">
                     <div className="flex items-center justify-center w-12 h-12 bg-[#C8A97E] rounded-xl mb-2 mx-auto">
                       <Calendar className="w-6 h-6 text-white" />
@@ -264,7 +260,6 @@ const ArtistDetailPage: React.FC = () => {
                       {artist.dateOfDeath ? "Tuổi thọ" : "Tuổi"}
                     </div>
                   </div>
-
                   <div className="text-center">
                     <div className="flex items-center justify-center w-12 h-12 bg-[#C8A97E] rounded-xl mb-2 mx-auto">
                       <MapPin className="w-6 h-6 text-white" />
@@ -275,8 +270,6 @@ const ArtistDetailPage: React.FC = () => {
                     <div className="text-sm text-[#6D4C41]">Quốc tịch</div>
                   </div>
                 </div>
-
-                {/* Action Buttons */}
                 <div className="flex flex-wrap gap-4">
                   <button
                     onClick={() => setIsFollowing(!isFollowing)}
@@ -289,7 +282,6 @@ const ArtistDetailPage: React.FC = () => {
                     <Heart className={`w-5 h-5 ${isFollowing ? 'fill-current' : ''}`} />
                     {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
                   </button>
-                  
                   <button className="flex items-center gap-2 px-6 py-3 bg-white/80 text-[#3A2A24] rounded-xl font-semibold hover:bg-[#E6D7C3] transition-colors border border-[#D3B995]">
                     <Share2 className="w-5 h-5" />
                     Chia sẻ
@@ -299,20 +291,12 @@ const ArtistDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Content Tabs */}
         <div className="container mx-auto px-4 py-8">
-          {/* Tab Navigation */}
           <div className="flex flex-wrap gap-2 mb-8 bg-white/80 p-2 rounded-2xl backdrop-blur-sm">
-            {[
-              { id: 'overview', label: 'Tổng quan', icon: BookOpen },
-              { id: 'biography', label: 'Tiểu sử', icon: User },
-              { id: 'works', label: 'Tác phẩm', icon: MusicIcon },
-              { id: 'timeline', label: 'Thời gian', icon: Clock }
-            ].map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                   activeTab === tab.id
                     ? 'bg-[#C8A97E] text-white shadow-lg'
@@ -324,14 +308,10 @@ const ArtistDetailPage: React.FC = () => {
               </button>
             ))}
           </div>
-
-          {/* Tab Content */}
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2">
               {activeTab === 'overview' && (
                 <div className="space-y-8">
-                  {/* Description */}
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                     <h3 className="text-2xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif]">
                       Giới thiệu
@@ -340,8 +320,6 @@ const ArtistDetailPage: React.FC = () => {
                       {artist.description || "Chưa có thông tin mô tả cho nghệ sĩ này."}
                     </p>
                   </div>
-
-                  {/* Genres */}
                   {artist.genres?.length > 0 && (
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                       <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
@@ -369,8 +347,6 @@ const ArtistDetailPage: React.FC = () => {
                       </div>
                     </div>
                   )}
-
-                  {/* Instruments */}
                   {artist.instruments?.length > 0 && (
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                       <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
@@ -397,7 +373,6 @@ const ArtistDetailPage: React.FC = () => {
                   )}
                 </div>
               )}
-
               {activeTab === 'biography' && (
                 <div className="space-y-8">
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
@@ -425,7 +400,6 @@ const ArtistDetailPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-
                   {artist.awardsAndHonors && (
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                       <h3 className="text-2xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif] flex items-center gap-3">
@@ -435,7 +409,6 @@ const ArtistDetailPage: React.FC = () => {
                       <p className="text-[#6D4C41] leading-relaxed">{artist.awardsAndHonors}</p>
                     </div>
                   )}
-
                   {artist.teachingAndAcademicContributions && (
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                       <h3 className="text-2xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif] flex items-center gap-3">
@@ -445,7 +418,6 @@ const ArtistDetailPage: React.FC = () => {
                       <p className="text-[#6D4C41] leading-relaxed">{artist.teachingAndAcademicContributions}</p>
                     </div>
                   )}
-
                   {artist.significantPerformences && (
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                       <h3 className="text-2xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif] flex items-center gap-3">
@@ -457,20 +429,17 @@ const ArtistDetailPage: React.FC = () => {
                   )}
                 </div>
               )}
-
               {activeTab === 'works' && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                   <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
                     Tác phẩm nổi bật
                   </h3>
-                  
                   {musicsLoading && (
                     <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#C8A97E] border-t-transparent mx-auto mb-4"></div>
                       <p className="text-[#6D4C41]">Đang tải danh sách tác phẩm...</p>
                     </div>
                   )}
-                  
                   {musicsError && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -480,7 +449,6 @@ const ArtistDetailPage: React.FC = () => {
                       <button
                         onClick={() => {
                           setMusicsError(null);
-                          // Trigger refetch by updating activeTab
                           const currentTab = activeTab;
                           setActiveTab('overview');
                           setTimeout(() => setActiveTab(currentTab), 100);
@@ -491,7 +459,6 @@ const ArtistDetailPage: React.FC = () => {
                       </button>
                     </div>
                   )}
-                  
                   {!musicsLoading && !musicsError && musics.length === 0 && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -500,7 +467,6 @@ const ArtistDetailPage: React.FC = () => {
                       <p className="text-[#6D4C41]">Chưa có tác phẩm nào của nghệ sĩ này.</p>
                     </div>
                   )}
-                  
                   {!musicsLoading && !musicsError && musics.length > 0 && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between mb-6">
@@ -508,14 +474,12 @@ const ArtistDetailPage: React.FC = () => {
                           Tìm thấy <span className="font-semibold text-[#3A2A24]">{musics.length}</span> tác phẩm
                         </p>
                       </div>
-                      
                       <div className="grid gap-4">
                         {musics.map((music) => (
                           <div
                             key={music.id}
                             className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#F8F0E3] to-[#E6D7C3] rounded-xl hover:shadow-lg transition-all duration-300 group"
                           >
-                            {/* Cover Photo */}
                             <div className="relative w-16 h-16 flex-shrink-0">
                               <Image
                                 src={music.coverPhoto}
@@ -527,8 +491,6 @@ const ArtistDetailPage: React.FC = () => {
                                 <Play className="w-6 h-6 text-white" fill="currentColor" />
                               </div>
                             </div>
-                            
-                            {/* Music Info */}
                             <div className="flex-grow min-w-0">
                               <h4 className="font-semibold text-[#3A2A24] text-lg truncate group-hover:text-[#C8A97E] transition-colors">
                                 {music.name}
@@ -546,8 +508,6 @@ const ArtistDetailPage: React.FC = () => {
                                 )}
                               </div>
                             </div>
-                            
-                            {/* Stats */}
                             <div className="flex items-center gap-6 text-sm text-[#6D4C41]">
                               <div className="flex items-center gap-1">
                                 <Headphones className="w-4 h-4" />
@@ -558,8 +518,6 @@ const ArtistDetailPage: React.FC = () => {
                                 <span>{music.favoriteCount.toLocaleString()}</span>
                               </div>
                             </div>
-                            
-                            {/* Actions */}
                             <div className="flex items-center gap-2">
                               <button className="w-10 h-10 bg-[#C8A97E] rounded-full flex items-center justify-center text-white hover:bg-[#A67C52] transition-colors opacity-0 group-hover:opacity-100">
                                 <Play className="w-4 h-4 ml-0.5" fill="currentColor" />
@@ -574,7 +532,6 @@ const ArtistDetailPage: React.FC = () => {
                           </div>
                         ))}
                       </div>
-                      
                       {musics.length >= 20 && (
                         <div className="text-center pt-6">
                           <p className="text-[#6D4C41] text-sm">
@@ -586,7 +543,6 @@ const ArtistDetailPage: React.FC = () => {
                   )}
                 </div>
               )}
-
               {activeTab === 'timeline' && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
                   <h3 className="text-2xl font-bold text-[#3A2A24] mb-6 font-['Playfair_Display',serif]">
@@ -613,10 +569,7 @@ const ArtistDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Sidebar */}
             <div className="space-y-6">
-              {/* Periods */}
               {artist.periods?.length > 0 && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
                   <h3 className="text-xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif]">
@@ -638,8 +591,6 @@ const ArtistDetailPage: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              {/* Orchestras */}
               {artist.orchestras?.length > 0 && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
                   <h3 className="text-xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif]">
@@ -661,8 +612,6 @@ const ArtistDetailPage: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              {/* Quick Stats */}
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
                 <h3 className="text-xl font-bold text-[#3A2A24] mb-4 font-['Playfair_Display',serif]">
                   Thống kê nhanh
@@ -690,4 +639,4 @@ const ArtistDetailPage: React.FC = () => {
   );
 };
 
-export default ArtistDetailPage; 
+export default ArtistDetailPage;

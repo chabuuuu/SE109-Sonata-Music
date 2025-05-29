@@ -48,7 +48,7 @@ export async function getPopularAlbums(topN: number = 5): Promise<Album[]> {
     
     // Kiểm tra response theo cấu trúc API thực tế
     if (response.data && response.data.success && Array.isArray(response.data.data)) {
-      return response.data.data.map((album: any) => ({
+      return response.data.data.map((album: Album) => ({
         id: album.id || 0,
         name: album.name || 'Unknown Album',
         description: album.description || '',
@@ -156,7 +156,7 @@ export async function searchAlbums(
     if (response.data && response.data.success && response.data.data) {
       const { total, items } = response.data.data;
       
-      const mappedItems = (items || []).map((album: any) => ({
+      const mappedItems = (items || []).map((album: Album) => ({
         id: album.id || 0,
         name: album.name || 'Unknown Album',
         description: album.description || '',
@@ -231,7 +231,7 @@ export async function getAlbumById(id: string | number): Promise<Album | null> {
         createAt: album.createAt,
         updateAt: album.updateAt,
         deleteAt: album.deleteAt,
-        musics: (album.musics || []).map((music: any) => ({
+        musics: (album.musics || []).map((music: Music) => ({
           id: music.id || 0,
           name: music.name || 'Unknown Track',
           description: music.description || '',

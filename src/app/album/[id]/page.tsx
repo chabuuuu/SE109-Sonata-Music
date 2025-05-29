@@ -9,9 +9,14 @@ import SearchBar from "@/components/SearchBar";
 import BottomBanner from "@/components/bottom_banner";
 import { getAlbumById, Album } from "@/services/albumService";
 
-/**
- * Component trang chi tiết album với layout nhất quán với Home
- */
+// Define the Track interface
+interface Track {
+  id: number;
+  name: string;
+  description?: string; // Optional, as it falls back to "Bài hát cổ điển" if not provided
+  coverPhoto: string;
+}
+
 const AlbumDetailPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
@@ -22,9 +27,6 @@ const AlbumDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentTrack, setCurrentTrack] = useState<number | null>(null);
 
-  /**
-   * Fetch thông tin album
-   */
   useEffect(() => {
     const fetchAlbum = async () => {
       try {
@@ -51,9 +53,6 @@ const AlbumDetailPage: React.FC = () => {
     }
   }, [albumId]);
 
-  /**
-   * Component Loading với style parchment
-   */
   const LoadingSpinner = () => (
     <div className="flex flex-col items-center justify-center min-h-[400px] bg-[#F0E6D6] border border-[#D3B995] rounded-lg p-8">
       <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#D3B995] border-t-[#C8A97E] mb-4"></div>
@@ -61,9 +60,6 @@ const AlbumDetailPage: React.FC = () => {
     </div>
   );
 
-  /**
-   * Component Error với style parchment
-   */
   const ErrorMessage = ({ message }: { message: string }) => (
     <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6 bg-[#F0E6D6] border border-[#D3B995] rounded-lg p-8">
       <div className="text-center">
@@ -90,17 +86,13 @@ const AlbumDetailPage: React.FC = () => {
     </div>
   );
 
-  /**
-   * Component Track Row với style vintage
-   */
-  const TrackRow = ({ track, index }: { track: any; index: number }) => (
+  const TrackRow = ({ track, index }: { track: Track; index: number }) => (
     <div 
       className={`grid grid-cols-12 items-center px-6 py-4 hover:bg-[#E6D7C3] rounded-lg transition-all duration-300 cursor-pointer group ${
         currentTrack === index ? 'bg-[#E6D7C3] shadow-md' : ''
       }`}
       onClick={() => setCurrentTrack(currentTrack === index ? null : index)}
     >
-      {/* Số thứ tự hoặc nút play */}
       <div className="col-span-1 flex items-center justify-center">
         {currentTrack === index ? (
           <button className="w-10 h-10 bg-[#C8A97E] text-white rounded-full flex items-center justify-center hover:bg-[#A67C52] transition-colors shadow-md">
@@ -118,7 +110,6 @@ const AlbumDetailPage: React.FC = () => {
         )}
       </div>
 
-      {/* Thông tin bài hát */}
       <div className="col-span-7 flex items-center space-x-4">
         <div className="w-12 h-12 relative flex-shrink-0 rounded-lg overflow-hidden border-2 border-[#D3B995]">
           <Image 
@@ -134,12 +125,10 @@ const AlbumDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Duration placeholder */}
       <div className="col-span-2 text-right">
         <span className="text-sm text-[#6D4C41] font-['Playfair_Display',serif]">3:45</span>
       </div>
 
-      {/* Actions */}
       <div className="col-span-2 flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <button className="p-2 rounded-full hover:bg-[#D3B995] transition-colors">
           <svg className="w-5 h-5 text-[#6D4C41]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,16 +146,10 @@ const AlbumDetailPage: React.FC = () => {
 
   return (
     <div className="flex relative font-['Playfair_Display',serif] text-[#3A2A24] bg-[#F8F0E3]">
-      {/* Sidebar */}
       <Navbar />
-
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto h-screen pb-28">
-        {/* Search Bar */}
         <SearchBar />
-        
         <div className="p-6">
-          {/* Breadcrumb với style parchment */}
           <nav className="flex items-center space-x-2 text-sm text-[#6D4C41] mb-6 bg-[#F0E6D6] border border-[#D3B995] rounded-lg px-4 py-3">
             <Link href="/" className="hover:text-[#C8A97E] transition-colors font-medium">
               Trang chủ
@@ -185,10 +168,8 @@ const AlbumDetailPage: React.FC = () => {
           
           {album && !loading && (
             <div className="space-y-8">
-              {/* Album Header với style vintage */}
               <div className="bg-[#F0E6D6] border border-[#D3B995] rounded-xl shadow-lg overflow-hidden">
                 <div className="flex flex-col lg:flex-row">
-                  {/* Album Cover */}
                   <div className="lg:w-80 lg:h-80 w-full h-64 relative flex-shrink-0">
                     <Image
                       src={album.coverPhoto}
@@ -198,8 +179,6 @@ const AlbumDetailPage: React.FC = () => {
                       priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#3A2A24]/60 via-transparent to-transparent" />
-                    
-                    {/* Play overlay button */}
                     <button className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black/20 backdrop-blur-sm">
                       <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform duration-300">
                         <svg className="w-8 h-8 text-[#3A2A24] ml-1" fill="currentColor" viewBox="0 0 20 20">
@@ -208,8 +187,6 @@ const AlbumDetailPage: React.FC = () => {
                       </div>
                     </button>
                   </div>
-                  
-                  {/* Album Info */}
                   <div className="flex-1 p-6 lg:p-8 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center space-x-3 mb-4">
@@ -226,15 +203,12 @@ const AlbumDetailPage: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      
                       <h1 className="text-4xl lg:text-5xl font-bold text-[#3A2A24] mb-4 tracking-wide">
                         {album.name}
                       </h1>
-                      
                       <p className="text-[#6D4C41] mb-6 leading-relaxed text-lg">
                         {album.description || "Một tuyệt tác âm nhạc cổ điển đầy cảm xúc và nghệ thuật."}
                       </p>
-                      
                       <div className="flex flex-wrap items-center gap-6 text-sm text-[#6D4C41] mb-6">
                         <div className="flex items-center space-x-2 bg-[#E6D7C3] px-3 py-2 rounded-full">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,14 +216,12 @@ const AlbumDetailPage: React.FC = () => {
                           </svg>
                           <span className="font-semibold">{new Date(album.releaseDate).getFullYear()}</span>
                         </div>
-                        
                         <div className="flex items-center space-x-2 bg-[#E6D7C3] px-3 py-2 rounded-full">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                           </svg>
                           <span className="font-semibold">{album.musics?.length || 0} bài hát</span>
                         </div>
-                        
                         {album.likeCount && (
                           <div className="flex items-center space-x-2 bg-[#E6D7C3] px-3 py-2 rounded-full">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,8 +232,6 @@ const AlbumDetailPage: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    
-                    {/* Action Buttons với style vintage */}
                     <div className="flex flex-wrap items-center gap-4">
                       <button className="px-8 py-4 bg-[#C8A97E] text-white rounded-full font-bold hover:bg-[#A67C52] transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105">
                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -269,14 +239,12 @@ const AlbumDetailPage: React.FC = () => {
                         </svg>
                         <span>Phát tất cả</span>
                       </button>
-                      
                       <button className="px-6 py-4 border-2 border-[#C8A97E] text-[#C8A97E] rounded-full font-bold hover:bg-[#C8A97E] hover:text-white transition-all duration-300 flex items-center space-x-2 shadow-md hover:shadow-lg">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                         <span>Yêu thích</span>
                       </button>
-                      
                       <button className="p-4 border-2 border-[#C8A97E] text-[#C8A97E] rounded-full hover:bg-[#C8A97E] hover:text-white transition-all duration-300 shadow-md hover:shadow-lg">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -286,26 +254,20 @@ const AlbumDetailPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Track List với style parchment */}
               <div className="bg-[#F0E6D6] border border-[#D3B995] rounded-xl shadow-lg overflow-hidden">
                 <div className="p-6 border-b border-[#D3B995] bg-gradient-to-r from-[#E6D7C3] to-[#D3B995]">
                   <h2 className="text-2xl font-bold text-[#3A2A24] tracking-wide">Danh sách bài hát</h2>
                   <p className="text-[#6D4C41] mt-1">Khám phá những giai điệu tuyệt vời trong album này</p>
                 </div>
-                
                 <div className="p-6">
                   {album.musics && album.musics.length > 0 ? (
                     <div className="space-y-2">
-                      {/* Header */}
                       <div className="grid grid-cols-12 items-center px-6 py-3 text-sm font-bold text-[#6D4C41] border-b border-[#D3B995] bg-[#E6D7C3] rounded-lg">
                         <span className="col-span-1">#</span>
                         <span className="col-span-7">Tên bài hát</span>
                         <span className="col-span-2 text-right">Thời lượng</span>
                         <span className="col-span-2 text-center">Hành động</span>
                       </div>
-                      
-                      {/* Tracks */}
                       <div className="space-y-1">
                         {album.musics.map((track, index) => (
                           <TrackRow key={track.id} track={track} index={index} />
@@ -330,11 +292,9 @@ const AlbumDetailPage: React.FC = () => {
           )}
         </div>
       </main>
-
-      {/* Bottom Banner */}
       <BottomBanner />
     </div>
   );
 };
 
-export default AlbumDetailPage; 
+export default AlbumDetailPage;
