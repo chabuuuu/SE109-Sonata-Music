@@ -73,6 +73,7 @@ interface MusicPlayerState {
   isLoading: boolean; // THÊM MỚI: Trạng thái loading toàn cục
   isExpanded: boolean;
   playSongById: (musicId: number | string) => Promise<void>; // THAY ĐỔI
+  playCollection: (songs: any[]) => Promise<void>; // THÊM MỚI: Phát collection
   togglePlayPause: () => void;
   playNext: () => Promise<void>;
   playPrevious: () => Promise<void>;
@@ -420,6 +421,49 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Hàm phát toàn bộ collection
+  const playCollection = async (songs: any[]) => {
+    if (!songs || songs.length === 0) {
+      console.warn("Collection rỗng hoặc không hợp lệ");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError("");
+
+      // Chuyển đổi songs sang định dạng GlobalMusic
+      const collectionPlaylist: GlobalMusic[] = songs.map((song) => ({
+        id: song.id.toString(),
+        name: song.name,
+        artist: song.artists && song.artists.length > 0 
+          ? song.artists[0].name 
+          : "Nghệ sĩ chưa xác định",
+        coverPhoto: song.coverPhoto || "/default-cover.png",
+        resourceLink: song.resourceLink || "",
+        favoriteCount: song.favoriteCount || 0,
+        isFavorite: false,
+        lyric: song.lyric,
+        fullApiData: song,
+      }));
+
+      // Cập nhật playlist với toàn bộ collection
+      setPlaylist(collectionPlaylist);
+      setCurrentTrackIndex(0);
+
+      // Phát bài đầu tiên
+      await playSongById(songs[0].id);
+
+      console.log(`🎵 Bắt đầu phát collection với ${songs.length} bài hát`);
+      
+    } catch (error) {
+      console.error("Lỗi khi phát collection:", error);
+      setError("Không thể phát collection này");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     playlist,
     currentTrackIndex,
@@ -431,6 +475,7 @@ export const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
     isExpanded,
     volume,
     playSongById,
+    playCollection,
     togglePlayPause,
     playNext,
     playPrevious,
