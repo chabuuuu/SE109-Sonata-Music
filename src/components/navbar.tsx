@@ -64,6 +64,7 @@ const ClassicalNavbar = () => {
                 <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">Explore</span>
               </Link>
             </li>
+            
             <li className="overflow-hidden rounded-md">
               <Link 
                 href="/user-likedsongs" 
@@ -77,6 +78,7 @@ const ClassicalNavbar = () => {
                 <span className="font-['Playfair_Display',serif] group-hover:text-[#F8F0E3]">My Favorite</span>
               </Link>
             </li>
+
           </ul>
         </nav>
       </div>

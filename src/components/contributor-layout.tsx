@@ -21,6 +21,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
   const activeItem = React.useMemo(() => {
     if (pathName.startsWith("/contributor-artist-view")) return "artists";
     if (pathName.startsWith("/contributor-view-all") || pathName.startsWith("/contributor-add-song")) return "viewAll";
+    if (pathName.startsWith("/contributor-exchange-premium")) return "exchange";
     return "dashboard";
   }, [pathName]);
 
@@ -90,6 +91,23 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children }) => {
                     className="object-contain"
                   />
                   <span className="text-base">Songs & Albums Management</span>
+                </li>
+
+                {/* Exchange Premium */}
+                <li
+                  className={`${styles.menuItem} ${
+                    activeItem === "exchange" ? styles.active : ""
+                  }`}
+                  onClick={() => router.push("/contributor-exchange-premium")}
+                >
+                  <Image
+                    src="/layout_imgs/library_logo.png"
+                    alt="Library logo"
+                    height={20}
+                    width={20}
+                    className="object-contain"
+                  />
+                  <span className="text-base"> Exchange Premium</span>
                 </li>
 
               </ul>
