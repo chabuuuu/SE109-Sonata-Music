@@ -149,6 +149,8 @@ export default function LoginPage() {
               </label>
             </div>
 
+            <a href="../user-login" className="text-black hover:text-yello-300" > A listener of Sonata? Click here.</a>
+
             <button
               type="submit"
               className="w-full bg-blue-900 text-white py-2 rounded font-semibold hover:bg-blue-800"
