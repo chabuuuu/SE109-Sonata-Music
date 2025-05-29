@@ -44,6 +44,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getToken } from "@/services/authService";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
+import { useMusicPlayer } from "@/context/MusicPlayerContext";
 
 // Interface cho dữ liệu nghệ sĩ từ API
 interface FeaturedArtist {
@@ -1236,7 +1237,8 @@ const InstrumentSpotlightSection: React.FC<{
   spotlights: InstrumentSpotlight[];
   loading: boolean;
   onPlayClick?: (songId: number) => void;
-}> = ({ spotlights, loading, onPlayClick }) => {
+  onPlayCollection?: (songs: any[]) => void;
+}> = ({ spotlights, loading, onPlayClick, onPlayCollection }) => {
   const [selectedInstrument, setSelectedInstrument] = useState<number | null>(
     null
   );
@@ -1412,11 +1414,12 @@ const InstrumentSpotlightSection: React.FC<{
                   {songs.length} songs available
                 </p>
                 <div className="flex space-x-4">
-                  <button className="bg-[#F0E6D6] hover:bg-white text-[#3A2A24] font-medium rounded-full px-8 py-3 shadow-lg transition-colors">
+                  <button 
+                    onClick={() => onPlayCollection && onPlayCollection(songs)}
+                    disabled={songs.length === 0}
+                    className="bg-[#F0E6D6] hover:bg-white text-[#3A2A24] font-medium rounded-full px-8 py-3 shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Play Collection
-                  </button>
-                  <button className="border border-[#F0E6D6] text-[#F0E6D6] font-medium rounded-full px-8 py-3 hover:bg-[#F0E6D6]/20 transition-colors">
-                    View Details
                   </button>
                 </div>
               </div>
@@ -1664,6 +1667,7 @@ const EraStyleSection: React.FC<{
 
 const HomePage: React.FC = () => {
   const router = useRouter();
+  const { playCollection } = useMusicPlayer();
   const [currentArtistIndex, setCurrentArtistIndex] = useState(0);
   const [currentBackgroundIndex, setCurrentBackgroundIndex] = useState(0);
   const [featuredArtists, setFeaturedArtists] =
@@ -1735,6 +1739,13 @@ const HomePage: React.FC = () => {
   // Handle play click function
   const handlePlayClick = (songId: number) => {
     router.push(`/music/${songId}`);
+  };
+
+  // Handle play collection function
+  const handlePlayCollection = async (songs: any[]) => {
+    if (songs && songs.length > 0) {
+      await playCollection(songs);
+    }
   };
 
   // Fetch featured artists from API
@@ -2242,6 +2253,7 @@ const HomePage: React.FC = () => {
             spotlights={instrumentSpotlights}
             loading={instrumentsLoading}
             onPlayClick={handlePlayClick}
+            onPlayCollection={handlePlayCollection}
           />
         </div>
       </main>
