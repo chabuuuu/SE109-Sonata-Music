@@ -307,12 +307,11 @@ export async function removeFromFavorite(musicId: number): Promise<FavoriteRespo
       data: requestData
     });
     
-    const response = await axios.delete(url, {
+    const response = await axios.post(url, requestData, {
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeaders()
       },
-      data: requestData,
       timeout: 8000
     });
     
@@ -716,12 +715,11 @@ export async function unfollowArtist(artistId: number): Promise<FavoriteResponse
       data: requestData
     });
     
-    const response = await axios.delete(url, {
+    const response = await axios.post(url, requestData, {
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeaders()
       },
-      data: requestData,
       timeout: 8000
     });
     
@@ -968,12 +966,11 @@ export async function unlikeAlbum(albumId: number): Promise<FavoriteResponse> {
       data: requestData
     });
     
-    const response = await axios.delete(url, {
+    const response = await axios.post(url, requestData, {
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeaders()
       },
-      data: requestData,
       timeout: 8000
     });
     
