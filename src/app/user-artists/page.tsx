@@ -24,6 +24,16 @@ import {
   checkIsFollowingArtist,
 } from "@/services/favoriteService";
 
+// Import logic phân loại nghệ sĩ theo thời kỳ
+import {
+  filterArtistsByEra,
+  getArtistMainEra,
+  getArtistAllEras,
+  getArtistEraDetails,
+  ERA_VIETNAMESE_NAMES,
+  getYear,
+} from "@/utils/artistClassification";
+
 // Giả sử bạn có một file định nghĩa type chung
 // Nếu không, bạn có thể định nghĩa nó ở đây để TypeScript không báo lỗi
 interface Music {
@@ -311,40 +321,11 @@ export default function ClassicalMusicArtistsPage() {
   const displayArtists =
     searchResults && searchTerm ? searchResults.data.items : artists;
 
-  // Helper function to get birth year from date string
-  const getBirthYear = (dateOfBirth: string | null): number => {
-    if (!dateOfBirth) return 0;
-    return new Date(dateOfBirth).getFullYear();
-  };
-
-  // Helper function to get death year from date string
-  const getDeathYear = (dateOfDeath: string | null): number => {
-    if (!dateOfDeath) return new Date().getFullYear(); // Current year if still alive
-    return new Date(dateOfDeath).getFullYear();
-  };
-
-  // Filter by era and sort
+  // Filter by era and sort - SỬ DỤNG LOGIC MỚI
   const filteredAndSortedArtists = [...displayArtists]
     .filter((artist) => {
-      if (selectedEra === "All Periods") return true;
-
-      const birthYear = getBirthYear(artist.dateOfBirth);
-
-      // Map era to year ranges
-      const eraRanges: Record<string, [number, number]> = {
-        Medieval: [500, 1400],
-        Renaissance: [1400, 1600],
-        Baroque: [1600, 1750],
-        Classical: [1750, 1820],
-        Romantic: [1820, 1900],
-        Modern: [1900, 1945],
-        Contemporary: [1945, 2024],
-      };
-
-      const range = eraRanges[selectedEra];
-      if (!range) return true;
-
-      return birthYear >= range[0] && birthYear <= range[1];
+      // Sử dụng logic phân loại mới từ artistClassification
+      return filterArtistsByEra([artist], selectedEra).length > 0;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -417,6 +398,17 @@ export default function ClassicalMusicArtistsPage() {
         return newSet;
       });
     }
+  };
+
+  // Helper function để hiển thị năm sinh/mất
+  const formatArtistYears = (dateOfBirth: string | null, dateOfDeath: string | null): string => {
+    const birthYear = getYear(dateOfBirth);
+    const deathYear = getYear(dateOfDeath);
+    
+    const birthDisplay = birthYear ? birthYear.toString() : "Unknown";
+    const deathDisplay = deathYear ? deathYear.toString() : "Present";
+    
+    return `${birthDisplay} - ${deathDisplay}`;
   };
 
   return (
@@ -861,13 +853,7 @@ export default function ClassicalMusicArtistsPage() {
                         {artist.name}
                       </h3>
                       <p className="text-xs text-[#6D4C41] text-center">
-                        {artist.dateOfBirth
-                          ? getBirthYear(artist.dateOfBirth).toString()
-                          : "Unknown"}{" "}
-                        -{" "}
-                        {artist.dateOfDeath
-                          ? getDeathYear(artist.dateOfDeath).toString()
-                          : "Present"}
+                        {formatArtistYears(artist.dateOfBirth, artist.dateOfDeath)}
                       </p>
                       <p className="text-xs text-[#8D6E63] text-center mt-1">
                         {artist.nationality || "Unknown"}
@@ -944,13 +930,7 @@ export default function ClassicalMusicArtistsPage() {
                       <div className="flex-1">
                         <h4 className="font-medium">{artist.name}</h4>
                         <p className="text-xs text-[#6D4C41]">
-                          {artist.dateOfBirth
-                            ? getBirthYear(artist.dateOfBirth).toString()
-                            : "Unknown"}{" "}
-                          -{" "}
-                          {artist.dateOfDeath
-                            ? getDeathYear(artist.dateOfDeath).toString()
-                            : "Present"}
+                          {formatArtistYears(artist.dateOfBirth, artist.dateOfDeath)}
                         </p>
                         <p className="text-xs text-[#8D6E63]">
                           {artist.nationality || "Unknown"} •{" "}

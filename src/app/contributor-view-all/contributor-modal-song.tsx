@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { X } from "lucide-react";
-import FileUploadSection from "@/components/upload-file";
+import ContributorFileUploadSection from "./upload-file-contributor";
 import * as Types from "./api-type";
 import axios from "axios";
 import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
@@ -106,6 +106,8 @@ const ContributorViewSongsModal = ({ onClose, musicId }: SearchModalProps) => {
       correctAnswer: "A",
     });
   };
+
+
 
   const fetchData = React.useCallback(async () => {
     if (!musicId) return;
@@ -506,7 +508,7 @@ const ContributorViewSongsModal = ({ onClose, musicId }: SearchModalProps) => {
               {/* File Upload Sections */}
               <div className="grid grid-cols-2 gap-12">
                 <div>
-                  <FileUploadSection
+                  <ContributorFileUploadSection
                     title="Upload Music File"
                     acceptedFormats="Accepted formats: MP3, WAV, FLAC"
                     acceptTypes=".mp3,.wav,.flac"
@@ -517,7 +519,7 @@ const ContributorViewSongsModal = ({ onClose, musicId }: SearchModalProps) => {
                   />
                 </div>
                 <div>
-                  <FileUploadSection
+                  <ContributorFileUploadSection
                     title="Upload Cover Art"
                     acceptedFormats="JPG, PNG files, max 10MB each"
                     acceptTypes="image/*,.jpg,.jpeg,.png"
