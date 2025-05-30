@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent, useEffect } from "react";
 import axios from "axios";
 import CustomImage from "@/components/CustomImage";
 import { Music } from "lucide-react";
-import { ADMIN_TOKEN } from "@/constant/adminToken";
+import { CONTRIBUTOR_TOKEN } from "@/constant/contributorToken";
 
 interface UploadResponse {
   status: string;
@@ -25,7 +25,7 @@ interface FileUploadSectionProps {
   onUploadError: (error: string) => void;
 }
 
-const FileUploadSection: React.FC<FileUploadSectionProps> = ({
+const ContributorFileUploadSection: React.FC<FileUploadSectionProps> = ({
   title,
   acceptedFormats,
   acceptTypes,
@@ -45,7 +45,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           `https://api.sonata.io.vn/media-service/api/v1/media/media-id`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+              Authorization: `Bearer ${localStorage.getItem(CONTRIBUTOR_TOKEN)}`,
             },
           }
         );
@@ -83,7 +83,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       const response = await axios.post<UploadResponse>(uploadUrl, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem(ADMIN_TOKEN)}`,
+          Authorization: `Bearer ${localStorage.getItem(CONTRIBUTOR_TOKEN)}`,
         },
         maxBodyLength: Infinity,
       });
@@ -165,4 +165,4 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   );
 };
 
-export default FileUploadSection;
+export default ContributorFileUploadSection;
