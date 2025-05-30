@@ -5,7 +5,7 @@ import { Download, Search, XCircle, Info } from "lucide-react";
 import axios from "axios";
 import { ADMIN_TOKEN } from "@/constant/adminToken";
 import * as MusicType from "../../../types/search-music-type";
-import AddSongsModal from "./edit-modal-song";
+import EditSongsModal from "./edit-modal-song";
 
 export default function AllSongsPage() {
   const [musics, setMusics] = useState<MusicType.Music[]>([]);
@@ -290,7 +290,7 @@ export default function AllSongsPage() {
         </div>
       </div>
       {popup && selectedMusic && (
-        <AddSongsModal musicId={selectedMusic.id} onClose={handleCloseModal} />
+        <EditSongsModal musicId={selectedMusic.id} onClose={handleCloseModal} />
       )}
     </div>
   );

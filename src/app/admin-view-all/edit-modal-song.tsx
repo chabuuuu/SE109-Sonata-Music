@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import FileUploadSection from "@/components/upload-file";
 import * as Types from "./api-type";
@@ -13,7 +13,7 @@ interface SearchModalProps {
   musicId: number;
 }
 
-const AddSongsModal = ({ onClose, musicId }: SearchModalProps) => {
+const EditSongsModal = ({ onClose, musicId }: SearchModalProps) => {
   const [showModal, setShowModal] = useState(false);
   const [currentField, setCurrentField] = useState("");
   const [description, setDescription] = useState("");
@@ -661,4 +661,4 @@ const AddSongsModal = ({ onClose, musicId }: SearchModalProps) => {
   );
 };
 
-export default AddSongsModal;
+export default EditSongsModal;

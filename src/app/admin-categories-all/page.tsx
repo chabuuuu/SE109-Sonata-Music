@@ -50,7 +50,7 @@ export default function AdminCategoriesAllPage() {
         const filters = searchTerm
           ? [
               {
-                operator: "equal",
+                operator: "like",
                 key: "name",
                 value: searchTerm,
               },
